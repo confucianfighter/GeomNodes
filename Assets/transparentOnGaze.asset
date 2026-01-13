@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95e66c6366d904e98bc83428217d4fd7, type: 3}
+  m_Name: transparentOnGaze
+  m_EditorClassIdentifier: 
+  _data:
+    _json: '{"graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[],"controlOutputDefinitions":[],"valueInputDefinitions":[],"valueOutputDefinitions":[],"title":null,"summary":null,"pan":{"x":219.3994,"y":134.2428},"zoom":1.0,"elements":[{"nest":{"source":"Macro","macro":0,"embed":null},"defaultValues":{"alpha":{"$content":0.5,"$type":"System.Single"}},"position":{"x":128.0,"y":66.0},"guid":"2b563ef9-af5d-40fe-b75d-d0edf459de03","$version":"A","$type":"Unity.VisualScripting.SubgraphUnit","$id":"9"},{"coroutine":false,"defaultValues":{"target":null},"position":{"x":-166.0,"y":20.0},"guid":"6510f335-c0a2-4333-9dc2-876d2b35d449","$version":"A","$type":"Flow.Framework.Events.XRIT.OnHoverEntered","$id":"12"},{"coroutine":false,"defaultValues":{"target":null},"position":{"x":-169.0,"y":227.0},"guid":"8a2b7e36-6f9a-4990-9ff7-4b918568e0da","$version":"A","$type":"Flow.Framework.Events.XRIT.OnHoverExited","$id":"14"},{"chainable":false,"member":{"name":"color","parameterTypes":null,"targetType":"UnityEngine.Material","targetTypeName":"UnityEngine.Material","$version":"A"},"defaultValues":{"target":null,"input":{"r":1.0,"g":1.0,"b":1.0,"a":1.0,"$type":"UnityEngine.Color"}},"position":{"x":806.0,"y":511.0},"guid":"ba95f077-e151-48cb-847b-1046b294cb2e","$version":"A","$type":"Unity.VisualScripting.SetMember"},{"sourceUnit":{"$ref":"12"},"sourceKey":"trigger","destinationUnit":{"$ref":"9"},"destinationKey":"Set
+      Alpha","guid":"2196bf36-1309-47cd-b9aa-807a836d6dbc","$type":"Unity.VisualScripting.ControlConnection"},{"sourceUnit":{"$ref":"14"},"sourceKey":"trigger","destinationUnit":{"$ref":"9"},"destinationKey":"Restore
+      Alpha","guid":"4a0133d0-4e66-4be1-a1e8-a8c5d4e2a827","$type":"Unity.VisualScripting.ControlConnection"}],"$version":"A"}}'
+    _objectReferences:
+    - {fileID: 11400000, guid: 9eee7eb2c4b04444093ccbcfdedc7d36, type: 2}

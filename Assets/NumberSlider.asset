@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95e66c6366d904e98bc83428217d4fd7, type: 3}
+  m_Name: NumberSlider
+  m_EditorClassIdentifier: 
+  _data:
+    _json: '{"graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[],"controlOutputDefinitions":[],"valueInputDefinitions":[],"valueOutputDefinitions":[],"title":null,"summary":null,"pan":{"x":0.0,"y":0.0},"zoom":1.0,"elements":[{"coroutine":false,"defaultValues":{},"position":{"x":-204.0,"y":-144.0},"guid":"e4a5b800-f1d9-4bcf-bc16-556cdb1c4286","$version":"A","$type":"Unity.VisualScripting.Start"},{"coroutine":false,"defaultValues":{},"position":{"x":-204.0,"y":60.0},"guid":"b314d6da-fe51-4980-b78a-84a89a2a43fc","$version":"A","$type":"Unity.VisualScripting.Update"},{"specifyFallback":false,"kind":"Object","defaultValues":{"name":{"$content":"","$type":"System.String"},"object":null},"position":{"x":-65.0,"y":-92.0},"guid":"9ef1ff30-0799-4c01-8ea0-c6c41a975af1","$version":"A","$type":"Unity.VisualScripting.GetVariable","$id":"13"},{"specifyFallback":false,"kind":"Object","defaultValues":{"name":{"$content":"Slider","$type":"System.String"},"object":null},"position":{"x":-396.0,"y":-27.0},"guid":"cfe00da9-4267-4e2e-a0fe-2b6246e99547","$version":"A","$type":"Unity.VisualScripting.GetVariable","$id":"15"},{"argumentCount":1,"coroutine":false,"defaultValues":{"target":null,"name":{"$content":"OnSliderMoved","$type":"System.String"}},"position":{"x":-22.0,"y":-222.0},"guid":"a4b32e42-6428-482e-90ca-598705654049","$version":"A","$type":"Unity.VisualScripting.CustomEvent"},{"sourceUnit":{"$ref":"15"},"sourceKey":"value","destinationUnit":{"$ref":"13"},"destinationKey":"object","guid":"1dd231f4-579e-4f0f-98e6-01b5a85d1922","$type":"Unity.VisualScripting.ValueConnection"}],"$version":"A"}}'
+    _objectReferences: []
