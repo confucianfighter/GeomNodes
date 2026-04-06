@@ -1,0 +1,33 @@
+{
+    "name": "DLN.Nodes.Runtime",
+    "rootNamespace": "DLN",
+    "references": [
+        "GUID:c4c9b5f18e914f7d9f1c5112f02c0da4",
+        "GUID:1826c0224c0d048b88112c79bbb0cd85",
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:fe685ec1767f73d42b749ea8045bfe43",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:dc960734dc080426fa6612f1c5fe95f3",
+        "GUID:75469ad4d38634e559750d17036d5f7c",
+        "GUID:7e521086000d5a9438798610d07f6507",
+        "GUID:71e544e92c54042cc82d58ed309ef148",
+        "GUID:734d92eba21c94caba915361bd5ac177",
+        "GUID:5f3cf485eb0554709a8abbeace890c86",
+        "GUID:2ca3fc2b00afc4049994d862b255e6b3",
+        "GUID:e0cd26848372d4e5c891c569017e11f1",
+        "GUID:343deaaf83e0cee4ca978e7df0b80d21",
+        "GUID:676cd7309770879438c3c4b1a4aaee66",
+        "GUID:03ca3ee4acaf74592bc6d299ca86aa27",
+        "GUID:8f07e33567e0ee542b40769c456c6b53",
+        "GUID:9233538b711383d449a485633568d17c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

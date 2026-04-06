@@ -1,0 +1,578 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace DLN
+{
+    [Serializable]
+    public struct BoundsOffsets
+    {
+        public float Left;
+        public float Right;
+        public float Bottom;
+        public float Top;
+        public float Back;
+        public float Front;
+
+        public BoundsOffsets(
+            float left,
+            float right,
+            float bottom,
+            float top,
+            float back,
+            float front)
+        {
+            Left = left;
+            Right = right;
+            Bottom = bottom;
+            Top = top;
+            Back = back;
+            Front = front;
+        }
+
+        public static BoundsOffsets Zero => new BoundsOffsets(0f, 0f, 0f, 0f, 0f, 0f);
+    }
+
+    public static class MeshOps
+    {
+        public const float Epsilon = 0.00001f;
+
+        public static Bounds ComputeBounds(IList<Vector3> points)
+        {
+            if (points == null) throw new ArgumentNullException(nameof(points));
+            if (points.Count == 0) throw new InvalidOperationException("Cannot compute bounds of an empty point set.");
+
+            Vector3 min = points[0];
+            Vector3 max = points[0];
+
+            for (int i = 1; i < points.Count; i++)
+            {
+                min = Vector3.Min(min, points[i]);
+                max = Vector3.Max(max, points[i]);
+            }
+
+            Bounds b = new Bounds();
+            b.SetMinMax(min, max);
+            return b;
+        }
+
+        public static Vector3[] GetBoundsCorners(Bounds b)
+        {
+            Vector3 min = b.min;
+            Vector3 max = b.max;
+
+            return new Vector3[]
+            {
+                new Vector3(min.x, min.y, min.z),
+                new Vector3(min.x, min.y, max.z),
+                new Vector3(min.x, max.y, min.z),
+                new Vector3(min.x, max.y, max.z),
+                new Vector3(max.x, min.y, min.z),
+                new Vector3(max.x, min.y, max.z),
+                new Vector3(max.x, max.y, min.z),
+                new Vector3(max.x, max.y, max.z),
+            };
+        }
+
+        public static Bounds ApplyOffsets(Bounds bounds, BoundsOffsets offsets)
+        {
+            Vector3 min = bounds.min;
+            Vector3 max = bounds.max;
+
+            min.x -= offsets.Left;
+            max.x += offsets.Right;
+
+            min.y -= offsets.Bottom;
+            max.y += offsets.Top;
+
+            min.z -= offsets.Back;
+            max.z += offsets.Front;
+
+            Bounds result = new Bounds();
+            result.SetMinMax(min, max);
+            return result;
+        }
+
+        public static BoundsOffsets NegateOffsets(BoundsOffsets offsets)
+        {
+            return new BoundsOffsets(
+                -offsets.Left,
+                -offsets.Right,
+                -offsets.Bottom,
+                -offsets.Top,
+                -offsets.Back,
+                -offsets.Front);
+        }
+
+        public static Vector3 InterpolateBounds(Bounds bounds, Vector3 t)
+        {
+            t.x = Mathf.Clamp01(t.x);
+            t.y = Mathf.Clamp01(t.y);
+            t.z = Mathf.Clamp01(t.z);
+
+            Vector3 min = bounds.min;
+            Vector3 max = bounds.max;
+
+            return new Vector3(
+                Mathf.LerpUnclamped(min.x, max.x, t.x),
+                Mathf.LerpUnclamped(min.y, max.y, t.y),
+                Mathf.LerpUnclamped(min.z, max.z, t.z));
+        }
+
+        private static void GetSourceLocal_RefLocal_Matrices(
+            Transform source,
+            Transform refTransform,
+            out Matrix4x4 sourceLocalToRefLocal,
+            out Matrix4x4 refLocalToSourceLocal)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (refTransform == null) throw new ArgumentNullException(nameof(refTransform));
+
+            sourceLocalToRefLocal = refTransform.worldToLocalMatrix * source.localToWorldMatrix;
+            refLocalToSourceLocal = source.worldToLocalMatrix * refTransform.localToWorldMatrix;
+        }
+
+        private static void TransformPointsInPlace(IList<Vector3> pts, Matrix4x4 m)
+        {
+            for (int i = 0; i < pts.Count; i++)
+                pts[i] = m.MultiplyPoint3x4(pts[i]);
+        }
+
+        private static Bounds TransformBounds(Bounds bounds, Matrix4x4 localToTargetSpace)
+        {
+            Vector3[] corners = GetBoundsCorners(bounds);
+
+            Vector3 min = localToTargetSpace.MultiplyPoint3x4(corners[0]);
+            Vector3 max = min;
+
+            for (int i = 1; i < corners.Length; i++)
+            {
+                Vector3 p = localToTargetSpace.MultiplyPoint3x4(corners[i]);
+                min = Vector3.Min(min, p);
+                max = Vector3.Max(max, p);
+            }
+
+            Bounds result = new Bounds();
+            result.SetMinMax(min, max);
+            return result;
+        }
+
+        private static Bounds GetObjectBoundsInRefLocal(
+            GameObject obj,
+            Transform refTransform,
+            BoundsSettings settings)
+        {
+            if (obj == null) throw new ArgumentNullException(nameof(obj));
+            if (refTransform == null) throw new ArgumentNullException(nameof(refTransform));
+
+            Bounds? localBoundsNullable = obj.ToLocalBounds(settings);
+
+            if (!localBoundsNullable.HasValue)
+                throw new InvalidOperationException($"Object '{obj.name}' returned no local bounds.");
+
+            Bounds localBounds = localBoundsNullable.Value;
+            Matrix4x4 objLocalToRefLocal = refTransform.worldToLocalMatrix * obj.transform.localToWorldMatrix;
+            return TransformBounds(localBounds, objLocalToRefLocal);
+        }
+
+        public static Bounds GetTargetBoundsInRefLocal(
+            GameObject targetBoundsSource,
+            Transform refTransform,
+            BoundsOffsets clearances,
+            BoundsSettings settings)
+        {
+            if (targetBoundsSource == null) throw new ArgumentNullException(nameof(targetBoundsSource));
+            if (refTransform == null) throw new ArgumentNullException(nameof(refTransform));
+
+            Bounds targetBoundsRef = GetObjectBoundsInRefLocal(targetBoundsSource, refTransform, settings);
+            Bounds usableTargetBoundsRef = ApplyOffsets(targetBoundsRef, NegateOffsets(clearances));
+
+            Vector3 usableSize = usableTargetBoundsRef.size;
+            if (usableSize.x < -Epsilon || usableSize.y < -Epsilon || usableSize.z < -Epsilon)
+                throw new InvalidOperationException("Clearances collapse the usable target bounds.");
+
+            return usableTargetBoundsRef;
+        }
+
+        public static float ComputeUniformScaleToFitBounds(
+            Bounds sourceBounds,
+            Bounds targetBounds,
+            bool fitX = true,
+            bool fitY = true,
+            bool fitZ = true)
+        {
+            if (!fitX && !fitY && !fitZ)
+                throw new ArgumentException("At least one fit axis must be enabled.");
+
+            Vector3 sourceSize = sourceBounds.size;
+            Vector3 targetSize = targetBounds.size;
+
+            float uniformScale = float.PositiveInfinity;
+
+            void ConsiderAxis(bool enabled, float source, float target, string axisName)
+            {
+                if (!enabled) return;
+
+                if (Mathf.Abs(source) <= Epsilon)
+                {
+                    if (Mathf.Abs(target) > Epsilon)
+                    {
+                        throw new InvalidOperationException(
+                            $"Cannot compute uniform scale on {axisName}: source size is zero while target size is {target}.");
+                    }
+                    return;
+                }
+
+                float ratio = target / source;
+                uniformScale = Mathf.Min(uniformScale, ratio);
+            }
+
+            ConsiderAxis(fitX, sourceSize.x, targetSize.x, "X");
+            ConsiderAxis(fitY, sourceSize.y, targetSize.y, "Y");
+            ConsiderAxis(fitZ, sourceSize.z, targetSize.z, "Z");
+
+            if (float.IsPositiveInfinity(uniformScale))
+                throw new InvalidOperationException("Could not compute a valid uniform scale.");
+
+            return uniformScale;
+        }
+
+        public static void ScalePointsUniformAroundPivot(
+            IList<Vector3> points,
+            float uniformScale,
+            Vector3 pivot)
+        {
+            if (points == null) throw new ArgumentNullException(nameof(points));
+            if (points.Count == 0) throw new InvalidOperationException("Cannot scale an empty point set.");
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                Vector3 p = points[i];
+                points[i] = pivot + (p - pivot) * uniformScale;
+            }
+        }
+
+        private static Bounds ClampTargetBoundsToMinimumCornerRegion(
+            Bounds currentBounds,
+            Bounds targetBounds,
+            float cornerRegionPercent,
+            bool scaleX = true,
+            bool scaleY = true,
+            bool scaleZ = true)
+        {
+            cornerRegionPercent = Mathf.Clamp(cornerRegionPercent, 0f, 0.5f);
+
+            Bounds result = targetBounds;
+            Vector3 size = result.size;
+            Vector3 currentSize = currentBounds.size;
+
+            if (scaleX)
+            {
+                float regionX = currentSize.x * cornerRegionPercent;
+                size.x = Mathf.Max(size.x, regionX * 2f);
+            }
+
+            if (scaleY)
+            {
+                float regionY = currentSize.y * cornerRegionPercent;
+                size.y = Mathf.Max(size.y, regionY * 2f);
+            }
+
+            if (scaleZ)
+            {
+                float regionZ = currentSize.z * cornerRegionPercent;
+                size.z = Mathf.Max(size.z, regionZ * 2f);
+            }
+
+            result.size = size;
+            return result;
+        }
+
+        private static float RemapValuePreservingOuterRegions(
+            float value,
+            float center,
+            float sourceSize,
+            float targetSize,
+            float cornerRegionPercent)
+        {
+            cornerRegionPercent = Mathf.Clamp(cornerRegionPercent, 0f, 0.5f);
+
+            float halfSource = sourceSize * 0.5f;
+            float halfTarget = targetSize * 0.5f;
+
+            float outerSize = sourceSize * cornerRegionPercent;
+            float innerHalfSource = halfSource - outerSize;
+            float innerHalfTarget = halfTarget - outerSize;
+
+            float d = value - center;
+
+            if (innerHalfSource <= Epsilon)
+            {
+                if (d > 0f) return center + halfTarget;
+                if (d < 0f) return center - halfTarget;
+                return center;
+            }
+
+            float absD = Mathf.Abs(d);
+            float sign = Mathf.Sign(d);
+
+            if (absD <= innerHalfSource)
+            {
+                float t = absD / innerHalfSource;
+                return center + sign * (t * innerHalfTarget);
+            }
+
+            float outerOffset = absD - innerHalfSource;
+            return center + sign * (innerHalfTarget + outerOffset);
+        }
+
+        private static void RemapPointsPreservingOuterRegions(
+            IList<Vector3> points,
+            Bounds sourceBounds,
+            Bounds targetBounds,
+            float cornerRegionPercent,
+            bool scaleX = true,
+            bool scaleY = true,
+            bool scaleZ = true)
+        {
+            if (points == null) throw new ArgumentNullException(nameof(points));
+            if (points.Count == 0) throw new InvalidOperationException("Cannot operate on an empty point set.");
+
+            Vector3 center = sourceBounds.center;
+            Vector3 sourceSize = sourceBounds.size;
+            Vector3 targetSize = targetBounds.size;
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                Vector3 p = points[i];
+
+                if (scaleX)
+                {
+                    p.x = RemapValuePreservingOuterRegions(
+                        p.x, center.x, sourceSize.x, targetSize.x, cornerRegionPercent);
+                }
+
+                if (scaleY)
+                {
+                    p.y = RemapValuePreservingOuterRegions(
+                        p.y, center.y, sourceSize.y, targetSize.y, cornerRegionPercent);
+                }
+
+                if (scaleZ)
+                {
+                    p.z = RemapValuePreservingOuterRegions(
+                        p.z, center.z, sourceSize.z, targetSize.z, cornerRegionPercent);
+                }
+
+                points[i] = p;
+            }
+        }
+
+        public static float UniformScaleToFitBoundsPoints(
+            IList<Vector3> points,
+            Bounds targetBoundsLocal,
+            Vector3 pivotT,
+            bool fitX = true,
+            bool fitY = true,
+            bool fitZ = true)
+        {
+            if (points == null) throw new ArgumentNullException(nameof(points));
+            if (points.Count == 0) throw new InvalidOperationException("Cannot operate on an empty point set.");
+
+            Bounds sourceBounds = ComputeBounds(points);
+            Vector3 pivot = InterpolateBounds(sourceBounds, pivotT);
+
+            float uniformScale = ComputeUniformScaleToFitBounds(
+                sourceBounds,
+                targetBoundsLocal,
+                fitX,
+                fitY,
+                fitZ);
+
+            ScalePointsUniformAroundPivot(points, uniformScale, pivot);
+            return uniformScale;
+        }
+
+        public static void ResizeToTargetBoundsByCornerRegionPoints(
+            IList<Vector3> points,
+            Bounds targetBoundsLocal,
+            float cornerRegionPercent,
+            bool scaleX = true,
+            bool scaleY = true,
+            bool scaleZ = true)
+        {
+            if (points == null) throw new ArgumentNullException(nameof(points));
+            if (points.Count == 0) throw new InvalidOperationException("Cannot operate on an empty point set.");
+
+            if (!scaleX && !scaleY && !scaleZ)
+                throw new ArgumentException("At least one axis must be enabled.");
+
+            Bounds sourceBounds = ComputeBounds(points);
+
+            RemapPointsPreservingOuterRegions(
+                points,
+                sourceBounds,
+                targetBoundsLocal,
+                cornerRegionPercent,
+                scaleX,
+                scaleY,
+                scaleZ);
+        }
+
+        public static float FitInsideBoundsThenCornerPreservePoints(
+            IList<Vector3> points,
+            Bounds targetBoundsLocal,
+            Vector3 pivotT,
+            bool fitX = true,
+            bool fitY = true,
+            bool fitZ = true,
+            bool scaleX = true,
+            bool scaleY = true,
+            bool scaleZ = true,
+            bool performInitialUniformScale = false,
+            float cornerRegionPercent = 0.25f)
+        {
+            if (points == null) throw new ArgumentNullException(nameof(points));
+            if (points.Count == 0) throw new InvalidOperationException("Cannot operate on an empty point set.");
+
+            float uniformScale = 1f;
+
+            if (performInitialUniformScale)
+            {
+                uniformScale = UniformScaleToFitBoundsPoints(
+                    points,
+                    targetBoundsLocal,
+                    pivotT,
+                    fitX,
+                    fitY,
+                    fitZ);
+            }
+
+            Bounds afterUniformBounds = ComputeBounds(points);
+
+            Bounds clampedTargetBounds = ClampTargetBoundsToMinimumCornerRegion(
+                afterUniformBounds,
+                targetBoundsLocal,
+                cornerRegionPercent,
+                scaleX,
+                scaleY,
+                scaleZ);
+
+            ResizeToTargetBoundsByCornerRegionPoints(
+                points,
+                clampedTargetBounds,
+                cornerRegionPercent,
+                scaleX,
+                scaleY,
+                scaleZ);
+
+
+
+
+            Bounds finalBounds = ComputeBounds(points);
+            return uniformScale;
+
+        }
+        public static float FitInsideBoundsThenCornerPreserve(
+            GameObject thingToResize,
+            GameObject targetBoundsSource,
+            Transform refTransform,
+            Vector3 pivotT,
+            BoundsOffsets clearances,
+            BoundsSettings targetBoundsSettings,
+
+            bool fitX = true,
+            bool fitY = true,
+            bool fitZ = true,
+            bool scaleX = true,
+            bool scaleY = true,
+            bool scaleZ = true,
+
+            bool performInitialUniformScale = false,
+            float cornerRegionPercent = 0.25f,
+            bool forceUniqueMeshInstanceForMeshFilter = true)
+        {
+            if (thingToResize == null) throw new ArgumentNullException(nameof(thingToResize));
+            if (targetBoundsSource == null) throw new ArgumentNullException(nameof(targetBoundsSource));
+            if (refTransform == null) throw new ArgumentNullException(nameof(refTransform));
+
+            var handle = MeshPointAccess.Acquire(
+                thingToResize,
+                forceUniqueMeshInstanceForMeshFilter);
+
+            GetSourceLocal_RefLocal_Matrices(
+                thingToResize.transform,
+                refTransform,
+                out var sourceLocalToRefLocal,
+                out var refLocalToSourceLocal);
+
+            TransformPointsInPlace(handle.Points, sourceLocalToRefLocal);
+
+            Bounds targetBoundsRef = GetTargetBoundsInRefLocal(
+                targetBoundsSource,
+                refTransform,
+                clearances,
+                settings: targetBoundsSettings
+                );
+
+            float uniformScale = FitInsideBoundsThenCornerPreservePoints(
+                handle.Points,
+                targetBoundsRef,
+                pivotT,
+                fitX,
+                fitY,
+                fitZ,
+                scaleX,
+                scaleY,
+                scaleZ,
+                performInitialUniformScale,
+                cornerRegionPercent);
+
+            TransformPointsInPlace(handle.Points, refLocalToSourceLocal);
+            Bounds finalBoundsLocal = ComputeBounds(handle.Points);
+            Vector3 finalAnchorLocal = InterpolateBounds(finalBoundsLocal, pivotT);
+
+            for (int i = 0; i < handle.Points.Count; i++)
+                handle.Points[i] -= finalAnchorLocal;
+            handle.Commit(handle.Points);
+
+            return uniformScale;
+        }
+
+        public static float FitInsideBoundsThenCornerPreserve(
+            GameObject thingToResize,
+            GameObject targetBoundsSource,
+            Transform refTransform,
+            Vector3 pivotT,
+            BoundsSettings targetBoundsSettings,
+            bool fitX = true,
+            bool fitY = true,
+            bool fitZ = true,
+            bool scaleX = true,
+            bool scaleY = true,
+            bool scaleZ = true,
+            bool performInitialUniformScale = false,
+            float cornerRegionPercent = 0.25f,
+            bool forceUniqueMeshInstanceForMeshFilter = true
+            )
+        {
+            return FitInsideBoundsThenCornerPreserve(
+                thingToResize,
+                targetBoundsSource,
+                refTransform,
+                pivotT,
+                BoundsOffsets.Zero,
+                targetBoundsSettings,
+                fitX,
+                fitY,
+                fitZ,
+                scaleX,
+                scaleY,
+                scaleZ,
+                performInitialUniformScale,
+                cornerRegionPercent,
+                forceUniqueMeshInstanceForMeshFilter,
+                );
+        }
+    }
+}

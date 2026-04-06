@@ -1,0 +1,147 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8903652427353009267
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8499148272846514315}
+  - component: {fileID: -3322725106747379458}
+  - component: {fileID: 7481433598283789593}
+  m_Layer: 0
+  m_Name: PoxyBounds
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8499148272846514315
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8903652427353009267}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-3322725106747379458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8903652427353009267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DLN.SmartBounds
+  settings:
+    includeSelf:
+      hasValue: 1
+      value: 0
+    includeChildren:
+      hasValue: 1
+      value: 0
+    includeSelfEvenIfEmpty:
+      hasValue: 1
+      value: 0
+    useProxy:
+      hasValue: 1
+      value: 0
+    regionSelection:
+      hasValue: 1
+      value:
+        x:
+          negativeBorderEdge: 1
+          negativeContentEdge: 0
+          negativePaddingEdge: 0
+          center: 0
+          positivePaddingEdge: 0
+          positiveContentEdge: 0
+          positiveBorderEdge: 1
+          interpMin: 0
+          interpMax: 1
+        y:
+          negativeBorderEdge: 1
+          negativeContentEdge: 0
+          negativePaddingEdge: 0
+          center: 0
+          positivePaddingEdge: 0
+          positiveContentEdge: 0
+          positiveBorderEdge: 1
+          interpMin: 0
+          interpMax: 1
+        z:
+          negativeBorderEdge: 1
+          negativeContentEdge: 0
+          negativePaddingEdge: 0
+          center: 0
+          positivePaddingEdge: 0
+          positiveContentEdge: 0
+          positiveBorderEdge: 1
+          interpMin: 0
+          interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 0}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -1000, y: -1000, z: -1000}
+  CachedSize: {x: -1000, y: -1000, z: -1000}
+  isEmpty: 1
+  boundsVisuals: {fileID: 0}
+--- !u!114 &7481433598283789593
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8903652427353009267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 525a0bc6724ac2947b61fa160266fb51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DLN.ProxyBounds
+  cornerPrefab: {fileID: 3484797808543974917, guid: 3184820ecbf3b064fad0815ac8ef4e44, type: 3}
+  linePrefab: {fileID: 2072345870999349230, guid: 3fdf6413b14965246b81844cee36ea38, type: 3}
+  target: {fileID: 8903652427353009267}
+  visualsRoot: {fileID: 0}
+  contentsVisuals: {fileID: 0}
+  paddingVisuals: {fileID: 0}
+  bordersVisuals: {fileID: 0}
+  actualReportingVisuals: {fileID: 0}
+  showActualReporting: 1
+  showContents: 1
+  showBorders: 1
+  showPadding: 1
+  showOnlyWhenSelected: 1
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  actualReportingColor: {r: 1, g: 1, b: 1, a: 1}
