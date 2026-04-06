@@ -5,6 +5,17 @@
 [Bb]uilds/
 [Ll]ogs/
 UserSettings/
+Assets/Flexalon
+Assets/geometry4Sharp
+Assets/Packages
+Assets/Samples
+Assets/TextMesh Pro
+Assets/VRTemplateAssets
+Assets/XR
+Assets/XRI
+Assets/XR
+Assets/XRI
+Assets/XRI_Examples
 .vs/
 .idea/
 *.csproj
