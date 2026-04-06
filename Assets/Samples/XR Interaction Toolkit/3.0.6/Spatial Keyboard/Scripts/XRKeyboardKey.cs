@@ -290,8 +290,10 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard
 
         protected virtual void KeyClick()
         {
+            m_Keyboard?.OnBeforeProcessKeyPress?.Invoke();
             // Local function of things to do to the key when pressed (Audio, etc.)
             KeyPressed();
+
 
             if (m_KeyFunction != null)
             {

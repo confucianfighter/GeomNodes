@@ -87,7 +87,7 @@ Material:
     - _UVSec: 0
     - _ZWrite: 0
     m_Colors:
-    - _Color: {r: 0.504, g: 0.504, b: 0.504, a: 0.2}
+    - _Color: {r: 1, g: 0.6470588, b: 0, a: 0.5}
     - _EdgeColor: {r: 1, g: 1, b: 1, a: 0.9019608}
     - _EdgeData: {r: -0.12, g: 0.88, b: 0.74, a: 1.5}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}

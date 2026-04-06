@@ -41,16 +41,22 @@ namespace Flexalon
     {
         private InternalAdapter _adapter;
 
-        public DefaultAdapter(GameObject gameObject)
+        public DefaultAdapter(GameObject gameObject, FlexalonNode node)
         {
-            CheckComponent(gameObject);
+            CheckComponent(gameObject, node);
 
             // Prevent detecting a change immediately after creating the adapter.
             _adapter?.SizeChanged();
         }
 
-        public bool CheckComponent(GameObject gameObject)
+        public bool CheckComponent(GameObject gameObject, FlexalonNode node)
         {
+            if (node.HasFlexalonObject && !node.FlexalonObject.UseDefaultAdapter)
+            {
+                _adapter = null;
+                return false;
+            }
+
             if (_adapter == null)
             {
                 CreateAdapter(gameObject);
@@ -86,9 +92,9 @@ namespace Flexalon
             {
                 _adapter = new CanvasAdapter(canvas);
             }
-            else if (gameObject.TryGetComponent<UnityEngine.UI.Image>(out var image))
+            else if (gameObject.TryGetComponent<UnityEngine.UI.ILayoutElement>(out var layoutElement))
             {
-                _adapter = new ImageAdapter(image);
+                _adapter = new LayoutElementAdapter(layoutElement as MonoBehaviour);
             } else
 #endif
             if (gameObject.TryGetComponent<RectTransform>(out var rectTransform))
@@ -168,7 +174,7 @@ namespace Flexalon
 
         public bool IsValid()
         {
-            return _renderer;
+            return _renderer && _renderer.enabled;
         }
 
         public bool SizeChanged()
@@ -231,7 +237,7 @@ namespace Flexalon
 
         public bool IsValid()
         {
-            return _renderer && _meshFilter && _meshFilter.sharedMesh;
+            return _renderer && _meshFilter && _meshFilter.sharedMesh && _renderer.enabled;
         }
 
         public bool SizeChanged()
@@ -327,11 +333,6 @@ namespace Flexalon
     internal class TextAdapter : InternalAdapter, Adapter
     {
         private TMPro.TMP_Text _text;
-        private string _lastFont;
-        private TMPro.FontWeight _lastFontWeight;
-        private float _lastFontSize;
-        private TMPro.FontStyles _lastFontStyle;
-        private string _lastText;
 
         public TextAdapter(TMPro.TMP_Text text)
         {
@@ -340,25 +341,11 @@ namespace Flexalon
 
         public bool IsValid()
         {
-            return _text;
+            return _text && _text.enabled;
         }
 
         public bool SizeChanged()
         {
-            if (_lastFont != _text.font?.ToString() ||
-                _lastFontWeight != _text.fontWeight ||
-                _lastFontSize != _text.fontSize ||
-                _lastFontStyle != _text.fontStyle ||
-                _lastText != _text.text)
-            {
-                _lastFont = _text.font?.ToString();
-                _lastFontWeight = _text.fontWeight;
-                _lastFontSize = _text.fontSize;
-                _lastFontStyle = _text.fontStyle;
-                _lastText = _text.text;
-                return true;
-            }
-
             return false;
         }
 
@@ -418,7 +405,7 @@ namespace Flexalon
 
         public bool IsValid()
         {
-            return _canvas;
+            return _canvas && _canvas.enabled;
         }
 
         public bool SizeChanged()
@@ -471,55 +458,69 @@ namespace Flexalon
         }
     }
 
-    internal class ImageAdapter : InternalAdapter
+    internal class LayoutElementAdapter : InternalAdapter
     {
-        private UnityEngine.UI.Image _image;
-        private Vector2 _lastImageSize;
-        private bool _lastPreserveAspect;
+        private MonoBehaviour _layoutElement;
         private RectTransformAdapter _rectTransformAdapter;
 
-        public ImageAdapter(UnityEngine.UI.Image image)
+        public LayoutElementAdapter(MonoBehaviour layoutElement)
         {
-            _rectTransformAdapter = new RectTransformAdapter(image.transform as RectTransform);
-            _image = image;
+            _rectTransformAdapter = new RectTransformAdapter(layoutElement.transform as RectTransform);
+            _layoutElement = layoutElement;
         }
 
         public bool IsValid()
         {
-            return _image;
+            return _layoutElement && _layoutElement.enabled;
         }
 
         public bool SizeChanged()
         {
-            var spriteSize = Vector2.zero;
-            if (_image.sprite)
-            {
-                spriteSize = _image.sprite.rect.size;
-            }
-
-            bool rectSizeChanged = _rectTransformAdapter.SizeChanged();
-            if (_lastImageSize != spriteSize || _lastPreserveAspect != _image.preserveAspect || rectSizeChanged)
-            {
-                _lastImageSize = spriteSize;
-                _lastPreserveAspect = _image.preserveAspect;
-                return true;
-            }
-
             return false;
         }
 
         public Bounds Measure(FlexalonNode node, Vector3 size, Vector3 min, Vector3 max)
         {
+            var le = _layoutElement as UnityEngine.UI.ILayoutElement;
+            var preferredSize = new Vector2(le.preferredWidth, le.preferredHeight);
+            var rectTransform = _layoutElement.transform as RectTransform;
             bool componentX = node.GetSizeType(Axis.X) == SizeType.Component;
             bool componentY = node.GetSizeType(Axis.Y) == SizeType.Component;
+            bool componentZ = node.GetSizeType(Axis.Z) == SizeType.Component;
 
-            if (!_image.preserveAspect || (componentX && componentY))
+            if (preferredSize.x < 0)
             {
-                return _rectTransformAdapter.Measure(node, size, min, max);
+                preferredSize.x = rectTransform.rect.size.x;
             }
 
-            var spriteSize = _image.sprite != null ? _image.sprite.rect.size : Vector2.one;
-            return Math.MeasureComponentBounds2D(new Bounds(Vector3.zero, spriteSize), node, size, min, max);
+            if (preferredSize.y < 0)
+            {
+                preferredSize.y = rectTransform.rect.size.y;
+            }
+
+            // Implement preserveAspect for the image component
+            if (_layoutElement is UnityEngine.UI.Image image)
+            {
+                if (image.preserveAspect && (componentX ^ componentY))
+                {
+                    return Math.MeasureComponentBounds2D(new Bounds(Vector3.zero, preferredSize), node, size, min, max);
+                }
+                else
+                {
+                    preferredSize.x = rectTransform.rect.size.x;
+                    preferredSize.y = rectTransform.rect.size.y;
+                }
+            }
+
+            var measureSize = new Vector3(
+                componentX ? preferredSize.x : size.x,
+                componentY ? preferredSize.y : size.y,
+                componentZ ? 0 : size.z);
+
+            measureSize = Math.Clamp(measureSize, min, max);
+
+            var center = new Vector3((0.5f - rectTransform.pivot.x) * measureSize.x, (0.5f - rectTransform.pivot.y) * measureSize.y, 0);
+            return new Bounds(center, measureSize);
         }
 
         public bool TryGetScale(FlexalonNode node, out Vector3 scale)
@@ -547,7 +548,7 @@ namespace Flexalon
 
         public bool IsValid()
         {
-            return _collider;
+            return _collider && _collider.enabled;
         }
 
         public Bounds GetBounds()
@@ -597,15 +598,7 @@ namespace Flexalon
 
         public bool TryGetScale(FlexalonNode node, out Vector3 scale)
         {
-            var bounds = GetBounds();
-            if (bounds.size == Vector3.zero) // Invalid bounds
-            {
-                scale = Vector3.one;
-                return true;
-            }
-
-            var r = node.Result;
-            scale = Math.Div(r.AdapterBounds.size, bounds.size);
+            scale = Math.SafeDivOne(node.Result.AdapterBounds.size, GetBounds().size);
             return true;
         }
 
@@ -630,7 +623,7 @@ namespace Flexalon
 
         public bool IsValid()
         {
-            return _collider;
+            return _collider && _collider.enabled;
         }
 
         public Bounds GetBounds()

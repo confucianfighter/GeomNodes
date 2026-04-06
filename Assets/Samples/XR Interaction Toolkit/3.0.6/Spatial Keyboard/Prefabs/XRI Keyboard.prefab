@@ -2043,7 +2043,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_OptimizeOnStart: 1
-  m_Canvas: {fileID: 7979916828988463974}
   m_BatchGroupParentTransform: {fileID: 234637812713154626}
   m_ButtonParentTransform: {fileID: 4863097412243294290}
   m_ImageParentTransform: {fileID: 2176062184860990979}

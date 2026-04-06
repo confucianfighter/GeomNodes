@@ -9,6 +9,9 @@ namespace Flexalon
     /// </summary>
     [ExecuteAlways, HelpURL("https://www.flexalon.com/docs/coreConcepts")]
     public class Flexalon : MonoBehaviour
+#if UNITY_UI
+    , UnityEngine.UI.ICanvasElement
+#endif
     {
         [SerializeField]
         private bool _updateInEditMode = true;
@@ -396,26 +399,26 @@ namespace Flexalon
             }
         }
 
+#if UNITY_EDITOR
         void OnEnable()
         {
-#if UNITY_EDITOR
             if (_instance == this)
             {
                 UnityEditor.Undo.undoRedoPerformed += OnUndoRedo;
             }
-#endif
         }
+#endif
 
+#if UNITY_EDITOR
         void OnDisable()
         {
-#if UNITY_EDITOR
             if (_instance == this)
             {
                 UnityEditor.Undo.undoRedoPerformed -= OnUndoRedo;
             }
-#endif
         }
 
+#endif
         void OnDestroy()
         {
             if (_instance == this)
@@ -678,7 +681,8 @@ namespace Flexalon
             var scale = node.Result.ComponentScale;
             if (node.Parent != null)
             {
-                scale = Math.Div(scale, node.Parent.Result.ComponentScale);
+                var s = scale;
+                scale = Math.SafeDivOne(scale, node.Parent.Result.ComponentScale);
             }
 
             FlexalonLog.Log("ComputeTransform:Scale", node, scale);
@@ -756,7 +760,7 @@ namespace Flexalon
                         - node._result.TargetRotation * node._result.RotatedAndScaledBounds.center
                         + node.Offset;
 
-                    position = Math.Div(position, node.Parent.Result.ComponentScale);
+                    position = Math.SafeDivZero(position, node.Parent.Result.ComponentScale);
                     FlexalonLog.Log("ComputeTransform:Layout:Position", node, position);
                     node.RecordResultUndo();
                     node._result.TargetPosition = position;
@@ -871,6 +875,16 @@ namespace Flexalon
             return false;
         }
 
+#if UNITY_UI
+        public void Rebuild(UnityEngine.UI.CanvasUpdate executing) {}
+
+        public void LayoutComplete() => UpdateDirtyNodes();
+
+        public void GraphicUpdateComplete() {}
+
+        public bool IsDestroyed() => this == null;
+#endif
+
         private class Node : FlexalonNode
         {
             public Node _parent;
@@ -899,7 +913,7 @@ namespace Flexalon
             public Constraint _constraint;
             public Constraint Constraint => _constraint;
             private Adapter _adapter = null;
-            public Adapter Adapter => (_adapter == null) ? _adapter = new DefaultAdapter(GameObject) : _adapter;
+            public Adapter Adapter => (_adapter == null) ? _adapter = new DefaultAdapter(GameObject, this) : _adapter;
             public bool _customAdapter = false;
             public FlexalonResult _result;
             public FlexalonResult Result => _result;
@@ -1342,12 +1356,12 @@ namespace Flexalon
                 bool shouldScale = Adapter.TryGetScale(this, out var _);
                 if (!shouldScale)
                 {
-                    return GameObject.transform.localScale;
+                    return Math.Abs(GameObject.transform.localScale);
                 }
                 else if (HasFlexalonObject)
                 {
                     // FlexalonObject size/scale always applies, even without a layout.
-                    return _flexalonObject.Scale;
+                    return Math.Abs(_flexalonObject.Scale);
                 }
                 else if (_parent != null)
                 {
@@ -1355,7 +1369,7 @@ namespace Flexalon
                 }
                 else
                 {
-                    return GameObject.transform.localScale;
+                    return Math.Abs(GameObject.transform.localScale);
                 }
             }
 
@@ -1444,7 +1458,7 @@ namespace Flexalon
             {
                 if (!_customAdapter)
                 {
-                    if ((Adapter as DefaultAdapter).CheckComponent(GameObject))
+                    if ((Adapter as DefaultAdapter).CheckComponent(GameObject, this))
                     {
                         MarkDirty();
                     }

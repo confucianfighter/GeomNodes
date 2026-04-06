@@ -17,7 +17,13 @@ namespace Flexalon
             Fixed,
 
             /// <summary> Space is added between children to fill the available space. </summary>
-            SpaceBetween
+            SpaceBetween,
+
+            /// <summary>  </summary>
+            SpaceAround,
+
+            /// <summary> Space is added between children to fill the available space. </summary>
+            SpaceEvenly
         }
 
         [SerializeField]
@@ -26,7 +32,7 @@ namespace Flexalon
         public Direction Direction
         {
             get { return _direction; }
-            set { _direction = value; _node.MarkDirty(); }
+            set { _direction = value; Node.MarkDirty(); }
         }
 
         [SerializeField]
@@ -38,7 +44,7 @@ namespace Flexalon
         public bool Wrap
         {
             get { return _wrap; }
-            set { _wrap = value; _node.MarkDirty(); }
+            set { _wrap = value; Node.MarkDirty(); }
         }
 
         [SerializeField]
@@ -47,7 +53,7 @@ namespace Flexalon
         public Direction WrapDirection
         {
             get { return _wrapDirection; }
-            set { _wrapDirection = value; _node.MarkDirty(); }
+            set { _wrapDirection = value; Node.MarkDirty(); }
         }
 
         [SerializeField]
@@ -56,7 +62,7 @@ namespace Flexalon
         public Align HorizontalAlign
         {
             get { return _horizontalAlign; }
-            set { _horizontalAlign = value; _node.MarkDirty(); }
+            set { _horizontalAlign = value; Node.MarkDirty(); }
         }
 
         [SerializeField]
@@ -65,7 +71,7 @@ namespace Flexalon
         public Align VerticalAlign
         {
             get { return _verticalAlign; }
-            set { _verticalAlign = value; _node.MarkDirty(); }
+            set { _verticalAlign = value; Node.MarkDirty(); }
         }
 
         [SerializeField]
@@ -74,7 +80,7 @@ namespace Flexalon
         public Align DepthAlign
         {
             get { return _depthAlign; }
-            set { _depthAlign = value; _node.MarkDirty(); }
+            set { _depthAlign = value; Node.MarkDirty(); }
         }
 
         [SerializeField]
@@ -85,7 +91,7 @@ namespace Flexalon
         public Align HorizontalInnerAlign
         {
             get { return _horizontalInnerAlign; }
-            set { _horizontalInnerAlign = value; _node.MarkDirty(); }
+            set { _horizontalInnerAlign = value; Node.MarkDirty(); }
         }
 
         [SerializeField]
@@ -96,7 +102,7 @@ namespace Flexalon
         public Align VerticalInnerAlign
         {
             get { return _verticalInnerAlign; }
-            set { _verticalInnerAlign = value; _node.MarkDirty(); }
+            set { _verticalInnerAlign = value; Node.MarkDirty(); }
         }
 
         [SerializeField]
@@ -107,7 +113,7 @@ namespace Flexalon
         public Align DepthInnerAlign
         {
             get { return _depthInnerAlign; }
-            set { _depthInnerAlign = value; _node.MarkDirty(); }
+            set { _depthInnerAlign = value; Node.MarkDirty(); }
         }
 
         [SerializeField]
@@ -116,7 +122,7 @@ namespace Flexalon
         public GapOptions GapType
         {
             get { return _gapType; }
-            set { _gapType = value; _node.MarkDirty(); }
+            set { _gapType = value; Node.MarkDirty(); }
         }
 
         [SerializeField]
@@ -129,7 +135,7 @@ namespace Flexalon
             {
                 _gap = value;
                 _gapType = GapOptions.Fixed;
-                _node.MarkDirty();
+                Node.MarkDirty();
             }
         }
 
@@ -139,7 +145,7 @@ namespace Flexalon
         public GapOptions WrapGapType
         {
             get { return _wrapGapType; }
-            set { _wrapGapType = value; _node.MarkDirty(); }
+            set { _wrapGapType = value; Node.MarkDirty(); }
         }
 
         [SerializeField]
@@ -152,7 +158,7 @@ namespace Flexalon
             {
                 _wrapGap = value;
                 _wrapGapType = GapOptions.Fixed;
-                _node.MarkDirty();
+                Node.MarkDirty();
             }
         }
 
@@ -195,8 +201,8 @@ namespace Flexalon
                     i++;
                 }
 
-                FlexalonLog.Log("FlexMeasure | Add child to line", child, i);
-                FlexalonLog.Log("FlexMeasure | Child Size", child, childSize);
+                FlexalonLog.Log("Flex | Add child to line", child, i);
+                FlexalonLog.Log("Flex | Child Size", child, childSize);
                 line.ChildSizes.Add(childSize);
                 line.Size[flexAxis] += childSize[flexAxis] + gap;
                 line.Size[wrapAxis] = Mathf.Max(line.Size[wrapAxis], childSize[wrapAxis]);
@@ -267,12 +273,6 @@ namespace Flexalon
 
             foreach (var line in _lines)
             {
-                var remainingSpace = size - line.Size[flexAxis];
-                if (Mathf.Abs(remainingSpace) <= 1e-6f)
-                {
-                    continue;
-                }
-
                 _flexItems.Clear();
                 for (int i = 0; i < line.Children.Count; i++)
                 {
@@ -359,7 +359,7 @@ namespace Flexalon
 
         private void FillThirdAxis(float size, int thirdAxis)
         {
-            foreach (var child in _node.Children)
+            foreach (var child in Node.Children)
             {
                 child.SetShrinkFillSize(thirdAxis, size, size);
             }
@@ -375,7 +375,7 @@ namespace Flexalon
         /// <inheritdoc />
         public override Bounds Measure(FlexalonNode node, Vector3 size, Vector3 min, Vector3 max)
         {
-            FlexalonLog.Log("FlexMeasure | Size", node, size);
+            FlexalonLog.Log("FlexMeasure", node, size, min, max);
 
             // Gather useful data
             var flexAxis = (int) Math.GetAxisFromDirection(_direction);
@@ -437,13 +437,14 @@ namespace Flexalon
             FlexalonLog.Log("FlexArrange | Third Axis", node, thirdAxis);
             FlexalonLog.Log("FlexArrange | Wrap", node, wrap);
 
-            CreateLines(node, flexAxis, wrapAxis, thirdAxis, wrap, layoutSize, layoutSize[flexAxis], false);
+            CreateLines(node, flexAxis, wrapAxis, thirdAxis, wrap, layoutSize, layoutSize[flexAxis] + 1e-4f, false);
 
             // Position children within _lines. Consider: line size, child size, flexInnerAlign
             {
                 foreach (var line in _lines)
                 {
                     float lineGap = 0;
+                    float startGap = 0;
                     if (line.Children.Count > 1)
                     {
                         switch (_gapType)
@@ -453,12 +454,24 @@ namespace Flexalon
                                 break;
                             case GapOptions.SpaceBetween:
                                 lineGap = (layoutSize[flexAxis] - line.Size[flexAxis]) / (line.Children.Count - 1);
-                                line.Size[flexAxis] = layoutSize[flexAxis];
                                 break;
+                            case GapOptions.SpaceAround:
+                                lineGap = (layoutSize[flexAxis] - line.Size[flexAxis]) / line.Children.Count;
+                                startGap = lineGap / 2;
+                                break;
+                            case GapOptions.SpaceEvenly:
+                                lineGap = (layoutSize[flexAxis] - line.Size[flexAxis]) / (line.Children.Count + 1);
+                                startGap = lineGap;
+                                break;
+                        }
+
+                        if (_gapType != GapOptions.Fixed)
+                        {
+                            line.Size[flexAxis] = layoutSize[flexAxis];
                         }
                     }
 
-                    float nextChildPosition = flexDirection * -line.Size[flexAxis] / 2;
+                    float nextChildPosition = flexDirection * (startGap + -line.Size[flexAxis] / 2);
                     foreach (var childSize in line.ChildSizes)
                     {
                         Vector3 childPosition = Vector3.zero;
@@ -490,6 +503,7 @@ namespace Flexalon
                 if (wrap)
                 {
                     float wrapGap = 0;
+                    float startWrapGap = 0;
                     if (_lines.Count > 1)
                     {
                         switch (_wrapGapType)
@@ -499,12 +513,24 @@ namespace Flexalon
                                 break;
                             case GapOptions.SpaceBetween:
                                 wrapGap = (layoutSize[wrapAxis] - totalLineSize[wrapAxis]) / (_lines.Count - 1);
-                                totalLineSize[wrapAxis] = layoutSize[wrapAxis];
                                 break;
+                            case GapOptions.SpaceAround:
+                                wrapGap = (layoutSize[wrapAxis] - totalLineSize[wrapAxis]) / _lines.Count;
+                                startWrapGap = wrapGap / 2;
+                                break;
+                            case GapOptions.SpaceEvenly:
+                                wrapGap = (layoutSize[wrapAxis] - totalLineSize[wrapAxis]) / (_lines.Count + 1);
+                                startWrapGap = wrapGap;
+                                break;
+                        }
+
+                        if (_wrapGapType != GapOptions.Fixed)
+                        {
+                            totalLineSize[wrapAxis] = layoutSize[wrapAxis];
                         }
                     }
 
-                    float nextLinePosition = wrapDirection * -totalLineSize[wrapAxis] / 2;
+                    float nextLinePosition = wrapDirection * (startWrapGap + -totalLineSize[wrapAxis] / 2);
                     foreach (var line in _lines)
                     {
                         line.Position[wrapAxis] = nextLinePosition + wrapDirection * line.Size[wrapAxis] / 2;

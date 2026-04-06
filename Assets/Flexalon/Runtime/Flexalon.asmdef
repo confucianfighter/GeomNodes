@@ -4,7 +4,8 @@
     "references": [
         "Unity.TextMeshPro",
         "Unity.XR.Interaction.Toolkit",
-        "Oculus.Interaction"
+        "Oculus.Interaction",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -40,9 +41,19 @@
             "define": "UNITY_XRI"
         },
         {
+            "name": "com.unity.xr.interaction.toolkit",
+            "expression": "3.0.0",
+            "define": "UNITY_XRI_3"
+        },
+        {
             "name": "com.unity.modules.ui",
             "expression": "",
             "define": "UNITY_UI"
+        },
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "",
+            "define": "UNITY_INPUT_SYSTEM"
         }
     ],
     "noEngineReferences": false

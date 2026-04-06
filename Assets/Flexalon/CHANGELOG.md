@@ -1,5 +1,49 @@
 # Changelog
 
+## Version 4.4.1
+
+- Unity 6 Compile Fix to Flexalon Random Modifier
+- Fix Templates to support new Input System.
+
+## Version 4.4
+
+IMPORTANT: Unity 2019 and 2021 are no longer tested. As always, please back up your project before updating.
+
+### Features
+
+- Added built-in support for the new Input System. It should work out of the box with mouse input. For more advanced usage, see FlexalonInputSystemProvider. All samples have also been updated to work in both new and legacy input systems.
+- Breaking Change: Disabled components (MeshRenderer, Image, etc.) are no longer used to determine the size of objects. You can override this behavior with a custom Adapter (see docs).
+- Added some helpful methods to FlexalonGridLayout: GetCellPositionWorldSpace and GetCellPositionLocalSpace.
+- New FlexalonInteractable property: Set Parent While Dragging. Normally, the interactable is unparented while being dragged. Setting this will set the parent to the currently hovered drag target.
+- Support raycasting with Canvas render mode Screen Space Camera.
+- Added FlexalonDpiScaler, which scales a Canvas pixel size to match the operating system screen settings.
+- Added spacing options to Flexible Layout: Space Evently and Space Around.
+
+### Fixes
+- Flexalon no longer preserves aspect ratio for ILayoutElement components. This was never intended.
+- Fixed Flexalon Constrant scaling the child of a Canvas.
+- Fixed collider adapter not scaling correctly.
+
+## Version 4.3
+
+### Features
+
+- **Improved UGUI Integration**: UGUI components like TextMeshPro and Image will automatically be recomputed when properties change in play mode.
+- **FlexalonAspectRatioAdapter**: Set a specific aspect ratio for an object.
+- **FlexalonColliderAdapter**: Resizes an attached collider to match the object's layout size.
+- **FlexalonObject.UseDefaultAdapter**: new property that can be disabled to make Flexalon treat the object as an empty gameObject and not consider components like MeshRenderer, TextMeshPro, etc.
+- **FlexalonInteractable.MaxClickDistance**: Immediately converts a click to a drag if the mouse moves more than the specified distance.
+
+### Fixes
+
+- Support negative Scale values in Flexalon Object.
+- Fix floating point error in Flexible Layout preventing wrapping.
+- Workaround for a TextMeshPro bug causing hanges in the template scene.
+- Display and serialize the "AnimateInWorldSpace" property in Curve Animator.
+- Disable the Flexalon Interactable placeholder when dragged off of a drag target.
+- Fix Flexible Layout fill not working correctly if there is no remaining space.
+- Fix some divide by zero errors.
+
 ## Version 4.2
 
 ### Features
@@ -10,7 +54,7 @@
 ### Fixes
 
 - Performance: Avoid third layout pass when possible when using Fill size type on children.
-- Update 4.2.1 Hotfix: Fix a regression where sometimes child sizes don't update from this performance fix.
+- Hotfix 4.2.1: Fix a regression where sometimes child sizes don't update from this performance fix.
 - Performance: Make Directions struct immutable.
 - Performance: Improve how Flexalon checks for the existance of FlexalonObject.
 - Performance: Reduce garbage collection allocations by replacing foreach loops with for loops.

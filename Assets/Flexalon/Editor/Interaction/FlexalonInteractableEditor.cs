@@ -10,6 +10,7 @@ namespace Flexalon.Editor
     {
         private SerializedProperty _clickable;
         private SerializedProperty _maxClickTime;
+        private SerializedProperty _maxClickDistance;
         private SerializedProperty _draggable;
         private SerializedProperty _interpolationSpeed;
         private SerializedProperty _insertRadius;
@@ -23,6 +24,7 @@ namespace Flexalon.Editor
         private SerializedProperty _holdRotation;
         private SerializedProperty _localSpaceRotation;
         private SerializedProperty _hideCursor;
+        private SerializedProperty _setParentWhileDragging;
         private SerializedProperty _handle;
         private SerializedProperty _bounds;
         private SerializedProperty _layerMask;
@@ -41,6 +43,7 @@ namespace Flexalon.Editor
         {
             _clickable = serializedObject.FindProperty("_clickable");
             _maxClickTime = serializedObject.FindProperty("_maxClickTime");
+            _maxClickDistance = serializedObject.FindProperty("_maxClickDistance");
             _draggable = serializedObject.FindProperty("_draggable");
             _interpolationSpeed = serializedObject.FindProperty("_interpolationSpeed");
             _insertRadius = serializedObject.FindProperty("_insertRadius");
@@ -54,6 +57,7 @@ namespace Flexalon.Editor
             _holdRotation = serializedObject.FindProperty("_holdRotation");
             _localSpaceRotation = serializedObject.FindProperty("_localSpaceRotation");
             _hideCursor = serializedObject.FindProperty("_hideCursor");
+            _setParentWhileDragging = serializedObject.FindProperty("_setParentWhileDragging");
             _handle = serializedObject.FindProperty("_handle");
             _bounds = serializedObject.FindProperty("_bounds");
             _layerMask = serializedObject.FindProperty("_layerMask");
@@ -74,7 +78,8 @@ namespace Flexalon.Editor
             if (_clickable.boolValue)
             {
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("_maxClickTime"), new GUIContent("Max Click Time"));
+                EditorGUILayout.PropertyField(_maxClickTime);
+                EditorGUILayout.PropertyField(_maxClickDistance);
                 EditorGUI.indentLevel--;
                 EditorGUILayout.Space();
             }
@@ -93,7 +98,7 @@ namespace Flexalon.Editor
                     foreach (var target in targets)
                     {
                         var interactable = target as FlexalonInteractable;
-                        showAllOptions = showAllOptions && interactable._showAllDragProperties;
+                        showAllOptions = showAllOptions && interactable.ShowAllDragProperties;
                     }
 
                     if (showAllOptions)
@@ -146,6 +151,7 @@ namespace Flexalon.Editor
                     }
 
                     EditorGUILayout.PropertyField(_hideCursor);
+                    EditorGUILayout.PropertyField(_setParentWhileDragging);
                     EditorGUILayout.PropertyField(_layerMask);
                     EditorGUI.indentLevel--;
                 }

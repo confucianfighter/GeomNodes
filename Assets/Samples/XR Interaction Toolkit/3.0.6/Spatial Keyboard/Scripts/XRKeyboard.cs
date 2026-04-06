@@ -3,6 +3,9 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine.Pool;
+using UnityEngine;
+using UnityEngine.Events;
+
 
 namespace UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard
 {
@@ -86,6 +89,8 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard
                     {
                         args.keyboard = this;
                         args.keyboardText = text;
+                        // change onTextUpdated to only send a single char?
+                        // add new text to args?
                         onTextUpdated?.Invoke(args);
                     }
                 }
@@ -118,6 +123,8 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard
                 }
             }
         }
+
+        public UnityEvent OnBeforeProcessKeyPress = new UnityEvent();
 
         [SerializeField]
         KeyboardTextEvent m_OnTextSubmitted = new KeyboardTextEvent();
@@ -290,7 +297,7 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard
         public int caretPosition
         {
             get => m_CaretPosition;
-            protected set => m_CaretPosition = value;
+            set => m_CaretPosition = value;
         }
 
         bool m_Shifted;
@@ -418,6 +425,9 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard
         /// <param name="key">Key to attempt to process</param>
         public virtual void TryProcessKeyPress(XRKeyboardKey key)
         {
+            Debug.Log("XRKeyboard: TryProcessKeyPress invoked");
+            Debug.Log($"XRKeyboard: number of listeners to onKeyPressed: {onKeyPressed.GetPersistentEventCount()}");
+            OnBeforeProcessKeyPress.Invoke();
             if (key == null || !ReferenceEquals(key.keyboard, this))
                 return;
 
@@ -494,7 +504,7 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard
             }
         }
 
-#region Process Key Functions
+        #region Process Key Functions
 
         /// <summary>
         /// Updates the keyboard text by inserting the <see cref="newText"/> string into the existing <see cref="text"/>.
@@ -506,6 +516,7 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard
         {
             // Attempt to add key press to current text
             var updatedText = text;
+            //do i have a reference to scene input field?
 
             updatedText = updatedText.Insert(caretPosition, newText);
 
@@ -636,9 +647,9 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard
             return false;
         }
 
-#endregion
+        #endregion
 
-#region Open Functions
+        #region Open Functions
 
         /// <summary>
         /// Opens the keyboard with a <see cref="TMP_InputField"/> parameter as the active input field.
@@ -690,16 +701,16 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard
                     onOpened?.Invoke(args);
                 }
             }
-
-            caretPosition = newText.Length;
+            // Ch
+            caretPosition = Math.Clamp(caretPosition, 0, newText.Length);
             text = newText;
             gameObject.SetActive(true);
             m_IsOpen = true;
         }
 
-#endregion
+        #endregion
 
-#region Close Functions
+        #region Close Functions
 
         /// <summary>
         /// Process close command for keyboard.
@@ -762,9 +773,9 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard
             }
         }
 
-#endregion
+        #endregion
 
-#region Input Field Handling
+        #region Input Field Handling
 
         protected virtual void StopObservingInputField(TMP_InputField inputField)
         {
@@ -788,11 +799,11 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.SpatialKeyboard
         /// <param name="updatedText">The text of the input field.</param>
         protected virtual void OnInputFieldValueChange(string updatedText)
         {
-            caretPosition = updatedText.Length;
+            caretPosition = Mathf.Clamp(caretPosition, 0, updatedText.Length);
             text = updatedText;
         }
 
-#endregion
+        #endregion
     }
 }
 #endif
