@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace DLN
+namespace DLN.EditorTools.ShapeStamper
 {
-    public static class ShapeStamperWindowDrawing
+    public static class ShapeCanvasDrawing
     {
         public static void DrawCanvasBackground(Rect allowedRect, Rect drawRect)
         {
