@@ -6,12 +6,14 @@ namespace DLN
 {
     public class ShapeStamperWindow : EditorWindow
     {
-        private const float TopBarHeight = 70f;
+        private const float TopBarHeight = 92f;
         private const float CanvasPadding = 12f;
         private const float PointHandleRadius = 7f;
         private const float EdgeInsertThreshold = 10f;
+        private const float DragStartThresholdPixels = 5f;
 
-        [SerializeField] private Vector2 canvasSize = new Vector2(200f, 200f);
+        [SerializeField] private Vector2 worldSizeMeters = new Vector2(1f, 1f);
+        [SerializeField] private Vector2 canvasPercentOfWindow = new Vector2(0.8f, 0.8f);
         [SerializeField] private List<Vector2> points = new List<Vector2>();
 
         [SerializeField] private List<int> selectedPointIndices = new List<int>();
@@ -21,14 +23,20 @@ namespace DLN
         private int hoveredEdgeIndex = -1;
 
         private bool isDraggingPoints;
-        private Vector2 lastDragCanvasMouse;
+        private Vector2 lastDragWorldMouse;
+
+        private bool hasPendingPointPress;
+        private int pendingPointIndex = -1;
+        private bool pendingAdditive;
+        private bool pendingPointWasAlreadySelected;
+        private Vector2 pendingMouseDownGui;
 
         [MenuItem("Tools/DLN/Shape Stamper")]
         public static void Open()
         {
             var window = GetWindow<ShapeStamperWindow>();
             window.titleContent = new GUIContent("Shape Stamper");
-            window.minSize = new Vector2(350f, 300f);
+            window.minSize = new Vector2(350f, 320f);
             window.Show();
         }
 
@@ -50,17 +58,22 @@ namespace DLN
                 Mathf.Max(0f, position.height - TopBarHeight)
             );
 
-            Rect drawRect = ShapeStamperWindowUtility.GetFittedCanvasRect(
+            Rect allowedRect = ShapeStamperWindowUtility.GetAllowedCanvasRect(
                 fullCanvasArea,
-                canvasSize,
+                canvasPercentOfWindow,
                 CanvasPadding
             );
 
-            ShapeStamperWindowDrawing.DrawCanvasBackground(drawRect);
+            Rect drawRect = ShapeStamperWindowUtility.GetFittedWorldRect(
+                allowedRect,
+                worldSizeMeters
+            );
+
+            ShapeStamperWindowDrawing.DrawCanvasBackground(allowedRect, drawRect);
             ShapeStamperWindowDrawing.DrawPolygon(
                 points,
                 drawRect,
-                canvasSize,
+                worldSizeMeters,
                 hoveredPointIndex,
                 hoveredEdgeIndex,
                 selectedPointIndices,
@@ -84,21 +97,23 @@ namespace DLN
             EditorGUILayout.Space(6f);
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Canvas Size", GUILayout.Width(80f));
+            EditorGUILayout.LabelField("World Size (m)", GUILayout.Width(92f));
 
             EditorGUILayout.LabelField("W", GUILayout.Width(16f));
-            float newWidth = EditorGUILayout.FloatField(canvasSize.x, GUILayout.Width(70f));
+            float newWorldWidth = EditorGUILayout.FloatField(worldSizeMeters.x, GUILayout.Width(70f));
 
             EditorGUILayout.LabelField("H", GUILayout.Width(16f));
-            float newHeight = EditorGUILayout.FloatField(canvasSize.y, GUILayout.Width(70f));
+            float newWorldHeight = EditorGUILayout.FloatField(worldSizeMeters.y, GUILayout.Width(70f));
 
-            newWidth = Mathf.Max(1f, newWidth);
-            newHeight = Mathf.Max(1f, newHeight);
+            newWorldWidth = Mathf.Max(0.0001f, newWorldWidth);
+            newWorldHeight = Mathf.Max(0.0001f, newWorldHeight);
 
-            if (!Mathf.Approximately(newWidth, canvasSize.x) || !Mathf.Approximately(newHeight, canvasSize.y))
+            Vector2 newWorldSize = new Vector2(newWorldWidth, newWorldHeight);
+            if (!Approximately(newWorldSize, worldSizeMeters))
             {
-                canvasSize = new Vector2(newWidth, newHeight);
-                ClampAllPointsToCanvas();
+                RescalePointsForWorldSizeChange(worldSizeMeters, newWorldSize);
+                worldSizeMeters = newWorldSize;
+                ClampAllPointsToWorldBounds();
             }
 
             GUILayout.FlexibleSpace();
@@ -116,6 +131,24 @@ namespace DLN
                 GUI.FocusControl(null);
             }
             EditorGUI.EndDisabledGroup();
+
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Canvas %", GUILayout.Width(92f));
+
+            EditorGUILayout.LabelField("W", GUILayout.Width(16f));
+            float newPercentWidth = EditorGUILayout.FloatField(canvasPercentOfWindow.x * 100f, GUILayout.Width(70f));
+
+            EditorGUILayout.LabelField("H", GUILayout.Width(16f));
+            float newPercentHeight = EditorGUILayout.FloatField(canvasPercentOfWindow.y * 100f, GUILayout.Width(70f));
+
+            newPercentWidth = Mathf.Clamp(newPercentWidth, 5f, 100f);
+            newPercentHeight = Mathf.Clamp(newPercentHeight, 5f, 100f);
+
+            canvasPercentOfWindow = new Vector2(newPercentWidth / 100f, newPercentHeight / 100f);
+
+            GUILayout.FlexibleSpace();
 
             EditorGUILayout.EndHorizontal();
 
@@ -142,11 +175,12 @@ namespace DLN
                     if (!mouseInsideCanvas)
                         break;
 
-                    bool additive = evt.shift;
+                    bool additive = evt.shift || evt.control || evt.command;
+
                     int pointIndex = ShapeStamperWindowUtility.FindPointNearMouse(
                         points,
                         drawRect,
-                        canvasSize,
+                        worldSizeMeters,
                         mouseGui,
                         PointHandleRadius
                     );
@@ -155,19 +189,7 @@ namespace DLN
                     {
                         if (pointIndex >= 0)
                         {
-                            if (!additive)
-                            {
-                                ClearSelection();
-                                AddPointSelection(pointIndex);
-                            }
-                            else
-                            {
-                                TogglePointSelection(pointIndex);
-                            }
-
-                            selectedEdgeIndices.Clear();
-                            isDraggingPoints = selectedPointIndices.Contains(pointIndex);
-                            lastDragCanvasMouse = ShapeStamperWindowUtility.GuiToCanvas(mouseGui, drawRect, canvasSize);
+                            BeginPendingPointPress(pointIndex, additive, mouseGui);
                             evt.Use();
                         }
                         else
@@ -175,10 +197,12 @@ namespace DLN
                             int edgeIndex = ShapeStamperWindowUtility.FindEdgeNearMouse(
                                 points,
                                 drawRect,
-                                canvasSize,
+                                worldSizeMeters,
                                 mouseGui,
                                 EdgeInsertThreshold
                             );
+
+                            CancelPendingPointPress();
 
                             if (edgeIndex >= 0)
                             {
@@ -190,9 +214,9 @@ namespace DLN
                                 else
                                 {
                                     ToggleEdgeSelection(edgeIndex);
+                                    selectedPointIndices.Clear();
                                 }
 
-                                selectedPointIndices.Clear();
                                 evt.Use();
                             }
                             else
@@ -206,10 +230,12 @@ namespace DLN
                     }
                     else if (evt.button == 1)
                     {
+                        CancelPendingPointPress();
+
                         int edgeIndex = ShapeStamperWindowUtility.FindEdgeNearMouse(
                             points,
                             drawRect,
-                            canvasSize,
+                            worldSizeMeters,
                             mouseGui,
                             EdgeInsertThreshold
                         );
@@ -228,15 +254,29 @@ namespace DLN
 
                 case EventType.MouseDrag:
                 {
-                    if (evt.button == 0 && isDraggingPoints && selectedPointIndices.Count > 0)
+                    if (evt.button == 0)
                     {
-                        Vector2 canvasMouse = ShapeStamperWindowUtility.GuiToCanvas(mouseGui, drawRect, canvasSize);
-                        Vector2 delta = canvasMouse - lastDragCanvasMouse;
+                        if (hasPendingPointPress && !isDraggingPoints)
+                        {
+                            float dragDistance = Vector2.Distance(mouseGui, pendingMouseDownGui);
+                            if (dragDistance >= DragStartThresholdPixels)
+                            {
+                                StartPointDrag(drawRect, mouseGui);
+                                evt.Use();
+                                break;
+                            }
+                        }
 
-                        MoveSelectedPoints(delta);
+                        if (isDraggingPoints && selectedPointIndices.Count > 0)
+                        {
+                            Vector2 worldMouse = ShapeStamperWindowUtility.GuiToWorld(mouseGui, drawRect, worldSizeMeters);
+                            Vector2 delta = worldMouse - lastDragWorldMouse;
 
-                        lastDragCanvasMouse = canvasMouse;
-                        evt.Use();
+                            MoveSelectedPoints(delta);
+
+                            lastDragWorldMouse = worldMouse;
+                            evt.Use();
+                        }
                     }
 
                     break;
@@ -244,10 +284,19 @@ namespace DLN
 
                 case EventType.MouseUp:
                 {
-                    if (evt.button == 0 && isDraggingPoints)
+                    if (evt.button == 0)
                     {
-                        isDraggingPoints = false;
-                        evt.Use();
+                        if (isDraggingPoints)
+                        {
+                            isDraggingPoints = false;
+                            CancelPendingPointPress();
+                            evt.Use();
+                        }
+                        else if (hasPendingPointPress)
+                        {
+                            CommitPendingPointClick();
+                            evt.Use();
+                        }
                     }
 
                     break;
@@ -269,12 +318,86 @@ namespace DLN
             }
         }
 
+        private void BeginPendingPointPress(int pointIndex, bool additive, Vector2 mouseGui)
+        {
+            hasPendingPointPress = true;
+            pendingPointIndex = pointIndex;
+            pendingAdditive = additive;
+            pendingPointWasAlreadySelected = selectedPointIndices.Contains(pointIndex);
+            pendingMouseDownGui = mouseGui;
+        }
+
+        private void StartPointDrag(Rect drawRect, Vector2 mouseGui)
+        {
+            if (!hasPendingPointPress || pendingPointIndex < 0 || pendingPointIndex >= points.Count)
+                return;
+
+            if (pendingAdditive)
+            {
+                if (!pendingPointWasAlreadySelected)
+                {
+                    selectedPointIndices.Clear();
+                    selectedEdgeIndices.Clear();
+                    AddPointSelection(pendingPointIndex);
+                }
+                else
+                {
+                    selectedEdgeIndices.Clear();
+                }
+            }
+            else
+            {
+                if (!pendingPointWasAlreadySelected)
+                {
+                    ClearSelection();
+                    AddPointSelection(pendingPointIndex);
+                }
+                else
+                {
+                    selectedEdgeIndices.Clear();
+                }
+            }
+
+            isDraggingPoints = selectedPointIndices.Contains(pendingPointIndex);
+            lastDragWorldMouse = ShapeStamperWindowUtility.GuiToWorld(mouseGui, drawRect, worldSizeMeters);
+        }
+
+        private void CommitPendingPointClick()
+        {
+            if (!hasPendingPointPress || pendingPointIndex < 0 || pendingPointIndex >= points.Count)
+            {
+                CancelPendingPointPress();
+                return;
+            }
+
+            if (pendingAdditive)
+            {
+                selectedEdgeIndices.Clear();
+                TogglePointSelection(pendingPointIndex);
+            }
+            else
+            {
+                ClearSelection();
+                AddPointSelection(pendingPointIndex);
+            }
+
+            CancelPendingPointPress();
+        }
+
+        private void CancelPendingPointPress()
+        {
+            hasPendingPointPress = false;
+            pendingPointIndex = -1;
+            pendingAdditive = false;
+            pendingPointWasAlreadySelected = false;
+        }
+
         private void UpdateHoverState(Rect drawRect, Vector2 mouseGui)
         {
             hoveredPointIndex = ShapeStamperWindowUtility.FindPointNearMouse(
                 points,
                 drawRect,
-                canvasSize,
+                worldSizeMeters,
                 mouseGui,
                 PointHandleRadius
             );
@@ -284,7 +407,7 @@ namespace DLN
                 : ShapeStamperWindowUtility.FindEdgeNearMouse(
                     points,
                     drawRect,
-                    canvasSize,
+                    worldSizeMeters,
                     mouseGui,
                     EdgeInsertThreshold
                 );
@@ -307,7 +430,7 @@ namespace DLN
                 if (index < 0 || index >= points.Count)
                     continue;
 
-                points[index] = ShapeStamperWindowUtility.ClampToCanvas(points[index] + delta, canvasSize);
+                points[index] = ShapeStamperWindowUtility.ClampToWorldBounds(points[index] + delta, worldSizeMeters);
             }
         }
 
@@ -352,13 +475,16 @@ namespace DLN
             if (selectedEdgeIndices == null)
                 selectedEdgeIndices = new List<int>();
 
-            if (canvasSize.x <= 0f || canvasSize.y <= 0f)
-                canvasSize = new Vector2(200f, 200f);
+            if (worldSizeMeters.x <= 0f || worldSizeMeters.y <= 0f)
+                worldSizeMeters = new Vector2(1f, 1f);
+
+            canvasPercentOfWindow.x = Mathf.Clamp(canvasPercentOfWindow.x, 0.05f, 1f);
+            canvasPercentOfWindow.y = Mathf.Clamp(canvasPercentOfWindow.y, 0.05f, 1f);
 
             if (points.Count < 3)
                 ResetToDefaultTriangle();
 
-            ClampAllPointsToCanvas();
+            ClampAllPointsToWorldBounds();
             PruneInvalidSelections();
         }
 
@@ -366,18 +492,34 @@ namespace DLN
         {
             points = new List<Vector2>
             {
-                new Vector2(canvasSize.x * 0.5f, canvasSize.y * 0.15f),
-                new Vector2(canvasSize.x * 0.15f, canvasSize.y * 0.85f),
-                new Vector2(canvasSize.x * 0.85f, canvasSize.y * 0.85f),
+                new Vector2(worldSizeMeters.x * 0.5f, worldSizeMeters.y * 0.15f),
+                new Vector2(worldSizeMeters.x * 0.15f, worldSizeMeters.y * 0.85f),
+                new Vector2(worldSizeMeters.x * 0.85f, worldSizeMeters.y * 0.85f),
             };
 
             ClearSelection();
+            CancelPendingPointPress();
+            isDraggingPoints = false;
         }
 
-        private void ClampAllPointsToCanvas()
+        private void ClampAllPointsToWorldBounds()
         {
             for (int i = 0; i < points.Count; i++)
-                points[i] = ShapeStamperWindowUtility.ClampToCanvas(points[i], canvasSize);
+                points[i] = ShapeStamperWindowUtility.ClampToWorldBounds(points[i], worldSizeMeters);
+        }
+
+        private void RescalePointsForWorldSizeChange(Vector2 oldWorldSize, Vector2 newWorldSize)
+        {
+            float scaleX = oldWorldSize.x > 0f ? newWorldSize.x / oldWorldSize.x : 1f;
+            float scaleY = oldWorldSize.y > 0f ? newWorldSize.y / oldWorldSize.y : 1f;
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                Vector2 p = points[i];
+                p.x *= scaleX;
+                p.y *= scaleY;
+                points[i] = p;
+            }
         }
 
         private void ClearSelection()
@@ -429,6 +571,14 @@ namespace DLN
                 if (index < 0 || index >= points.Count)
                     selectedEdgeIndices.RemoveAt(i);
             }
+
+            if (pendingPointIndex < 0 || pendingPointIndex >= points.Count)
+                CancelPendingPointPress();
+        }
+
+        private static bool Approximately(Vector2 a, Vector2 b)
+        {
+            return Mathf.Approximately(a.x, b.x) && Mathf.Approximately(a.y, b.y);
         }
     }
 }

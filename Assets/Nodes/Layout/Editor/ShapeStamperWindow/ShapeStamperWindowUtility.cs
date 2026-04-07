@@ -5,7 +5,7 @@ namespace DLN
 {
     public static class ShapeStamperWindowUtility
     {
-        public static Rect GetFittedCanvasRect(Rect availableRect, Vector2 canvasSize, float padding)
+        public static Rect GetAllowedCanvasRect(Rect availableRect, Vector2 canvasPercentOfWindow, float padding)
         {
             Rect padded = new Rect(
                 availableRect.x + padding,
@@ -14,25 +14,11 @@ namespace DLN
                 Mathf.Max(0f, availableRect.height - padding * 2f)
             );
 
-            if (canvasSize.x <= 0f || canvasSize.y <= 0f || padded.width <= 0f || padded.height <= 0f)
-                return padded;
+            float percentWidth = Mathf.Clamp01(canvasPercentOfWindow.x);
+            float percentHeight = Mathf.Clamp01(canvasPercentOfWindow.y);
 
-            float canvasAspect = canvasSize.x / canvasSize.y;
-            float areaAspect = padded.width / padded.height;
-
-            float width;
-            float height;
-
-            if (areaAspect > canvasAspect)
-            {
-                height = padded.height;
-                width = height * canvasAspect;
-            }
-            else
-            {
-                width = padded.width;
-                height = width / canvasAspect;
-            }
+            float width = padded.width * percentWidth;
+            float height = padded.height * percentHeight;
 
             return new Rect(
                 padded.x + (padded.width - width) * 0.5f,
@@ -42,32 +28,62 @@ namespace DLN
             );
         }
 
-        public static Vector2 CanvasToGui(Vector2 canvasPoint, Rect drawRect, Vector2 canvasSize)
+        public static Rect GetFittedWorldRect(Rect allowedRect, Vector2 worldSizeMeters)
         {
-            float x = drawRect.x + (canvasPoint.x / canvasSize.x) * drawRect.width;
-            float y = drawRect.y + (canvasPoint.y / canvasSize.y) * drawRect.height;
+            if (worldSizeMeters.x <= 0f || worldSizeMeters.y <= 0f || allowedRect.width <= 0f || allowedRect.height <= 0f)
+                return allowedRect;
+
+            float worldAspect = worldSizeMeters.x / worldSizeMeters.y;
+            float allowedAspect = allowedRect.width / allowedRect.height;
+
+            float width;
+            float height;
+
+            if (allowedAspect > worldAspect)
+            {
+                height = allowedRect.height;
+                width = height * worldAspect;
+            }
+            else
+            {
+                width = allowedRect.width;
+                height = width / worldAspect;
+            }
+
+            return new Rect(
+                allowedRect.x + (allowedRect.width - width) * 0.5f,
+                allowedRect.y + (allowedRect.height - height) * 0.5f,
+                width,
+                height
+            );
+        }
+
+        public static Vector2 WorldToGui(Vector2 worldPoint, Rect drawRect, Vector2 worldSizeMeters)
+        {
+            float x = drawRect.x + (worldPoint.x / worldSizeMeters.x) * drawRect.width;
+            float y = drawRect.y + (worldPoint.y / worldSizeMeters.y) * drawRect.height;
             return new Vector2(x, y);
         }
 
-        public static Vector2 GuiToCanvas(Vector2 guiPoint, Rect drawRect, Vector2 canvasSize)
+        public static Vector2 GuiToWorld(Vector2 guiPoint, Rect drawRect, Vector2 worldSizeMeters)
         {
-            float x = Mathf.InverseLerp(drawRect.x, drawRect.xMax, guiPoint.x) * canvasSize.x;
-            float y = Mathf.InverseLerp(drawRect.y, drawRect.yMax, guiPoint.y) * canvasSize.y;
+            float x = Mathf.InverseLerp(drawRect.x, drawRect.xMax, guiPoint.x) * worldSizeMeters.x;
+            float y = Mathf.InverseLerp(drawRect.y, drawRect.yMax, guiPoint.y) * worldSizeMeters.y;
             return new Vector2(x, y);
         }
 
-        public static Vector2 ClampToCanvas(Vector2 point, Vector2 canvasSize)
+        public static Vector2 ClampToWorldBounds(Vector2 point, Vector2 worldSizeMeters)
         {
             return new Vector2(
-                Mathf.Clamp(point.x, 0f, canvasSize.x),
-                Mathf.Clamp(point.y, 0f, canvasSize.y)
+                Mathf.Clamp(point.x, 0f, worldSizeMeters.x),
+                Mathf.Clamp(point.y, 0f, worldSizeMeters.y)
             );
         }
 
         public static int FindPointNearMouse(
             List<Vector2> points,
             Rect drawRect,
-            Vector2 canvasSize,
+            Vector2 worldSizeMeters,
             Vector2 mouseGui,
             float pointHandleRadius)
         {
@@ -76,7 +92,7 @@ namespace DLN
 
             for (int i = 0; i < points.Count; i++)
             {
-                Vector2 guiPoint = CanvasToGui(points[i], drawRect, canvasSize);
+                Vector2 guiPoint = WorldToGui(points[i], drawRect, worldSizeMeters);
                 if (Vector2.Distance(guiPoint, mouseGui) <= pointHandleRadius + 3f)
                     return i;
             }
@@ -87,7 +103,7 @@ namespace DLN
         public static int FindEdgeNearMouse(
             List<Vector2> points,
             Rect drawRect,
-            Vector2 canvasSize,
+            Vector2 worldSizeMeters,
             Vector2 mouseGui,
             float edgeInsertThreshold)
         {
@@ -100,8 +116,8 @@ namespace DLN
             for (int i = 0; i < points.Count; i++)
             {
                 int next = (i + 1) % points.Count;
-                Vector2 a = CanvasToGui(points[i], drawRect, canvasSize);
-                Vector2 b = CanvasToGui(points[next], drawRect, canvasSize);
+                Vector2 a = WorldToGui(points[i], drawRect, worldSizeMeters);
+                Vector2 b = WorldToGui(points[next], drawRect, worldSizeMeters);
 
                 float dist = DistancePointToSegment(mouseGui, a, b);
                 if (dist < edgeInsertThreshold && dist < bestDistance)
