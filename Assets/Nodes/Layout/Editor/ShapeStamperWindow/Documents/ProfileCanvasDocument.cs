@@ -1,37 +1,43 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace DLN.EditorTools.ShapeStamper
 {
-    [System.Serializable]
-    public class ProfileCanvasDocument
+    [Serializable]
+    public class ProfileCanvasDocument : ICanvasDocument
     {
-        [SerializeField] private Vector2 worldSizeMeters = new Vector2(1f, 1f);
-        [SerializeField] private List<Vector2> points = new();
+        [SerializeField] private List<CanvasPoint> points = new();
+        [SerializeField] private List<CanvasEdge> edges = new();
+        [SerializeField] private List<CanvasOffsetConstraint> offsets = new();
 
-        public Vector2 WorldSizeMeters => worldSizeMeters;
-        public List<Vector2> Points => points;
-        public int PointCount => points?.Count ?? 0;
+        public IList<CanvasPoint> Points => points;
+        public IList<CanvasEdge> Edges => edges;
+        public IList<CanvasOffsetConstraint> Offsets => offsets;
+
+        public void MarkDirty()
+        {
+        }
 
         public void EnsureValidProfile()
         {
-            if (points == null)
-                points = new List<Vector2>();
-
-            if (worldSizeMeters.x <= 0f || worldSizeMeters.y <= 0f)
-                worldSizeMeters = new Vector2(1f, 1f);
-
-            if (points.Count < 2)
-                ResetToDefaultProfile();
+            if (points.Count == 0)
+                ResetDefaultProfile();
         }
 
-        public void ResetToDefaultProfile()
+        public void ResetDefaultProfile()
         {
-            points = new List<Vector2>
-            {
-                new Vector2(0.15f, 0.8f),
-                new Vector2(0.85f, 0.2f),
-            };
+            points.Clear();
+            edges.Clear();
+            offsets.Clear();
+
+            points.Add(new CanvasPoint { Id = 0, Position = new Vector2(0.1f, 0.1f) });
+            points.Add(new CanvasPoint { Id = 1, Position = new Vector2(0.3f, 0.2f) });
+            points.Add(new CanvasPoint { Id = 2, Position = new Vector2(0.5f, 0.5f) });
+
+            edges.Add(new CanvasEdge { Id = 0, A = 0, B = 1 });
+            edges.Add(new CanvasEdge { Id = 1, A = 1, B = 2 });
         }
+        public bool IsClosed  => true;
     }
 }
