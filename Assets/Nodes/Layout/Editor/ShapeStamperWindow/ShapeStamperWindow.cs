@@ -20,8 +20,8 @@ namespace DLN.EditorTools.ShapeStamper
         [SerializeField] private Vector2 canvasPercentOfWindow = new Vector2(0.8f, 0.8f);
         [SerializeField] private float verticalDividerPercent = 0.65f;
 
-        private ShapeEditorCanvas _shapeCanvas;
-        private ShapeEditorCanvas _profileCanvas;
+        private EditorCanvas _shapeCanvas;
+        private EditorCanvas _profileCanvas;
 
         private bool _isDraggingDivider;
 
@@ -36,8 +36,8 @@ namespace DLN.EditorTools.ShapeStamper
 
         private void OnEnable()
         {
-            _shapeCanvas ??= new ShapeEditorCanvas();
-            _profileCanvas ??= new ShapeEditorCanvas();
+            _shapeCanvas ??= new EditorCanvas();
+            _profileCanvas ??= new EditorCanvas();
             document ??= new ShapeCanvasDocument();
 
             EnsureValidShape();
@@ -46,8 +46,8 @@ namespace DLN.EditorTools.ShapeStamper
 
         private void OnGUI()
         {
-            _shapeCanvas ??= new ShapeEditorCanvas();
-            _profileCanvas ??= new ShapeEditorCanvas();
+            _shapeCanvas ??= new EditorCanvas();
+            _profileCanvas ??= new EditorCanvas();
             document ??= new ShapeCanvasDocument();
 
             EnsureValidShape();

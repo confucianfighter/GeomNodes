@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DLN.EditorTools.ShapeStamper
 {
     [System.Serializable]
-    public class ShapeEditorCanvas
+    public class EditorCanvas
     {
         public Rect ScreenRect;
 
