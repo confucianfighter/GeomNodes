@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace DLN
+namespace DLN.EditorTools.ShapeStamper
+
 {
     /// <summary>
     /// Shared editor canvas core for shape/profile style 2D editing.
