@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DLN.EditorTools.ShapeStamper
+namespace DLN
 {
     [System.Serializable]
     public class CanvasViewState
@@ -8,54 +8,23 @@ namespace DLN.EditorTools.ShapeStamper
         public Vector2 Pan = Vector2.zero;
         public float Zoom = 1f;
 
-        public const float MinZoom = 0.05f;
-        public const float MaxZoom = 50f;
-
-        public void ClampZoom()
+        public void FrameRect(Rect rect, Vector2 viewportSize, float padding)
         {
-            Zoom = Mathf.Clamp(Zoom, MinZoom, MaxZoom);
-        }
+            if (viewportSize.x <= 0f || viewportSize.y <= 0f)
+                return;
 
-        public Vector2 CanvasToScreen(Vector2 canvasPosition, Rect canvasRect)
-        {
-            var center = canvasRect.center;
-            return center + Pan + (canvasPosition * Zoom);
-        }
+            float width = Mathf.Max(1f, rect.width);
+            float height = Mathf.Max(1f, rect.height);
 
-        public Vector2 ScreenToCanvas(Vector2 screenPosition, Rect canvasRect)
-        {
-            var center = canvasRect.center;
-            return (screenPosition - center - Pan) / Mathf.Max(Zoom, 0.0001f);
-        }
+            float zoomX = (viewportSize.x - padding * 2f) / width;
+            float zoomY = (viewportSize.y - padding * 2f) / height;
 
-        public float CanvasToScreenDistance(float canvasDistance)
-        {
-            return canvasDistance * Zoom;
-        }
+            Zoom = Mathf.Clamp(Mathf.Min(zoomX, zoomY), 0.05f, 10f);
 
-        public float ScreenToCanvasDistance(float screenDistance)
-        {
-            return screenDistance / Mathf.Max(Zoom, 0.0001f);
-        }
+            Vector2 rectCenter = rect.center;
+            Vector2 viewportCenter = viewportSize * 0.5f;
 
-        /// <summary>
-        /// Zooms around a specific screen-space pivot so the canvas point under the mouse stays stable.
-        /// </summary>
-        public void ZoomAroundScreenPoint(float zoomDelta, Vector2 screenPivot, Rect canvasRect)
-        {
-            var before = ScreenToCanvas(screenPivot, canvasRect);
-
-            Zoom *= zoomDelta;
-            ClampZoom();
-
-            var after = CanvasToScreen(before, canvasRect);
-            Pan += screenPivot - after;
-        }
-
-        public void Reset()
-        {
-            Pan = Vector2.zero;
-            Zoom = 1f;
+            Pan = viewportCenter - rectCenter * Zoom;
         }
     }
 }

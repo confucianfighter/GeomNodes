@@ -1,3 +1,8 @@
+using System.Collections.Generic;
+using UnityEngine;
+namespace DLN.EditorTools.ShapeStamper
+{
+
 public interface ICanvasDocument
 {
     IList<CanvasPoint> Points { get; }
@@ -6,4 +11,5 @@ public interface ICanvasDocument
 
     bool IsClosed { get; }
     void MarkDirty();
+}
 }
