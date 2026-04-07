@@ -70,18 +70,18 @@ namespace DLN.EditorTools.ShapeStamper
 
             HandleDividerInput(dividerHitRect);
 
-            Rect leftAllowedRect = ShapeStamperWindowUtility.GetAllowedCanvasRect(
+            Rect leftAllowedRect = ShapeCanvasUtility.GetAllowedCanvasRect(
                 leftPanelRect,
                 canvasPercentOfWindow,
                 CanvasPadding
             );
 
-            Rect leftDrawRect = ShapeStamperWindowUtility.GetFittedWorldRect(
+            Rect leftDrawRect = ShapeCanvasUtility.GetFittedWorldRect(
                 leftAllowedRect,
                 document.WorldSizeMeters
             );
 
-            Rect rightAllowedRect = ShapeStamperWindowUtility.GetAllowedCanvasRect(
+            Rect rightAllowedRect = ShapeCanvasUtility.GetAllowedCanvasRect(
                 rightPanelRect,
                 canvasPercentOfWindow,
                 CanvasPadding
@@ -90,7 +90,7 @@ namespace DLN.EditorTools.ShapeStamper
             // Placeholder profile world for now: square-ish canvas.
             Vector2 profileWorldSize = new Vector2(1f, 1f);
 
-            Rect rightDrawRect = ShapeStamperWindowUtility.GetFittedWorldRect(
+            Rect rightDrawRect = ShapeCanvasUtility.GetFittedWorldRect(
                 rightAllowedRect,
                 profileWorldSize
             );
@@ -214,32 +214,70 @@ namespace DLN.EditorTools.ShapeStamper
             switch (evt.type)
             {
                 case EventType.MouseDown:
-                {
-                    if (!mouseInsideCanvas)
-                        break;
-
-                    bool additive = _shapeCanvas.IsAdditiveSelection(evt);
-
-                    int pointIndex = ShapeStamperWindowUtility.FindPointNearMouse(
-                        document.Points,
-                        drawRect,
-                        document.WorldSizeMeters,
-                        mouseGui,
-                        PointHandleRadius
-                    );
-
-                    if (evt.button == 0)
                     {
-                        _shapeCanvas.BeginPrimaryMouseDown(evt);
+                        if (!mouseInsideCanvas)
+                            break;
 
-                        if (pointIndex >= 0)
+                        bool additive = _shapeCanvas.IsAdditiveSelection(evt);
+
+                        int pointIndex = ShapeCanvasUtility.FindPointNearMouse(
+                            document.Points,
+                            drawRect,
+                            document.WorldSizeMeters,
+                            mouseGui,
+                            PointHandleRadius
+                        );
+
+                        if (evt.button == 0)
                         {
-                            BeginPendingPointPress(pointIndex, mouseGui);
-                            evt.Use();
+                            _shapeCanvas.BeginPrimaryMouseDown(evt);
+
+                            if (pointIndex >= 0)
+                            {
+                                BeginPendingPointPress(pointIndex, mouseGui);
+                                evt.Use();
+                            }
+                            else
+                            {
+                                int edgeIndex = ShapeCanvasUtility.FindEdgeNearMouse(
+                                    document.Points,
+                                    drawRect,
+                                    document.WorldSizeMeters,
+                                    mouseGui,
+                                    EdgeInsertThreshold
+                                );
+
+                                CancelPendingPointPress();
+
+                                if (edgeIndex >= 0)
+                                {
+                                    if (!additive)
+                                    {
+                                        _shapeCanvas.Selection.Clear();
+                                        _shapeCanvas.Selection.AddSegment(edgeIndex);
+                                    }
+                                    else
+                                    {
+                                        _shapeCanvas.Selection.ToggleSegment(edgeIndex);
+                                        _shapeCanvas.Selection.SelectedPointIds.Clear();
+                                    }
+
+                                    evt.Use();
+                                }
+                                else
+                                {
+                                    if (!additive)
+                                        _shapeCanvas.Selection.Clear();
+
+                                    evt.Use();
+                                }
+                            }
                         }
-                        else
+                        else if (evt.button == 1)
                         {
-                            int edgeIndex = ShapeStamperWindowUtility.FindEdgeNearMouse(
+                            CancelPendingPointPress();
+
+                            int edgeIndex = ShapeCanvasUtility.FindEdgeNearMouse(
                                 document.Points,
                                 drawRect,
                                 document.WorldSizeMeters,
@@ -247,142 +285,104 @@ namespace DLN.EditorTools.ShapeStamper
                                 EdgeInsertThreshold
                             );
 
-                            CancelPendingPointPress();
-
                             if (edgeIndex >= 0)
                             {
-                                if (!additive)
-                                {
-                                    _shapeCanvas.Selection.Clear();
-                                    _shapeCanvas.Selection.AddSegment(edgeIndex);
-                                }
-                                else
-                                {
-                                    _shapeCanvas.Selection.ToggleSegment(edgeIndex);
-                                    _shapeCanvas.Selection.SelectedPointIds.Clear();
-                                }
+                                document.InsertMidpointOnEdge(edgeIndex);
+                                _shapeCanvas.Selection.Clear();
+                                _shapeCanvas.Selection.AddPoint(edgeIndex + 1);
+                                evt.Use();
+                            }
+                        }
 
+                        break;
+                    }
+
+                case EventType.MouseDrag:
+                    {
+                        if (evt.button == 0)
+                        {
+                            _shapeCanvas.Interaction.UpdateMousePosition(mouseGui);
+
+                            if (_shapeCanvas.Interaction.HasMouseDown && !_shapeCanvas.Interaction.IsDraggingSelection)
+                            {
+                                float dragDistance = Vector2.Distance(
+                                    _shapeCanvas.Interaction.MouseDownScreenPosition,
+                                    mouseGui
+                                );
+
+                                if (dragDistance >= DragStartThresholdPixels &&
+                                    _shapeCanvas.Interaction.PressedPointId >= 0)
+                                {
+                                    StartPointDrag(drawRect, mouseGui);
+                                    evt.Use();
+                                    break;
+                                }
+                            }
+
+                            if (_shapeCanvas.Interaction.IsDraggingSelection &&
+                                _shapeCanvas.Selection.SelectedPointIds.Count > 0)
+                            {
+                                Vector2 worldMouse = ShapeCanvasUtility.GuiToWorld(
+                                    mouseGui,
+                                    drawRect,
+                                    document.WorldSizeMeters
+                                );
+
+                                Vector2 lastWorldMouse = ShapeCanvasUtility.GuiToWorld(
+                                    _shapeCanvas.Interaction.LastMouseScreenPosition,
+                                    drawRect,
+                                    document.WorldSizeMeters
+                                );
+
+                                Vector2 delta = worldMouse - lastWorldMouse;
+                                MoveSelectedPoints(delta);
+
+                                evt.Use();
+                            }
+                        }
+
+                        break;
+                    }
+
+                case EventType.MouseUp:
+                    {
+                        if (evt.button == 0)
+                        {
+                            if (_shapeCanvas.Interaction.IsDraggingSelection)
+                            {
+                                _shapeCanvas.Interaction.EndMouseInteraction();
+                                CancelPendingPointPress();
+                                evt.Use();
+                            }
+                            else if (_shapeCanvas.Interaction.HasMouseDown &&
+                                     _shapeCanvas.Interaction.PressedPointId >= 0)
+                            {
+                                CommitPendingPointClick();
+                                _shapeCanvas.Interaction.EndMouseInteraction();
                                 evt.Use();
                             }
                             else
                             {
-                                if (!additive)
-                                    _shapeCanvas.Selection.Clear();
-
-                                evt.Use();
-                            }
-                        }
-                    }
-                    else if (evt.button == 1)
-                    {
-                        CancelPendingPointPress();
-
-                        int edgeIndex = ShapeStamperWindowUtility.FindEdgeNearMouse(
-                            document.Points,
-                            drawRect,
-                            document.WorldSizeMeters,
-                            mouseGui,
-                            EdgeInsertThreshold
-                        );
-
-                        if (edgeIndex >= 0)
-                        {
-                            document.InsertMidpointOnEdge(edgeIndex);
-                            _shapeCanvas.Selection.Clear();
-                            _shapeCanvas.Selection.AddPoint(edgeIndex + 1);
-                            evt.Use();
-                        }
-                    }
-
-                    break;
-                }
-
-                case EventType.MouseDrag:
-                {
-                    if (evt.button == 0)
-                    {
-                        _shapeCanvas.Interaction.UpdateMousePosition(mouseGui);
-
-                        if (_shapeCanvas.Interaction.HasMouseDown && !_shapeCanvas.Interaction.IsDraggingSelection)
-                        {
-                            float dragDistance = Vector2.Distance(
-                                _shapeCanvas.Interaction.MouseDownScreenPosition,
-                                mouseGui
-                            );
-
-                            if (dragDistance >= DragStartThresholdPixels &&
-                                _shapeCanvas.Interaction.PressedPointId >= 0)
-                            {
-                                StartPointDrag(drawRect, mouseGui);
-                                evt.Use();
-                                break;
+                                _shapeCanvas.Interaction.EndMouseInteraction();
                             }
                         }
 
-                        if (_shapeCanvas.Interaction.IsDraggingSelection &&
-                            _shapeCanvas.Selection.SelectedPointIds.Count > 0)
-                        {
-                            Vector2 worldMouse = ShapeStamperWindowUtility.GuiToWorld(
-                                mouseGui,
-                                drawRect,
-                                document.WorldSizeMeters
-                            );
-
-                            Vector2 lastWorldMouse = ShapeStamperWindowUtility.GuiToWorld(
-                                _shapeCanvas.Interaction.LastMouseScreenPosition,
-                                drawRect,
-                                document.WorldSizeMeters
-                            );
-
-                            Vector2 delta = worldMouse - lastWorldMouse;
-                            MoveSelectedPoints(delta);
-
-                            evt.Use();
-                        }
+                        break;
                     }
-
-                    break;
-                }
-
-                case EventType.MouseUp:
-                {
-                    if (evt.button == 0)
-                    {
-                        if (_shapeCanvas.Interaction.IsDraggingSelection)
-                        {
-                            _shapeCanvas.Interaction.EndMouseInteraction();
-                            CancelPendingPointPress();
-                            evt.Use();
-                        }
-                        else if (_shapeCanvas.Interaction.HasMouseDown &&
-                                 _shapeCanvas.Interaction.PressedPointId >= 0)
-                        {
-                            CommitPendingPointClick();
-                            _shapeCanvas.Interaction.EndMouseInteraction();
-                            evt.Use();
-                        }
-                        else
-                        {
-                            _shapeCanvas.Interaction.EndMouseInteraction();
-                        }
-                    }
-
-                    break;
-                }
 
                 case EventType.KeyDown:
-                {
-                    if (evt.keyCode == KeyCode.Delete || evt.keyCode == KeyCode.Backspace)
                     {
-                        if (_shapeCanvas.Selection.SelectedPointIds.Count > 0 && document.PointCount > 3)
+                        if (evt.keyCode == KeyCode.Delete || evt.keyCode == KeyCode.Backspace)
                         {
-                            DeleteSelectedPoints();
-                            evt.Use();
+                            if (_shapeCanvas.Selection.SelectedPointIds.Count > 0 && document.PointCount > 3)
+                            {
+                                DeleteSelectedPoints();
+                                evt.Use();
+                            }
                         }
-                    }
 
-                    break;
-                }
+                        break;
+                    }
             }
         }
 
@@ -422,7 +422,7 @@ namespace DLN.EditorTools.ShapeStamper
             _shapeCanvas.Interaction.LastMouseScreenPosition = mouseGui;
             _shapeCanvas.Interaction.CurrentMouseScreenPosition = mouseGui;
 
-            Vector2 worldMouse = ShapeStamperWindowUtility.GuiToWorld(
+            Vector2 worldMouse = ShapeCanvasUtility.GuiToWorld(
                 mouseGui,
                 drawRect,
                 document.WorldSizeMeters
@@ -464,7 +464,7 @@ namespace DLN.EditorTools.ShapeStamper
 
         private void UpdateHoverState(Rect drawRect, Vector2 mouseGui)
         {
-            _shapeCanvas.Interaction.HoveredPointId = ShapeStamperWindowUtility.FindPointNearMouse(
+            _shapeCanvas.Interaction.HoveredPointId = ShapeCanvasUtility.FindPointNearMouse(
                 document.Points,
                 drawRect,
                 document.WorldSizeMeters,
@@ -474,7 +474,7 @@ namespace DLN.EditorTools.ShapeStamper
 
             _shapeCanvas.Interaction.HoveredSegmentId = _shapeCanvas.Interaction.HoveredPointId >= 0
                 ? -1
-                : ShapeStamperWindowUtility.FindEdgeNearMouse(
+                : ShapeCanvasUtility.FindEdgeNearMouse(
                     document.Points,
                     drawRect,
                     document.WorldSizeMeters,

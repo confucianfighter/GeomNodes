@@ -48,8 +48,8 @@ namespace DLN.EditorTools.ShapeStamper
             {
                 int next = (i + 1) % points.Count;
 
-                Vector2 a = ShapeStamperWindowUtility.WorldToGui(points[i], drawRect, worldSizeMeters);
-                Vector2 b = ShapeStamperWindowUtility.WorldToGui(points[next], drawRect, worldSizeMeters);
+                Vector2 a = ShapeCanvasUtility.WorldToGui(points[i], drawRect, worldSizeMeters);
+                Vector2 b = ShapeCanvasUtility.WorldToGui(points[next], drawRect, worldSizeMeters);
 
                 Handles.color = selectedEdgeIndices.Contains(i)
                     ? Color.green
@@ -69,7 +69,7 @@ namespace DLN.EditorTools.ShapeStamper
         {
             for (int i = 0; i < points.Count; i++)
             {
-                Vector2 guiPoint = ShapeStamperWindowUtility.WorldToGui(points[i], drawRect, worldSizeMeters);
+                Vector2 guiPoint = ShapeCanvasUtility.WorldToGui(points[i], drawRect, worldSizeMeters);
 
                 Color color = Color.white;
                 if (selectedPointIndices.Contains(i))

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DLN.EditorTools.ShapeStamper
 {
-    public static class ShapeStamperWindowUtility
+    public static class ShapeCanvasUtility
     {
         public static Rect GetAllowedCanvasRect(Rect availableRect, Vector2 canvasPercentOfWindow, float padding)
         {
