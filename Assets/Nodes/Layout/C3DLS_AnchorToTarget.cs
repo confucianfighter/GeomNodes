@@ -10,14 +10,14 @@ namespace DLN
         [SerializeField] public Vector3 pivot = new Vector3(.5f, .5f, .5f);
         [SerializeField] public Vector3 anchor = new Vector3(.5f, .5f, .5f);
         [SerializeField] public bool pinChildren = false;
-        [SerializeField] public IncludeAxis includeAxis;
+        [SerializeField] public IncludeAxis includeAxis = IncludeAxis.AllTrue;
 
         public OptionalBoundsSettings anchorTargetBoundsSettings = OptionalBoundsSettings.Empty;
 
 
         public OptionalBoundsSettings moveTargetBoundsSettings = OptionalBoundsSettings.Empty;
 
-
+        [ContextMenu("Execute")]
 
         public override void Execute()
         {
@@ -30,7 +30,7 @@ namespace DLN
             );
             Bnds.InterpolateBounds(
                 @object: anchorTarget,
-                interpVec: pivot,
+                interpVec: anchor,
                 outputCoordSpace: Space.World,
                 overrides: moveTargetBoundsSettings,
                 result: out var _anchor
@@ -48,6 +48,10 @@ namespace DLN
             }
 
 
+        }
+        void OnValidate()
+        {
+            Execute();
         }
     }
 
