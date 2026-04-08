@@ -12,6 +12,15 @@ namespace DLN.EditorTools.ShapeStamper
         [SerializeField] private List<CanvasEdge> edges = new();
         [SerializeField] private List<CanvasOffsetConstraint> offsets = new();
 
+        [SerializeField] private bool hasInnerShape;
+        [SerializeField] private List<CanvasPoint> innerPoints = new();
+        [SerializeField] private List<CanvasEdge> innerEdges = new();
+
+        public bool HasInnerShape
+        {
+            get => hasInnerShape;
+            set => hasInnerShape = value;
+        }
         public Vector2 WorldSizeMeters
         {
             get => worldSizeMeters;
@@ -110,6 +119,101 @@ namespace DLN.EditorTools.ShapeStamper
                     B = points[next].Id
                 });
             }
+        }
+        public void EnsureDefaultInnerShape()
+        {
+            WorldSizeMeters = worldSizeMeters;
+
+            if (innerPoints == null)
+                innerPoints = new List<CanvasPoint>();
+
+            if (innerEdges == null)
+                innerEdges = new List<CanvasEdge>();
+
+            if (innerPoints.Count >= 3 && innerEdges.Count == innerPoints.Count)
+            {
+                ClampAllInnerPointsToWorld();
+                return;
+            }
+
+            innerPoints.Clear();
+            innerEdges.Clear();
+
+            Vector2 size = WorldSizeMeters;
+            Vector2 center = size * 0.5f;
+
+            float halfWidth = size.x * 0.12f;
+            float halfHeight = size.y * 0.12f;
+
+            int nextId = GetNextPointId(points, innerPoints);
+
+            innerPoints.Add(new CanvasPoint
+            {
+                Id = nextId++,
+                Position = new Vector2(center.x, center.y + halfHeight)
+            });
+
+            innerPoints.Add(new CanvasPoint
+            {
+                Id = nextId++,
+                Position = new Vector2(center.x - halfWidth, center.y - halfHeight)
+            });
+
+            innerPoints.Add(new CanvasPoint
+            {
+                Id = nextId++,
+                Position = new Vector2(center.x + halfWidth, center.y - halfHeight)
+            });
+
+            RebuildClosedInnerEdges();
+            ClampAllInnerPointsToWorld();
+        }
+        private void ClampAllInnerPointsToWorld()
+        {
+            for (int i = 0; i < innerPoints.Count; i++)
+            {
+                CanvasPoint p = innerPoints[i];
+                p.Position = new Vector2(
+                    Mathf.Clamp(p.Position.x, 0f, WorldSizeMeters.x),
+                    Mathf.Clamp(p.Position.y, 0f, WorldSizeMeters.y)
+                );
+                innerPoints[i] = p;
+            }
+        }
+
+        private void RebuildClosedInnerEdges()
+        {
+            innerEdges.Clear();
+
+            for (int i = 0; i < innerPoints.Count; i++)
+            {
+                int next = (i + 1) % innerPoints.Count;
+                innerEdges.Add(new CanvasEdge
+                {
+                    Id = i,
+                    A = innerPoints[i].Id,
+                    B = innerPoints[next].Id
+                });
+            }
+        }
+
+        private static int GetNextPointId(IList<CanvasPoint> outerPoints, IList<CanvasPoint> innerPoints)
+        {
+            int maxId = -1;
+
+            if (outerPoints != null)
+            {
+                for (int i = 0; i < outerPoints.Count; i++)
+                    maxId = Mathf.Max(maxId, outerPoints[i].Id);
+            }
+
+            if (innerPoints != null)
+            {
+                for (int i = 0; i < innerPoints.Count; i++)
+                    maxId = Mathf.Max(maxId, innerPoints[i].Id);
+            }
+
+            return maxId + 1;
         }
     }
 }

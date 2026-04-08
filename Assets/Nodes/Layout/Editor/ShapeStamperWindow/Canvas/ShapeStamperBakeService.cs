@@ -17,7 +17,7 @@ namespace DLN.EditorTools.ShapeStamper
                 return;
             }
 
-            Mesh mesh = BuildMeshFromShape(shapeDocument);
+            Mesh mesh = ShapeStamperTessellator.BuildFlatShapeMesh(shapeDocument);
             if (mesh == null)
             {
                 Debug.LogWarning("Shape Stamper: Failed to build mesh.");

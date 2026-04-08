@@ -123,6 +123,14 @@ namespace DLN.EditorTools.ShapeStamper
                 ShapeStamperBakeService.BakeShapeFaceToScene(shapeDocument);
             }
             GUILayout.FlexibleSpace();
+            bool newHasInnerShape = EditorGUILayout.ToggleLeft("Inner Shape", shapeDocument.HasInnerShape, GUILayout.Width(100f));
+            if (newHasInnerShape != shapeDocument.HasInnerShape)
+            {
+                shapeDocument.HasInnerShape = newHasInnerShape;
+
+                if (newHasInnerShape)
+                    shapeDocument.EnsureDefaultInnerShape();
+            }
 
             if (GUILayout.Button("Reset Shape", GUILayout.Width(100f)))
             {
