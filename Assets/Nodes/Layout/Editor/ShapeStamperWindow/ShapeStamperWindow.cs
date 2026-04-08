@@ -124,12 +124,14 @@ namespace DLN.EditorTools.ShapeStamper
             }
             GUILayout.FlexibleSpace();
             bool newHasInnerShape = EditorGUILayout.ToggleLeft("Inner Shape", shapeDocument.HasInnerShape, GUILayout.Width(100f));
-            if (newHasInnerShape != shapeDocument.HasInnerShape)
+            if (newHasInnerShape && !shapeDocument.HasInnerShape)
             {
-                shapeDocument.HasInnerShape = newHasInnerShape;
-
-                if (newHasInnerShape)
-                    shapeDocument.EnsureDefaultInnerShape();
+                shapeDocument.HasInnerShape = true;
+                shapeDocument.EnsureDefaultInnerShape();
+            }
+            else if (!newHasInnerShape && shapeDocument.HasInnerShape)
+            {
+                shapeDocument.HasInnerShape = false;
             }
 
             if (GUILayout.Button("Reset Shape", GUILayout.Width(100f)))
