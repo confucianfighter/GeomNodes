@@ -75,7 +75,7 @@ namespace DLN.EditorTools.ShapeStamper
         {
             foreach (var point in document.Points)
             {
-                Vector2 screenPos = CanvasMath.CanvasToScreen(point.Position, canvasRect, view);
+                Vector2 screenPos = CanvasMath.CanvasToScreen(point.Position, canvasRect, view, document);
 
                 bool isHovered = interaction.Hovered == CanvasElementRef.ForPoint(point.Id);
                 bool isSelected = selection.Contains(CanvasElementRef.ForPoint(point.Id));
@@ -172,8 +172,8 @@ namespace DLN.EditorTools.ShapeStamper
             if (!TryGetPoint(document, edge.B, out var pointB))
                 return false;
 
-            a = CanvasMath.CanvasToScreen(pointA.Position, canvasRect, view);
-            b = CanvasMath.CanvasToScreen(pointB.Position, canvasRect, view);
+            a = CanvasMath.CanvasToScreen(pointA.Position, canvasRect, view, document);
+            b = CanvasMath.CanvasToScreen(pointB.Position, canvasRect, view, document);
             return true;
         }
 

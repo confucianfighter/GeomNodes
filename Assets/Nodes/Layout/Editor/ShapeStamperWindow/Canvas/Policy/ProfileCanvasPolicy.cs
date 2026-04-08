@@ -31,9 +31,9 @@ namespace DLN.EditorTools.ShapeStamper
             Color old = Handles.color;
             Handles.color = new Color(1f, 1f, 1f, 0.12f);
 
-            Vector2 origin = CanvasMath.CanvasToScreen(Vector2.zero, canvasRect, canvas.View);
-            Vector2 xAxis = CanvasMath.CanvasToScreen(new Vector2(_document.WorldSizeMeters.x, 0f), canvasRect, canvas.View);
-            Vector2 yAxis = CanvasMath.CanvasToScreen(new Vector2(0f, _document.WorldSizeMeters.y), canvasRect, canvas.View);
+            Vector2 origin = CanvasMath.CanvasToScreen(Vector2.zero, canvasRect, canvas.View, _document);
+            Vector2 xAxis = CanvasMath.CanvasToScreen(new Vector2(_document.WorldSizeMeters.x, 0f), canvasRect, canvas.View, _document);
+            Vector2 yAxis = CanvasMath.CanvasToScreen(new Vector2(0f, _document.WorldSizeMeters.y), canvasRect, canvas.View, _document);
 
             Handles.DrawLine(origin, xAxis);
             Handles.DrawLine(origin, yAxis);
@@ -64,20 +64,65 @@ namespace DLN.EditorTools.ShapeStamper
                 return;
 
             int newPointId = GetNextPointId(_document);
-            canvasPos = ClampToProfileBounds(canvasPos);
+
+            Vector2 newPos;
+
+            if (_document.Points.Count == 0)
+            {
+                newPos = ClampToProfileBounds(canvasPos);
+            }
+            else if (_document.Points.Count == 1)
+            {
+                CanvasPoint last = _document.Points[_document.Points.Count - 1];
+                newPos = last.Position + new Vector2(0.15f, 0f);
+                newPos = ClampToProfileBounds(newPos);
+            }
+            else
+            {
+                CanvasPoint prev = _document.Points[_document.Points.Count - 2];
+                CanvasPoint last = _document.Points[_document.Points.Count - 1];
+
+                Vector2 dir = last.Position - prev.Position;
+                if (dir.sqrMagnitude < 0.000001f)
+                    dir = Vector2.right;
+                else
+                    dir.Normalize();
+
+                float defaultLength = Mathf.Max(
+                    _document.WorldSizeMeters.x,
+                    _document.WorldSizeMeters.y) * 0.15f;
+
+                newPos = last.Position + dir * defaultLength;
+                newPos = ClampToProfileBounds(newPos);
+            }
 
             _document.Points.Add(new CanvasPoint
             {
                 Id = newPointId,
-                Position = canvasPos
+                Position = newPos
             });
+
+            RebuildOpenEdges();
 
             _document.MarkDirty();
 
             canvas.Selection.Clear();
             canvas.Selection.Add(CanvasElementRef.ForPoint(newPointId));
         }
+        private void RebuildOpenEdges()
+        {
+            _document.Edges.Clear();
 
+            for (int i = 0; i < _document.Points.Count - 1; i++)
+            {
+                _document.Edges.Add(new CanvasEdge
+                {
+                    Id = i,
+                    A = _document.Points[i].Id,
+                    B = _document.Points[i + 1].Id
+                });
+            }
+        }
         public void SplitEdgeAtScreenPosition(EditorCanvas canvas, CanvasElementRef edgeRef, Vector2 screenPos)
         {
             if (_document == null || !edgeRef.IsEdge)

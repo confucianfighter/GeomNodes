@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DLN.EditorTools.ShapeStamper
@@ -9,9 +10,6 @@ namespace DLN.EditorTools.ShapeStamper
         {
             Rect worldRect = GetWorldRect(document);
             Rect fittedRect = GetFittedWorldScreenRect(canvasRect, view, document);
-
-            float width = Mathf.Max(0.0001f, fittedRect.width);
-            float height = Mathf.Max(0.0001f, fittedRect.height);
 
             float tx = Mathf.InverseLerp(fittedRect.xMin, fittedRect.xMax, screenPosition.x);
             float ty = Mathf.InverseLerp(fittedRect.yMin, fittedRect.yMax, screenPosition.y);
@@ -26,9 +24,6 @@ namespace DLN.EditorTools.ShapeStamper
         {
             Rect worldRect = GetWorldRect(document);
             Rect fittedRect = GetFittedWorldScreenRect(canvasRect, view, document);
-
-            float width = Mathf.Max(0.0001f, worldRect.width);
-            float height = Mathf.Max(0.0001f, worldRect.height);
 
             float tx = Mathf.InverseLerp(worldRect.xMin, worldRect.xMax, canvasPosition.x);
             float ty = Mathf.InverseLerp(worldRect.yMin, worldRect.yMax, canvasPosition.y);
@@ -196,12 +191,15 @@ namespace DLN.EditorTools.ShapeStamper
 
         public static bool TryGetPoint(ICanvasDocument document, int pointId, out CanvasPoint point)
         {
-            foreach (CanvasPoint p in document.Points)
+            if (document != null)
             {
-                if (p.Id == pointId)
+                foreach (CanvasPoint p in document.Points)
                 {
-                    point = p;
-                    return true;
+                    if (p.Id == pointId)
+                    {
+                        point = p;
+                        return true;
+                    }
                 }
             }
 
@@ -211,12 +209,15 @@ namespace DLN.EditorTools.ShapeStamper
 
         public static bool TryGetEdgeById(ICanvasDocument document, int edgeId, out CanvasEdge edge)
         {
-            foreach (CanvasEdge e in document.Edges)
+            if (document != null)
             {
-                if (e.Id == edgeId)
+                foreach (CanvasEdge e in document.Edges)
                 {
-                    edge = e;
-                    return true;
+                    if (e.Id == edgeId)
+                    {
+                        edge = e;
+                        return true;
+                    }
                 }
             }
 
@@ -224,7 +225,7 @@ namespace DLN.EditorTools.ShapeStamper
             return false;
         }
 
-        private static Rect GetCanvasBounds(System.Collections.Generic.IList<CanvasPoint> points)
+        private static Rect GetCanvasBounds(IList<CanvasPoint> points)
         {
             if (points == null || points.Count == 0)
                 return new Rect(0f, 0f, 1f, 1f);

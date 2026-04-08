@@ -25,9 +25,9 @@ namespace DLN.EditorTools.ShapeStamper
             Color old = Handles.color;
             Handles.color = new Color(1f, 1f, 1f, 0.18f);
 
-            Vector2 originScreen = CanvasMath.CanvasToScreen(Vector2.zero, canvasRect, canvas.View);
-            Vector2 xScreen = CanvasMath.CanvasToScreen(new Vector2(_document.WorldSizeMeters.x, 0f), canvasRect, canvas.View);
-            Vector2 yScreen = CanvasMath.CanvasToScreen(new Vector2(0f, _document.WorldSizeMeters.y), canvasRect, canvas.View);
+            Vector2 originScreen = CanvasMath.CanvasToScreen(Vector2.zero, canvasRect, canvas.View, _document);
+            Vector2 xScreen = CanvasMath.CanvasToScreen(new Vector2(_document.WorldSizeMeters.x, 0f), canvasRect, canvas.View, _document);
+            Vector2 yScreen = CanvasMath.CanvasToScreen(new Vector2(0f, _document.WorldSizeMeters.y), canvasRect, canvas.View, _document);
 
             Handles.DrawLine(originScreen, xScreen);
             Handles.DrawLine(originScreen, yScreen);

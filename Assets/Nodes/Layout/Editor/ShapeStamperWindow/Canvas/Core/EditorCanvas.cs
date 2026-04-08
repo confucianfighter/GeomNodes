@@ -74,7 +74,7 @@ namespace DLN.EditorTools.ShapeStamper
                 view: View);
 
             DrawWorldBounds(canvasRect);
-            DrawMarquee(canvasRect);
+            DrawMarquee();
 
             Policy?.DrawOverlay(this, canvasRect);
 
@@ -86,7 +86,28 @@ namespace DLN.EditorTools.ShapeStamper
         {
             return CanvasMath.ScreenToCanvas(screenPosition, LastCanvasRect, View, Document);
         }
+        private void DrawMarquee()
+        {
+            if (!Interaction.IsMarqueeSelecting)
+                return;
 
+            Rect marquee = GetScreenMarqueeRect();
+
+            EditorGUI.DrawRect(marquee, new Color(0.3f, 0.6f, 1f, 0.10f));
+
+            Handles.BeginGUI();
+            Color old = Handles.color;
+            Handles.color = new Color(0.3f, 0.6f, 1f, 0.9f);
+            Handles.DrawAAPolyLine(
+                2f,
+                new Vector3(marquee.xMin, marquee.yMin),
+                new Vector3(marquee.xMax, marquee.yMin),
+                new Vector3(marquee.xMax, marquee.yMax),
+                new Vector3(marquee.xMin, marquee.yMax),
+                new Vector3(marquee.xMin, marquee.yMin));
+            Handles.color = old;
+            Handles.EndGUI();
+        }
         public Vector2 CanvasToScreen(Vector2 canvasPosition)
         {
             return CanvasMath.CanvasToScreen(canvasPosition, LastCanvasRect, View, Document);
@@ -286,6 +307,9 @@ namespace DLN.EditorTools.ShapeStamper
         {
             GenericMenu menu = new GenericMenu();
 
+            bool isProfileCanvas = Document is ProfileCanvasDocument;
+            bool isShapeCanvas = Document is ShapeCanvasDocument;
+
             if (Interaction.Hovered.IsValid)
             {
                 if (Interaction.Hovered.Type == CanvasElementType.Edge)
@@ -308,10 +332,17 @@ namespace DLN.EditorTools.ShapeStamper
             }
             else
             {
-                menu.AddItem(new GUIContent("Add Point"), false, () =>
+                if (isProfileCanvas)
                 {
-                    Policy?.AddPointAtCanvasPosition(this, ScreenToCanvas(evt.mousePosition));
-                });
+                    menu.AddItem(new GUIContent("Add Segment To End"), false, () =>
+                    {
+                        Policy?.AddPointAtCanvasPosition(this, ScreenToCanvas(evt.mousePosition));
+                    });
+                }
+                else if (isShapeCanvas)
+                {
+                    menu.AddDisabledItem(new GUIContent("Split Edge"));
+                }
 
                 menu.AddSeparator("");
                 menu.AddDisabledItem(new GUIContent("Delete Selection"));
@@ -320,7 +351,6 @@ namespace DLN.EditorTools.ShapeStamper
             menu.ShowAsContext();
             evt.Use();
         }
-
         private void UpdateHover(Vector2 mouseScreen)
         {
             Interaction.LastMouseScreen = mouseScreen;
