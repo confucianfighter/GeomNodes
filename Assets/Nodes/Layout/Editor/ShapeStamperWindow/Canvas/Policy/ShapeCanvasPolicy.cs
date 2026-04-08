@@ -34,6 +34,7 @@ namespace DLN.EditorTools.ShapeStamper
 
             Handles.color = old;
             Handles.EndGUI();
+            DrawInnerShape(canvas, canvasRect);
 
             Rect labelRect = new Rect(canvasRect.x + 8f, canvasRect.y + 8f, 220f, 20f);
             GUI.Label(
@@ -41,6 +42,77 @@ namespace DLN.EditorTools.ShapeStamper
                 $"Shape  {_document.WorldSizeMeters.x:0.###}m x {_document.WorldSizeMeters.y:0.###}m",
                 EditorStyles.miniLabel
             );
+        }
+        private void DrawInnerShape(EditorCanvas canvas, Rect canvasRect)
+        {
+            if (_document == null || !_document.HasInnerShape)
+                return;
+
+            if (_document.innerPoints == null || _document.innerEdges == null)
+                return;
+
+            Handles.BeginGUI();
+
+            Color old = Handles.color;
+
+            // Draw inner edges
+            Handles.color = new Color(1f, 0.6f, 0.2f, 0.95f);
+            for (int i = 0; i < _document.innerEdges.Count; i++)
+            {
+                CanvasEdge edge = _document.innerEdges[i];
+
+                if (!TryGetInnerEdgeScreenPositions(canvas, canvasRect, edge, out Vector2 a, out Vector2 b))
+                    continue;
+
+                Handles.DrawAAPolyLine(2f, a, b);
+            }
+
+            // Draw inner points
+            for (int i = 0; i < _document.innerPoints.Count; i++)
+            {
+                CanvasPoint point = _document.innerPoints[i];
+                Vector2 screen = canvas.CanvasToScreen(point.Position);
+
+                Handles.color = new Color(1f, 0.5f, 0.15f, 1f);
+                Handles.DrawSolidDisc(screen, Vector3.forward, 5f);
+
+                Handles.color = Color.black;
+                Handles.DrawWireDisc(screen, Vector3.forward, 6f);
+            }
+
+            Handles.color = old;
+            Handles.EndGUI();
+        }
+
+        private bool TryGetInnerEdgeScreenPositions(EditorCanvas canvas, Rect canvasRect, CanvasEdge edge, out Vector2 a, out Vector2 b)
+        {
+            a = default;
+            b = default;
+
+            if (!TryGetInnerPoint(edge.A, out CanvasPoint pointA))
+                return false;
+
+            if (!TryGetInnerPoint(edge.B, out CanvasPoint pointB))
+                return false;
+
+            a = canvas.CanvasToScreen(pointA.Position);
+            b = canvas.CanvasToScreen(pointB.Position);
+            return true;
+        }
+
+        private bool TryGetInnerPoint(int pointId, out CanvasPoint point)
+        {
+            for (int i = 0; i < _document.innerPoints.Count; i++)
+            {
+                if (_document.innerPoints[i].Id == pointId)
+                {
+                    point = _document.innerPoints[i];
+                    return true;
+                }
+            }
+
+            point = default;
+            return false;
         }
 
         public void OnMouseDown(EditorCanvas canvas, Event evt)

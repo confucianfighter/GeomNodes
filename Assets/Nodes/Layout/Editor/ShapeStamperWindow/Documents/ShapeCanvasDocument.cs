@@ -13,8 +13,21 @@ namespace DLN.EditorTools.ShapeStamper
         [SerializeField] private List<CanvasOffsetConstraint> offsets = new();
 
         [SerializeField] private bool hasInnerShape;
-        [SerializeField] private List<CanvasPoint> innerPoints = new();
-        [SerializeField] private List<CanvasEdge> innerEdges = new();
+        [SerializeField] public List<CanvasPoint> innerPoints = new();
+        [SerializeField] public List<CanvasEdge> innerEdges = new();
+        public enum ShapeLoopEditMode
+        {
+            Outer = 0,
+            Inner = 1
+        }
+
+        [SerializeField] private ShapeLoopEditMode editMode = ShapeLoopEditMode.Outer;
+
+        public ShapeLoopEditMode EditMode
+        {
+            get => editMode;
+            set => editMode = value;
+        }
 
         public bool HasInnerShape
         {
