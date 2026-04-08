@@ -1,30 +1,29 @@
 using UnityEngine;
 
-namespace DLN
+namespace DLN.EditorTools.ShapeStamper
 {
     [System.Serializable]
     public class CanvasViewState
     {
-        public Vector2 Pan = Vector2.zero;
-        public float Zoom = 1f;
+        [SerializeField] private float worldPaddingPixels = 24f;
+
+        public float WorldPaddingPixels
+        {
+            get => Mathf.Max(0f, worldPaddingPixels);
+            set => worldPaddingPixels = Mathf.Max(0f, value);
+        }
+
+        public void ResetView()
+        {
+            // Intentionally no-op for now.
+            // This canvas always fits the document world rect into the viewport.
+        }
 
         public void FrameRect(Rect rect, Vector2 viewportSize, float padding)
         {
-            if (viewportSize.x <= 0f || viewportSize.y <= 0f)
-                return;
-
-            float width = Mathf.Max(1f, rect.width);
-            float height = Mathf.Max(1f, rect.height);
-
-            float zoomX = (viewportSize.x - padding * 2f) / width;
-            float zoomY = (viewportSize.y - padding * 2f) / height;
-
-            Zoom = Mathf.Clamp(Mathf.Min(zoomX, zoomY), 0.05f, 10f);
-
-            Vector2 rectCenter = rect.center;
-            Vector2 viewportCenter = viewportSize * 0.5f;
-
-            Pan = viewportCenter - rectCenter * Zoom;
+            // Intentionally no-op for now.
+            // Kept only so existing callers do not break.
+            WorldPaddingPixels = padding;
         }
     }
 }

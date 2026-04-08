@@ -20,7 +20,11 @@ namespace DLN.EditorTools.ShapeStamper
                 return;
 
             Rect labelRect = new Rect(canvasRect.x + 8f, canvasRect.y + 8f, 220f, 20f);
-            GUI.Label(labelRect, "Profile Canvas", EditorStyles.miniLabel);
+            GUI.Label(
+                labelRect,
+                $"Profile  {_document.WorldSizeMeters.x:0.###}m x {_document.WorldSizeMeters.y:0.###}m",
+                EditorStyles.miniLabel
+            );
 
             Handles.BeginGUI();
 
@@ -28,8 +32,8 @@ namespace DLN.EditorTools.ShapeStamper
             Handles.color = new Color(1f, 1f, 1f, 0.12f);
 
             Vector2 origin = CanvasMath.CanvasToScreen(Vector2.zero, canvasRect, canvas.View);
-            Vector2 xAxis = CanvasMath.CanvasToScreen(new Vector2(1f, 0f), canvasRect, canvas.View);
-            Vector2 yAxis = CanvasMath.CanvasToScreen(new Vector2(0f, 1f), canvasRect, canvas.View);
+            Vector2 xAxis = CanvasMath.CanvasToScreen(new Vector2(_document.WorldSizeMeters.x, 0f), canvasRect, canvas.View);
+            Vector2 yAxis = CanvasMath.CanvasToScreen(new Vector2(0f, _document.WorldSizeMeters.y), canvasRect, canvas.View);
 
             Handles.DrawLine(origin, xAxis);
             Handles.DrawLine(origin, yAxis);
@@ -38,17 +42,9 @@ namespace DLN.EditorTools.ShapeStamper
             Handles.EndGUI();
         }
 
-        public void OnMouseDown(EditorCanvas canvas, Event evt)
-        {
-        }
-
-        public void OnDrag(EditorCanvas canvas, Event evt)
-        {
-        }
-
-        public void OnClick(EditorCanvas canvas, Event evt)
-        {
-        }
+        public void OnMouseDown(EditorCanvas canvas, Event evt) { }
+        public void OnDrag(EditorCanvas canvas, Event evt) { }
+        public void OnClick(EditorCanvas canvas, Event evt) { }
 
         public void OnKeyDown(EditorCanvas canvas, Event evt)
         {
@@ -68,6 +64,7 @@ namespace DLN.EditorTools.ShapeStamper
                 return;
 
             int newPointId = GetNextPointId(_document);
+            canvasPos = ClampToProfileBounds(canvasPos);
 
             _document.Points.Add(new CanvasPoint
             {
@@ -94,6 +91,7 @@ namespace DLN.EditorTools.ShapeStamper
 
             Vector2 mouseCanvas = canvas.ScreenToCanvas(screenPos);
             Vector2 splitPoint = CanvasMath.ClosestPointOnSegment(mouseCanvas, a, b);
+            splitPoint = ClampToProfileBounds(splitPoint);
 
             int newPointId = GetNextPointId(_document);
             int newEdgeIdA = GetNextEdgeId(_document);
@@ -144,17 +142,9 @@ namespace DLN.EditorTools.ShapeStamper
             {
                 switch (element.Type)
                 {
-                    case CanvasElementType.Point:
-                        pointIdsToDelete.Add(element.Id);
-                        break;
-
-                    case CanvasElementType.Edge:
-                        edgeIdsToDelete.Add(element.Id);
-                        break;
-
-                    case CanvasElementType.Offset:
-                        offsetIdsToDelete.Add(element.Id);
-                        break;
+                    case CanvasElementType.Point: pointIdsToDelete.Add(element.Id); break;
+                    case CanvasElementType.Edge: edgeIdsToDelete.Add(element.Id); break;
+                    case CanvasElementType.Offset: offsetIdsToDelete.Add(element.Id); break;
                 }
             }
 
@@ -177,8 +167,15 @@ namespace DLN.EditorTools.ShapeStamper
 
         public void ConstrainDraggedPoint(EditorCanvas canvas, int pointId, ref Vector2 position)
         {
-            // No profile-specific clamping yet.
-            // Later this is where you can enforce bevel/profile constraints.
+            position = ClampToProfileBounds(position);
+        }
+
+        private Vector2 ClampToProfileBounds(Vector2 p)
+        {
+            return new Vector2(
+                Mathf.Clamp(p.x, 0f, _document.WorldSizeMeters.x),
+                Mathf.Clamp(p.y, 0f, _document.WorldSizeMeters.y)
+            );
         }
 
         private static int GetNextPointId(ICanvasDocument document)
@@ -290,7 +287,6 @@ namespace DLN.EditorTools.ShapeStamper
                 _document.Offsets[i] = offset;
             }
         }
-        
     }
 }
 #endif

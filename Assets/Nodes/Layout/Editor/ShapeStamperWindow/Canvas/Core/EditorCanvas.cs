@@ -5,14 +5,7 @@ using UnityEditor;
 using UnityEngine;
 
 namespace DLN.EditorTools.ShapeStamper
-
 {
-    /// <summary>
-    /// Shared editor canvas core for shape/profile style 2D editing.
-    /// This class should contain only generic canvas behavior:
-    /// view transforms, hit testing, hover/selection, dragging, marquee, etc.
-    /// Document-specific rules should live in ICanvasToolPolicy / document classes.
-    /// </summary>
     [Serializable]
     public class EditorCanvas
     {
@@ -20,7 +13,6 @@ namespace DLN.EditorTools.ShapeStamper
         private const float DefaultEdgeHitDistance = 8f;
         private const float DefaultOffsetHitDistance = 10f;
         private const float DragStartThreshold = 4f;
-        private const float GridSpacing = 20f;
 
         public ICanvasDocument Document { get; private set; }
         public ICanvasToolPolicy Policy { get; private set; }
@@ -49,6 +41,7 @@ namespace DLN.EditorTools.ShapeStamper
         {
             Document = document;
             ClearTransientState();
+            View?.ResetView();
         }
 
         public void SetPolicy(ICanvasToolPolicy policy)
@@ -66,11 +59,11 @@ namespace DLN.EditorTools.ShapeStamper
                 return;
             }
 
-            var evt = Event.current;
-
+            Event evt = Event.current;
             HandleEvent(evt, canvasRect);
 
             DrawBackground(canvasRect);
+            DrawWorldMask(canvasRect);
             DrawGrid(canvasRect);
 
             CanvasDrawing.DrawDocument(
@@ -80,33 +73,29 @@ namespace DLN.EditorTools.ShapeStamper
                 interaction: Interaction,
                 view: View);
 
+            DrawWorldBounds(canvasRect);
             DrawMarquee(canvasRect);
 
             Policy?.DrawOverlay(this, canvasRect);
 
             if (evt.type == EventType.Repaint)
-            {
                 EditorGUIUtility.AddCursorRect(canvasRect, MouseCursor.Arrow);
-            }
         }
 
         public Vector2 ScreenToCanvas(Vector2 screenPosition)
         {
-            return CanvasMath.ScreenToCanvas(screenPosition, LastCanvasRect, View);
+            return CanvasMath.ScreenToCanvas(screenPosition, LastCanvasRect, View, Document);
         }
 
         public Vector2 CanvasToScreen(Vector2 canvasPosition)
         {
-            return CanvasMath.CanvasToScreen(canvasPosition, LastCanvasRect, View);
+            return CanvasMath.CanvasToScreen(canvasPosition, LastCanvasRect, View, Document);
         }
 
-        public void FrameAll(float padding = 30f)
+        public void FrameAll(float padding = 24f)
         {
-            if (Document == null || Document.Points == null || Document.Points.Count == 0)
-                return;
-
-            Rect bounds = GetCanvasBounds(Document.Points);
-            View.FrameRect(bounds, LastCanvasRect.size, padding);
+            if (View != null)
+                View.WorldPaddingPixels = padding;
         }
 
         public void ClearSelection()
@@ -123,16 +112,18 @@ namespace DLN.EditorTools.ShapeStamper
             Interaction.Pressed = default;
             Interaction.Dragging = default;
             Interaction.IsDragging = false;
+            Interaction.IsDraggingPoints = false;
             Interaction.IsPanning = false;
             Interaction.IsMarqueeSelecting = false;
+            Interaction.DragPointStartPositions.Clear();
+            Interaction.MarqueeSelectionSnapshot.Clear();
         }
 
         private void HandleEvent(Event evt, Rect canvasRect)
         {
             if (!canvasRect.Contains(evt.mousePosition) &&
                 evt.type != EventType.MouseUp &&
-                evt.type != EventType.MouseDrag &&
-                evt.type != EventType.ScrollWheel)
+                evt.type != EventType.MouseDrag)
             {
                 return;
             }
@@ -142,40 +133,26 @@ namespace DLN.EditorTools.ShapeStamper
             switch (evt.type)
             {
                 case EventType.MouseDown:
-                    HandleMouseDown(evt, canvasRect);
+                    HandleMouseDown(evt);
                     break;
 
                 case EventType.MouseDrag:
-                    HandleMouseDrag(evt, canvasRect);
+                    HandleMouseDrag(evt);
                     break;
 
                 case EventType.MouseUp:
-                    HandleMouseUp(evt, canvasRect);
-                    break;
-
-                case EventType.ScrollWheel:
-                    HandleScrollWheel(evt, canvasRect);
+                    HandleMouseUp(evt);
                     break;
 
                 case EventType.KeyDown:
                     HandleKeyDown(evt);
                     break;
-
-                case EventType.Repaint:
-                    break;
             }
         }
 
-        private void HandleMouseDown(Event evt, Rect canvasRect)
+        private void HandleMouseDown(Event evt)
         {
             GUI.FocusControl(null);
-
-            if (evt.button == 2 || (evt.button == 0 && evt.alt))
-            {
-                BeginPan(evt.mousePosition);
-                evt.Use();
-                return;
-            }
 
             if (evt.button == 1)
             {
@@ -209,9 +186,7 @@ namespace DLN.EditorTools.ShapeStamper
                 }
 
                 if (Interaction.Hovered.Type == CanvasElementType.Point)
-                {
                     BeginPointDrag();
-                }
 
                 Policy?.OnMouseDown(this, evt);
                 evt.Use();
@@ -226,17 +201,8 @@ namespace DLN.EditorTools.ShapeStamper
             evt.Use();
         }
 
-        private void HandleMouseDrag(Event evt, Rect canvasRect)
+        private void HandleMouseDrag(Event evt)
         {
-            if (Interaction.IsPanning)
-            {
-                Vector2 delta = evt.mousePosition - Interaction.LastMouseScreen;
-                View.Pan += delta;
-                Interaction.LastMouseScreen = evt.mousePosition;
-                evt.Use();
-                return;
-            }
-
             float dragDistance = Vector2.Distance(evt.mousePosition, Interaction.MouseDownScreen);
             if (!Interaction.IsDragging && dragDistance >= DragStartThreshold)
                 Interaction.IsDragging = true;
@@ -261,53 +227,32 @@ namespace DLN.EditorTools.ShapeStamper
             Policy?.OnDrag(this, evt);
         }
 
-        private void HandleMouseUp(Event evt, Rect canvasRect)
+        private void HandleMouseUp(Event evt)
         {
-            if (Interaction.IsPanning)
-            {
-                EndPan();
-                evt.Use();
+            if (evt.button != 0)
                 return;
-            }
 
-            if (evt.button == 0)
+            bool wasDragging = Interaction.IsDragging;
+
+            if (Interaction.IsDraggingPoints)
             {
-                bool wasDragging = Interaction.IsDragging;
-
-                if (Interaction.IsDraggingPoints)
-                {
-                    EndPointDrag();
-                    Document.MarkDirty();
-                    evt.Use();
-                }
-                else if (Interaction.IsMarqueeSelecting)
-                {
-                    EndMarquee();
-                    evt.Use();
-                }
-                else if (!wasDragging)
-                {
-                    Policy?.OnClick(this, evt);
-                    evt.Use();
-                }
-
-                Interaction.Pressed = default;
-                Interaction.IsDragging = false;
+                EndPointDrag();
+                Document.MarkDirty();
+                evt.Use();
             }
-        }
+            else if (Interaction.IsMarqueeSelecting)
+            {
+                EndMarquee();
+                evt.Use();
+            }
+            else if (!wasDragging)
+            {
+                Policy?.OnClick(this, evt);
+                evt.Use();
+            }
 
-        private void HandleScrollWheel(Event evt, Rect canvasRect)
-        {
-            float zoomDelta = -evt.delta.y * 0.03f;
-            Vector2 mouseCanvasBefore = ScreenToCanvas(evt.mousePosition);
-
-            View.Zoom = Mathf.Clamp(View.Zoom * (1f + zoomDelta), 0.1f, 10f);
-
-            Vector2 mouseScreenAfter = CanvasToScreen(mouseCanvasBefore);
-            Vector2 screenDelta = evt.mousePosition - mouseScreenAfter;
-            View.Pan += screenDelta;
-
-            evt.Use();
+            Interaction.Pressed = default;
+            Interaction.IsDragging = false;
         }
 
         private void HandleKeyDown(Event evt)
@@ -329,7 +274,7 @@ namespace DLN.EditorTools.ShapeStamper
 
             if (evt.keyCode == KeyCode.F)
             {
-                FrameAll();
+                View?.ResetView();
                 evt.Use();
                 return;
             }
@@ -356,7 +301,6 @@ namespace DLN.EditorTools.ShapeStamper
                 }
 
                 menu.AddSeparator("");
-
                 menu.AddItem(new GUIContent("Delete Selection"), false, () =>
                 {
                     Policy?.DeleteSelection(this);
@@ -370,7 +314,6 @@ namespace DLN.EditorTools.ShapeStamper
                 });
 
                 menu.AddSeparator("");
-
                 menu.AddDisabledItem(new GUIContent("Delete Selection"));
             }
 
@@ -382,21 +325,20 @@ namespace DLN.EditorTools.ShapeStamper
         {
             Interaction.LastMouseScreen = mouseScreen;
             Interaction.LastMouseCanvas = ScreenToCanvas(mouseScreen);
-
             Interaction.Hovered = FindHit(mouseScreen);
         }
 
         private CanvasElementRef FindHit(Vector2 mouseScreen)
         {
-            var pointHit = FindPointHit(mouseScreen);
+            CanvasElementRef pointHit = FindPointHit(mouseScreen);
             if (pointHit.IsValid)
                 return pointHit;
 
-            var edgeHit = FindEdgeHit(mouseScreen);
+            CanvasElementRef edgeHit = FindEdgeHit(mouseScreen);
             if (edgeHit.IsValid)
                 return edgeHit;
 
-            var offsetHit = FindOffsetHit(mouseScreen);
+            CanvasElementRef offsetHit = FindOffsetHit(mouseScreen);
             if (offsetHit.IsValid)
                 return offsetHit;
 
@@ -408,7 +350,7 @@ namespace DLN.EditorTools.ShapeStamper
             float bestDistance = DefaultPointRadius + 4f;
             CanvasElementRef best = default;
 
-            foreach (var point in Document.Points)
+            foreach (CanvasPoint point in Document.Points)
             {
                 Vector2 pointScreen = CanvasToScreen(point.Position);
                 float distance = Vector2.Distance(mouseScreen, pointScreen);
@@ -427,7 +369,7 @@ namespace DLN.EditorTools.ShapeStamper
             float bestDistance = DefaultEdgeHitDistance;
             CanvasElementRef best = default;
 
-            foreach (var edge in Document.Edges)
+            foreach (CanvasEdge edge in Document.Edges)
             {
                 if (!TryGetEdgeScreenPositions(edge, out Vector2 a, out Vector2 b))
                     continue;
@@ -448,7 +390,7 @@ namespace DLN.EditorTools.ShapeStamper
             float bestDistance = DefaultOffsetHitDistance;
             CanvasElementRef best = default;
 
-            foreach (var offset in Document.Offsets)
+            foreach (CanvasOffsetConstraint offset in Document.Offsets)
             {
                 if (!CanvasMath.TryGetOffsetHandleScreenPosition(
                         offset,
@@ -469,29 +411,18 @@ namespace DLN.EditorTools.ShapeStamper
             return best;
         }
 
-        private void BeginPan(Vector2 mouseScreen)
-        {
-            Interaction.IsPanning = true;
-            Interaction.LastMouseScreen = mouseScreen;
-        }
-
-        private void EndPan()
-        {
-            Interaction.IsPanning = false;
-        }
-
         private void BeginPointDrag()
         {
             Interaction.IsDraggingPoints = true;
             Interaction.DragStartCanvas = Interaction.MouseDownCanvas;
             Interaction.DragPointStartPositions.Clear();
 
-            foreach (var selected in Selection.Elements)
+            foreach (CanvasElementRef selected in Selection.Elements)
             {
                 if (selected.Type != CanvasElementType.Point)
                     continue;
 
-                if (TryGetPointById(selected.Id, out var point))
+                if (TryGetPointById(selected.Id, out CanvasPoint point))
                     Interaction.DragPointStartPositions[selected.Id] = point.Position;
             }
         }
@@ -501,12 +432,9 @@ namespace DLN.EditorTools.ShapeStamper
             Vector2 currentCanvas = ScreenToCanvas(currentMouseScreen);
             Vector2 delta = currentCanvas - Interaction.DragStartCanvas;
 
-            foreach (var kvp in Interaction.DragPointStartPositions)
+            foreach ((int pointId, Vector2 startPos) in Interaction.DragPointStartPositions)
             {
-                int pointId = kvp.Key;
-                Vector2 startPos = kvp.Value;
                 Vector2 newPos = startPos + delta;
-
                 Policy?.ConstrainDraggedPoint(this, pointId, ref newPos);
                 SetPointPosition(pointId, newPos);
             }
@@ -535,13 +463,13 @@ namespace DLN.EditorTools.ShapeStamper
             else
                 Selection.SetElements(Interaction.MarqueeSelectionSnapshot);
 
-            foreach (var point in Document.Points)
+            foreach (CanvasPoint point in Document.Points)
             {
                 Vector2 pointScreen = CanvasToScreen(point.Position);
                 if (!marquee.Contains(pointScreen))
                     continue;
 
-                var pointRef = CanvasElementRef.ForPoint(point.Id);
+                CanvasElementRef pointRef = CanvasElementRef.ForPoint(point.Id);
 
                 if (subtractive)
                     Selection.Remove(pointRef);
@@ -559,13 +487,13 @@ namespace DLN.EditorTools.ShapeStamper
         {
             Selection.Clear();
 
-            foreach (var point in Document.Points)
+            foreach (CanvasPoint point in Document.Points)
                 Selection.Add(CanvasElementRef.ForPoint(point.Id));
 
-            foreach (var edge in Document.Edges)
+            foreach (CanvasEdge edge in Document.Edges)
                 Selection.Add(CanvasElementRef.ForEdge(edge.Id));
 
-            foreach (var offset in Document.Offsets)
+            foreach (CanvasOffsetConstraint offset in Document.Offsets)
                 Selection.Add(CanvasElementRef.ForOffset(offset.Id));
         }
 
@@ -581,57 +509,108 @@ namespace DLN.EditorTools.ShapeStamper
             EditorGUI.DrawRect(canvasRect, new Color(0.13f, 0.13f, 0.13f));
         }
 
+        private void DrawWorldMask(Rect canvasRect)
+        {
+            Rect worldScreenRect = CanvasMath.GetFittedWorldScreenRect(canvasRect, View, Document);
+
+            Color outside = new Color(0f, 0f, 0f, 0.18f);
+
+            Rect top = new Rect(canvasRect.xMin, canvasRect.yMin, canvasRect.width, Mathf.Max(0f, worldScreenRect.yMin - canvasRect.yMin));
+            Rect bottom = new Rect(canvasRect.xMin, worldScreenRect.yMax, canvasRect.width, Mathf.Max(0f, canvasRect.yMax - worldScreenRect.yMax));
+            Rect left = new Rect(canvasRect.xMin, worldScreenRect.yMin, Mathf.Max(0f, worldScreenRect.xMin - canvasRect.xMin), Mathf.Max(0f, worldScreenRect.height));
+            Rect right = new Rect(worldScreenRect.xMax, worldScreenRect.yMin, Mathf.Max(0f, canvasRect.xMax - worldScreenRect.xMax), Mathf.Max(0f, worldScreenRect.height));
+
+            if (top.width > 0f && top.height > 0f) EditorGUI.DrawRect(top, outside);
+            if (bottom.width > 0f && bottom.height > 0f) EditorGUI.DrawRect(bottom, outside);
+            if (left.width > 0f && left.height > 0f) EditorGUI.DrawRect(left, outside);
+            if (right.width > 0f && right.height > 0f) EditorGUI.DrawRect(right, outside);
+        }
+
         private void DrawGrid(Rect canvasRect)
         {
+            Rect worldRect = CanvasMath.GetWorldRect(Document);
+            Rect worldScreenRect = CanvasMath.GetFittedWorldScreenRect(canvasRect, View, Document);
+
+            float pixelsPerWorldUnitX = worldScreenRect.width / Mathf.Max(0.0001f, worldRect.width);
+            float pixelsPerWorldUnitY = worldScreenRect.height / Mathf.Max(0.0001f, worldRect.height);
+            float pixelsPerWorldUnit = Mathf.Min(pixelsPerWorldUnitX, pixelsPerWorldUnitY);
+
+            float targetPixels = 48f;
+            float step = GetNiceWorldStep(targetPixels / Mathf.Max(0.0001f, pixelsPerWorldUnit));
+
             Handles.BeginGUI();
 
             Color oldColor = Handles.color;
-            Handles.color = new Color(1f, 1f, 1f, 0.05f);
+            Color minor = new Color(1f, 1f, 1f, 0.06f);
+            Color major = new Color(1f, 1f, 1f, 0.12f);
 
-            float spacing = GridSpacing * View.Zoom;
-            if (spacing < 8f)
-                spacing *= 2f;
+            float startX = Mathf.Ceil(worldRect.xMin / step) * step;
+            float endX = worldRect.xMax + step * 0.5f;
+            float startY = Mathf.Ceil(worldRect.yMin / step) * step;
+            float endY = worldRect.yMax + step * 0.5f;
 
-            Vector2 offset = new Vector2(
-                Mathf.Repeat(View.Pan.x, spacing),
-                Mathf.Repeat(View.Pan.y, spacing));
+            int ix = 0;
+            for (float x = startX; x <= endX; x += step, ix++)
+            {
+                Vector2 a = CanvasToScreen(new Vector2(x, worldRect.yMin));
+                Vector2 b = CanvasToScreen(new Vector2(x, worldRect.yMax));
+                Handles.color = (ix % 5 == 0) ? major : minor;
+                Handles.DrawLine(a, b);
+            }
 
-            for (float x = canvasRect.xMin + offset.x; x < canvasRect.xMax; x += spacing)
-                Handles.DrawLine(new Vector3(x, canvasRect.yMin), new Vector3(x, canvasRect.yMax));
-
-            for (float y = canvasRect.yMin + offset.y; y < canvasRect.yMax; y += spacing)
-                Handles.DrawLine(new Vector3(canvasRect.xMin, y), new Vector3(canvasRect.xMax, y));
+            int iy = 0;
+            for (float y = startY; y <= endY; y += step, iy++)
+            {
+                Vector2 a = CanvasToScreen(new Vector2(worldRect.xMin, y));
+                Vector2 b = CanvasToScreen(new Vector2(worldRect.xMax, y));
+                Handles.color = (iy % 5 == 0) ? major : minor;
+                Handles.DrawLine(a, b);
+            }
 
             Handles.color = oldColor;
             Handles.EndGUI();
         }
 
-        private void DrawMarquee(Rect canvasRect)
+        private void DrawWorldBounds(Rect canvasRect)
         {
-            if (!Interaction.IsMarqueeSelecting)
-                return;
+            Rect worldRect = CanvasMath.GetWorldRect(Document);
+            Rect screenRect = CanvasMath.GetFittedWorldScreenRect(canvasRect, View, Document);
 
-            Rect marquee = GetScreenMarqueeRect();
-
-            EditorGUI.DrawRect(marquee, new Color(0.3f, 0.6f, 1f, 0.10f));
+            Vector2 bl = new Vector2(screenRect.xMin, screenRect.yMin);
+            Vector2 br = new Vector2(screenRect.xMax, screenRect.yMin);
+            Vector2 tr = new Vector2(screenRect.xMax, screenRect.yMax);
+            Vector2 tl = new Vector2(screenRect.xMin, screenRect.yMax);
 
             Handles.BeginGUI();
             Color old = Handles.color;
-            Handles.color = new Color(0.3f, 0.6f, 1f, 0.9f);
-            Handles.DrawAAPolyLine(
-                2f,
-                new Vector3(marquee.xMin, marquee.yMin),
-                new Vector3(marquee.xMax, marquee.yMin),
-                new Vector3(marquee.xMax, marquee.yMax),
-                new Vector3(marquee.xMin, marquee.yMax),
-                new Vector3(marquee.xMin, marquee.yMin));
+
+            Handles.color = new Color(1f, 1f, 1f, 0.7f);
+            Handles.DrawAAPolyLine(2f, bl, br, tr, tl, bl);
+
             Handles.color = old;
             Handles.EndGUI();
         }
 
+        private static float GetNiceWorldStep(float rawStep)
+        {
+            rawStep = Mathf.Max(0.000001f, rawStep);
+
+            float exponent = Mathf.Floor(Mathf.Log10(rawStep));
+            float magnitude = Mathf.Pow(10f, exponent);
+            float normalized = rawStep / magnitude;
+
+            float niceNormalized;
+            if (normalized <= 1f) niceNormalized = 1f;
+            else if (normalized <= 2f) niceNormalized = 2f;
+            else if (normalized <= 5f) niceNormalized = 5f;
+            else niceNormalized = 10f;
+
+            return niceNormalized * magnitude;
+        }
+
         private bool TryGetPointById(int pointId, out CanvasPoint point)
         {
-            foreach (var p in Document.Points)
+            foreach (CanvasPoint p in Document.Points)
             {
                 if (p.Id == pointId)
                 {
@@ -651,7 +630,7 @@ namespace DLN.EditorTools.ShapeStamper
                 if (Document.Points[i].Id != pointId)
                     continue;
 
-                var p = Document.Points[i];
+                CanvasPoint p = Document.Points[i];
                 p.Position = position;
                 Document.Points[i] = p;
                 return;
@@ -663,36 +642,15 @@ namespace DLN.EditorTools.ShapeStamper
             a = default;
             b = default;
 
-            if (!TryGetPointById(edge.A, out var pointA))
+            if (!TryGetPointById(edge.A, out CanvasPoint pointA))
                 return false;
 
-            if (!TryGetPointById(edge.B, out var pointB))
+            if (!TryGetPointById(edge.B, out CanvasPoint pointB))
                 return false;
 
             a = CanvasToScreen(pointA.Position);
             b = CanvasToScreen(pointB.Position);
             return true;
-        }
-
-        private static Rect GetCanvasBounds(IList<CanvasPoint> points)
-        {
-            if (points == null || points.Count == 0)
-                return new Rect(0f, 0f, 100f, 100f);
-
-            Vector2 min = points[0].Position;
-            Vector2 max = points[0].Position;
-
-            for (int i = 1; i < points.Count; i++)
-            {
-                min = Vector2.Min(min, points[i].Position);
-                max = Vector2.Max(max, points[i].Position);
-            }
-
-            Vector2 size = max - min;
-            if (size.x < 0.001f) size.x = 1f;
-            if (size.y < 0.001f) size.y = 1f;
-
-            return new Rect(min, size);
         }
     }
 }

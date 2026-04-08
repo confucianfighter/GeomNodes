@@ -5,7 +5,7 @@ namespace DLN.EditorTools.ShapeStamper
 {
     public class ShapeStamperWindow : EditorWindow
     {
-        private const float TopBarHeight = 92f;
+        private const float TopBarHeight = 116f;
         private const float CanvasPadding = 12f;
 
         private const float DividerWidth = 6f;
@@ -36,9 +36,9 @@ namespace DLN.EditorTools.ShapeStamper
         [MenuItem("Tools/DLN/Shape Stamper")]
         public static void Open()
         {
-            var window = GetWindow<ShapeStamperWindow>();
+            ShapeStamperWindow window = GetWindow<ShapeStamperWindow>();
             window.titleContent = new GUIContent("Shape Stamper");
-            window.minSize = new Vector2(500f, 320f);
+            window.minSize = new Vector2(600f, 360f);
             window.Show();
         }
 
@@ -56,6 +56,7 @@ namespace DLN.EditorTools.ShapeStamper
             profileView ??= new CanvasViewState();
 
             shapeDocument.EnsureValidShape();
+            profileDocument.EnsureValidProfile();
 
             _shapePolicy ??= new ShapeCanvasPolicy(shapeDocument);
             _profilePolicy ??= new ProfileCanvasPolicy(profileDocument);
@@ -70,6 +71,7 @@ namespace DLN.EditorTools.ShapeStamper
             profileDocument ??= new ProfileCanvasDocument();
 
             shapeDocument.EnsureValidShape();
+            profileDocument.EnsureValidProfile();
 
             DrawTopBar();
 
@@ -103,41 +105,54 @@ namespace DLN.EditorTools.ShapeStamper
             EditorGUILayout.Space(6f);
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("World Size (m)", GUILayout.Width(92f));
-
+            EditorGUILayout.LabelField("Shape World", GUILayout.Width(82f));
             EditorGUILayout.LabelField("W", GUILayout.Width(16f));
-            float newWorldWidth = EditorGUILayout.FloatField(shapeDocument.WorldSizeMeters.x, GUILayout.Width(70f));
-
+            float newShapeWidth = EditorGUILayout.FloatField(shapeDocument.WorldSizeMeters.x, GUILayout.Width(70f));
             EditorGUILayout.LabelField("H", GUILayout.Width(16f));
-            float newWorldHeight = EditorGUILayout.FloatField(shapeDocument.WorldSizeMeters.y, GUILayout.Width(70f));
+            float newShapeHeight = EditorGUILayout.FloatField(shapeDocument.WorldSizeMeters.y, GUILayout.Width(70f));
 
-            shapeDocument.WorldSizeMeters = new Vector2(
-                Mathf.Max(0.0001f, newWorldWidth),
-                Mathf.Max(0.0001f, newWorldHeight)
-            );
+            GUILayout.Space(18f);
+
+            EditorGUILayout.LabelField("Profile World", GUILayout.Width(84f));
+            EditorGUILayout.LabelField("W", GUILayout.Width(16f));
+            float newProfileWidth = EditorGUILayout.FloatField(profileDocument.WorldSizeMeters.x, GUILayout.Width(70f));
+            EditorGUILayout.LabelField("H", GUILayout.Width(16f));
+            float newProfileHeight = EditorGUILayout.FloatField(profileDocument.WorldSizeMeters.y, GUILayout.Width(70f));
 
             GUILayout.FlexibleSpace();
 
-            if (GUILayout.Button("Reset Triangle", GUILayout.Width(120f)))
+            if (GUILayout.Button("Reset Shape", GUILayout.Width(100f)))
             {
                 shapeDocument.ResetToDefaultTriangle();
                 shapeSelection.Clear();
                 shapeInteraction.Clear();
+                shapeView.ResetView();
                 GUI.FocusControl(null);
             }
 
-            EditorGUI.BeginDisabledGroup(!HasAnyShapePointSelection() || shapeDocument.PointCount <= 3);
-            if (GUILayout.Button("Delete Selected", GUILayout.Width(120f)))
+            if (GUILayout.Button("Reset Profile", GUILayout.Width(100f)))
             {
-                DeleteSelectedShapePoints();
+                profileDocument.ResetDefaultProfile();
+                profileSelection.Clear();
+                profileInteraction.Clear();
+                profileView.ResetView();
                 GUI.FocusControl(null);
             }
-            EditorGUI.EndDisabledGroup();
 
             EditorGUILayout.EndHorizontal();
 
+            shapeDocument.WorldSizeMeters = new Vector2(
+                Mathf.Max(0.0001f, newShapeWidth),
+                Mathf.Max(0.0001f, newShapeHeight)
+            );
+
+            profileDocument.WorldSizeMeters = new Vector2(
+                Mathf.Max(0.0001f, newProfileWidth),
+                Mathf.Max(0.0001f, newProfileHeight)
+            );
+
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Canvas %", GUILayout.Width(92f));
+            EditorGUILayout.LabelField("Canvas %", GUILayout.Width(82f));
 
             EditorGUILayout.LabelField("W", GUILayout.Width(16f));
             float newPercentWidth = EditorGUILayout.FloatField(canvasPercentOfWindow.x * 100f, GUILayout.Width(70f));
@@ -150,47 +165,37 @@ namespace DLN.EditorTools.ShapeStamper
                 Mathf.Clamp(newPercentHeight, 5f, 100f) / 100f
             );
 
-            GUILayout.Space(16f);
+            GUILayout.Space(18f);
             EditorGUILayout.LabelField("Split", GUILayout.Width(30f));
             verticalDividerPercent = GUILayout.HorizontalSlider(verticalDividerPercent, 0.2f, 0.8f, GUILayout.Width(140f));
 
             GUILayout.FlexibleSpace();
+
+            if (GUILayout.Button("Frame Shape", GUILayout.Width(100f)))
+            {
+                shapeView.ResetView();
+            }
+
+            if (GUILayout.Button("Frame Profile", GUILayout.Width(100f)))
+            {
+                profileView.ResetView();
+            }
+
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(
-                $"Points: {shapeDocument.PointCount}   Selected: {shapeSelection.Count}",
+                $"Shape Points: {shapeDocument.PointCount}   Selected: {shapeSelection.Count}",
+                EditorStyles.miniLabel
+            );
+            GUILayout.Space(20f);
+            EditorGUILayout.LabelField(
+                $"Profile Points: {profileDocument.Points.Count}   Selected: {profileSelection.Count}",
                 EditorStyles.miniLabel
             );
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.EndVertical();
-        }
-
-        private bool HasAnyShapePointSelection()
-        {
-            foreach (var element in shapeSelection.Elements)
-            {
-                if (element.Type == CanvasElementType.Point)
-                    return true;
-            }
-
-            return false;
-        }
-
-        private void DeleteSelectedShapePoints()
-        {
-            System.Collections.Generic.List<int> pointIds = new();
-
-            foreach (var element in shapeSelection.Elements)
-            {
-                if (element.Type == CanvasElementType.Point)
-                    pointIds.Add(element.Id);
-            }
-
-            shapeDocument.DeletePoints(pointIds);
-            shapeSelection.Clear();
-            shapeInteraction.Clear();
         }
 
         private void ComputeSplitRects(

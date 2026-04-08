@@ -5,14 +5,73 @@ namespace DLN.EditorTools.ShapeStamper
 {
     public static class CanvasMath
     {
-        public static Vector2 ScreenToCanvas(Vector2 screenPosition, Rect canvasRect, CanvasViewState view)
+        public static Vector2 ScreenToCanvas(Vector2 screenPosition, Rect canvasRect, CanvasViewState view, ICanvasDocument document)
         {
-            return (screenPosition - canvasRect.position - view.Pan) / Mathf.Max(0.0001f, view.Zoom);
+            Rect worldRect = GetWorldRect(document);
+            Rect fittedRect = GetFittedWorldScreenRect(canvasRect, view, document);
+
+            float width = Mathf.Max(0.0001f, fittedRect.width);
+            float height = Mathf.Max(0.0001f, fittedRect.height);
+
+            float tx = Mathf.InverseLerp(fittedRect.xMin, fittedRect.xMax, screenPosition.x);
+            float ty = Mathf.InverseLerp(fittedRect.yMin, fittedRect.yMax, screenPosition.y);
+
+            return new Vector2(
+                Mathf.Lerp(worldRect.xMin, worldRect.xMax, tx),
+                Mathf.Lerp(worldRect.yMin, worldRect.yMax, ty)
+            );
         }
 
-        public static Vector2 CanvasToScreen(Vector2 canvasPosition, Rect canvasRect, CanvasViewState view)
+        public static Vector2 CanvasToScreen(Vector2 canvasPosition, Rect canvasRect, CanvasViewState view, ICanvasDocument document)
         {
-            return canvasRect.position + view.Pan + canvasPosition * view.Zoom;
+            Rect worldRect = GetWorldRect(document);
+            Rect fittedRect = GetFittedWorldScreenRect(canvasRect, view, document);
+
+            float width = Mathf.Max(0.0001f, worldRect.width);
+            float height = Mathf.Max(0.0001f, worldRect.height);
+
+            float tx = Mathf.InverseLerp(worldRect.xMin, worldRect.xMax, canvasPosition.x);
+            float ty = Mathf.InverseLerp(worldRect.yMin, worldRect.yMax, canvasPosition.y);
+
+            return new Vector2(
+                Mathf.Lerp(fittedRect.xMin, fittedRect.xMax, tx),
+                Mathf.Lerp(fittedRect.yMin, fittedRect.yMax, ty)
+            );
+        }
+
+        public static Rect GetFittedWorldScreenRect(Rect canvasRect, CanvasViewState view, ICanvasDocument document)
+        {
+            Rect worldRect = GetWorldRect(document);
+
+            float padding = view != null ? Mathf.Max(0f, view.WorldPaddingPixels) : 24f;
+
+            float availableWidth = Mathf.Max(1f, canvasRect.width - padding * 2f);
+            float availableHeight = Mathf.Max(1f, canvasRect.height - padding * 2f);
+
+            float worldWidth = Mathf.Max(0.0001f, worldRect.width);
+            float worldHeight = Mathf.Max(0.0001f, worldRect.height);
+
+            float scale = Mathf.Min(availableWidth / worldWidth, availableHeight / worldHeight);
+            scale = Mathf.Max(0.0001f, scale);
+
+            float fittedWidth = worldWidth * scale;
+            float fittedHeight = worldHeight * scale;
+
+            float x = canvasRect.x + (canvasRect.width - fittedWidth) * 0.5f;
+            float y = canvasRect.y + (canvasRect.height - fittedHeight) * 0.5f;
+
+            return new Rect(x, y, fittedWidth, fittedHeight);
+        }
+
+        public static Rect GetWorldRect(ICanvasDocument document)
+        {
+            if (document is ICanvasBoundsProvider boundsProvider)
+                return SanitizeRect(boundsProvider.GetCanvasFrameRect());
+
+            if (document != null && document.Points != null && document.Points.Count > 0)
+                return GetCanvasBounds(document.Points);
+
+            return new Rect(0f, 0f, 1f, 1f);
         }
 
         public static float DistancePointToSegment(Vector2 point, Vector2 a, Vector2 b)
@@ -94,8 +153,8 @@ namespace DLN.EditorTools.ShapeStamper
             if (!TryGetEdgeCanvasPositions(edge, document, out Vector2 canvasA, out Vector2 canvasB))
                 return false;
 
-            a = CanvasToScreen(canvasA, canvasRect, view);
-            b = CanvasToScreen(canvasB, canvasRect, view);
+            a = CanvasToScreen(canvasA, canvasRect, view, document);
+            b = CanvasToScreen(canvasB, canvasRect, view, document);
             return true;
         }
 
@@ -131,13 +190,13 @@ namespace DLN.EditorTools.ShapeStamper
             if (!TryGetOffsetHandleCanvasPosition(offset, document, out Vector2 handleCanvas))
                 return false;
 
-            handleScreenPosition = CanvasToScreen(handleCanvas, canvasRect, view);
+            handleScreenPosition = CanvasToScreen(handleCanvas, canvasRect, view, document);
             return true;
         }
 
         public static bool TryGetPoint(ICanvasDocument document, int pointId, out CanvasPoint point)
         {
-            foreach (var p in document.Points)
+            foreach (CanvasPoint p in document.Points)
             {
                 if (p.Id == pointId)
                 {
@@ -152,7 +211,7 @@ namespace DLN.EditorTools.ShapeStamper
 
         public static bool TryGetEdgeById(ICanvasDocument document, int edgeId, out CanvasEdge edge)
         {
-            foreach (var e in document.Edges)
+            foreach (CanvasEdge e in document.Edges)
             {
                 if (e.Id == edgeId)
                 {
@@ -163,6 +222,34 @@ namespace DLN.EditorTools.ShapeStamper
 
             edge = default;
             return false;
+        }
+
+        private static Rect GetCanvasBounds(System.Collections.Generic.IList<CanvasPoint> points)
+        {
+            if (points == null || points.Count == 0)
+                return new Rect(0f, 0f, 1f, 1f);
+
+            Vector2 min = points[0].Position;
+            Vector2 max = points[0].Position;
+
+            for (int i = 1; i < points.Count; i++)
+            {
+                min = Vector2.Min(min, points[i].Position);
+                max = Vector2.Max(max, points[i].Position);
+            }
+
+            Vector2 size = max - min;
+            if (size.x < 0.001f) size.x = 1f;
+            if (size.y < 0.001f) size.y = 1f;
+
+            return new Rect(min, size);
+        }
+
+        private static Rect SanitizeRect(Rect rect)
+        {
+            float width = Mathf.Max(0.0001f, rect.width);
+            float height = Mathf.Max(0.0001f, rect.height);
+            return new Rect(rect.x, rect.y, width, height);
         }
     }
 }

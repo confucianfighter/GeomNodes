@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DLN.EditorTools.ShapeStamper
 {
     [Serializable]
-    public class ShapeCanvasDocument : ICanvasDocument
+    public class ShapeCanvasDocument : ICanvasDocument, ICanvasBoundsProvider
     {
         [SerializeField] private Vector2 worldSizeMeters = new Vector2(1f, 1f);
         [SerializeField] private List<CanvasPoint> points = new();
@@ -26,6 +26,7 @@ namespace DLN.EditorTools.ShapeStamper
         public IList<CanvasOffsetConstraint> Offsets => offsets;
 
         public int PointCount => points.Count;
+        public bool IsClosed => true;
 
         public void MarkDirty()
         {
@@ -37,6 +38,8 @@ namespace DLN.EditorTools.ShapeStamper
 
             if (points.Count < 3)
                 ResetToDefaultTriangle();
+
+            ClampAllPointsToWorld();
 
             if (edges.Count != points.Count)
                 RebuildClosedEdges();
@@ -72,6 +75,25 @@ namespace DLN.EditorTools.ShapeStamper
 
             RebuildClosedEdges();
             offsets.Clear();
+            ClampAllPointsToWorld();
+        }
+
+        public Rect GetCanvasFrameRect()
+        {
+            return new Rect(0f, 0f, WorldSizeMeters.x, WorldSizeMeters.y);
+        }
+
+        private void ClampAllPointsToWorld()
+        {
+            for (int i = 0; i < points.Count; i++)
+            {
+                CanvasPoint p = points[i];
+                p.Position = new Vector2(
+                    Mathf.Clamp(p.Position.x, 0f, WorldSizeMeters.x),
+                    Mathf.Clamp(p.Position.y, 0f, WorldSizeMeters.y)
+                );
+                points[i] = p;
+            }
         }
 
         private void RebuildClosedEdges()
@@ -89,6 +111,5 @@ namespace DLN.EditorTools.ShapeStamper
                 });
             }
         }
-        public bool IsClosed => false;
     }
 }
