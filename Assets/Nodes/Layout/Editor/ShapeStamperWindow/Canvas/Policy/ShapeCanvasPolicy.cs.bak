@@ -19,6 +19,7 @@ namespace DLN.EditorTools.ShapeStamper
             if (_document == null)
                 return;
 
+            // Optional: draw world-size label or other shape-specific helpers.
             Handles.BeginGUI();
 
             Color old = Handles.color;
@@ -33,64 +34,46 @@ namespace DLN.EditorTools.ShapeStamper
 
             Handles.color = old;
             Handles.EndGUI();
+            DrawInnerShape(canvas, canvasRect);
 
-            DrawInactiveLoop(canvas);
-
-            Rect labelRect = new Rect(canvasRect.x + 8f, canvasRect.y + 8f, 320f, 20f);
-            string modeLabel = _document.HasInnerShape
-                ? $"Mode: {_document.EditMode}"
-                : "Mode: Outer";
-
+            Rect labelRect = new Rect(canvasRect.x + 8f, canvasRect.y + 8f, 220f, 20f);
             GUI.Label(
                 labelRect,
-                $"Shape  {_document.WorldSizeMeters.x:0.###}m x {_document.WorldSizeMeters.y:0.###}m   {modeLabel}",
+                $"Shape  {_document.WorldSizeMeters.x:0.###}m x {_document.WorldSizeMeters.y:0.###}m",
                 EditorStyles.miniLabel
             );
         }
-
-        private void DrawInactiveLoop(EditorCanvas canvas)
+        private void DrawInnerShape(EditorCanvas canvas, Rect canvasRect)
         {
             if (_document == null || !_document.HasInnerShape)
                 return;
 
-            IList<CanvasPoint> points;
-            IList<CanvasEdge> edges;
-            Color edgeColor;
-            Color pointColor;
-
-            if (_document.EditMode == ShapeCanvasDocument.ShapeLoopEditMode.Inner)
-            {
-                points = _document.OuterPoints;
-                edges = _document.OuterEdges;
-                edgeColor = new Color(0.45f, 0.85f, 0.45f, 0.55f);
-                pointColor = new Color(0.45f, 0.85f, 0.45f, 0.85f);
-            }
-            else
-            {
-                points = _document.InnerPoints;
-                edges = _document.InnerEdges;
-                edgeColor = new Color(1f, 0.6f, 0.2f, 0.85f);
-                pointColor = new Color(1f, 0.5f, 0.15f, 1f);
-            }
+            if (_document.innerPoints == null || _document.innerEdges == null)
+                return;
 
             Handles.BeginGUI();
+
             Color old = Handles.color;
 
-            for (int i = 0; i < edges.Count; i++)
+            // Draw inner edges
+            Handles.color = new Color(1f, 0.6f, 0.2f, 0.95f);
+            for (int i = 0; i < _document.innerEdges.Count; i++)
             {
-                CanvasEdge edge = edges[i];
-                if (!TryGetEdgeScreenPositions(canvas, points, edge, out Vector2 a, out Vector2 b))
+                CanvasEdge edge = _document.innerEdges[i];
+
+                if (!TryGetInnerEdgeScreenPositions(canvas, canvasRect, edge, out Vector2 a, out Vector2 b))
                     continue;
 
-                Handles.color = edgeColor;
                 Handles.DrawAAPolyLine(2f, a, b);
             }
 
-            for (int i = 0; i < points.Count; i++)
+            // Draw inner points
+            for (int i = 0; i < _document.innerPoints.Count; i++)
             {
-                Vector2 screen = canvas.CanvasToScreen(points[i].Position);
+                CanvasPoint point = _document.innerPoints[i];
+                Vector2 screen = canvas.CanvasToScreen(point.Position);
 
-                Handles.color = pointColor;
+                Handles.color = new Color(1f, 0.5f, 0.15f, 1f);
                 Handles.DrawSolidDisc(screen, Vector3.forward, 5f);
 
                 Handles.color = Color.black;
@@ -101,15 +84,15 @@ namespace DLN.EditorTools.ShapeStamper
             Handles.EndGUI();
         }
 
-        private static bool TryGetEdgeScreenPositions(EditorCanvas canvas, IList<CanvasPoint> points, CanvasEdge edge, out Vector2 a, out Vector2 b)
+        private bool TryGetInnerEdgeScreenPositions(EditorCanvas canvas, Rect canvasRect, CanvasEdge edge, out Vector2 a, out Vector2 b)
         {
             a = default;
             b = default;
 
-            if (!TryGetPoint(points, edge.A, out CanvasPoint pointA))
+            if (!TryGetInnerPoint(edge.A, out CanvasPoint pointA))
                 return false;
 
-            if (!TryGetPoint(points, edge.B, out CanvasPoint pointB))
+            if (!TryGetInnerPoint(edge.B, out CanvasPoint pointB))
                 return false;
 
             a = canvas.CanvasToScreen(pointA.Position);
@@ -117,13 +100,13 @@ namespace DLN.EditorTools.ShapeStamper
             return true;
         }
 
-        private static bool TryGetPoint(IList<CanvasPoint> points, int pointId, out CanvasPoint point)
+        private bool TryGetInnerPoint(int pointId, out CanvasPoint point)
         {
-            for (int i = 0; i < points.Count; i++)
+            for (int i = 0; i < _document.innerPoints.Count; i++)
             {
-                if (points[i].Id == pointId)
+                if (_document.innerPoints[i].Id == pointId)
                 {
-                    point = points[i];
+                    point = _document.innerPoints[i];
                     return true;
                 }
             }
@@ -134,14 +117,18 @@ namespace DLN.EditorTools.ShapeStamper
 
         public void OnMouseDown(EditorCanvas canvas, Event evt)
         {
+            // No special shape-only behavior needed yet.
         }
 
         public void OnDrag(EditorCanvas canvas, Event evt)
         {
+            // No special behavior yet.
         }
 
         public void OnClick(EditorCanvas canvas, Event evt)
         {
+            // No special click behavior yet.
+            // Generic selection/click handling already lives in EditorCanvas.
         }
 
         public void OnKeyDown(EditorCanvas canvas, Event evt)
@@ -163,6 +150,7 @@ namespace DLN.EditorTools.ShapeStamper
 
             Vector2 clamped = ClampToShapeBounds(canvasPos);
 
+            // If your document already has an AddPoint method, use that instead.
             int newId = GetNextPointId(_document);
             _document.Points.Add(new CanvasPoint
             {
@@ -205,6 +193,7 @@ namespace DLN.EditorTools.ShapeStamper
                 Position = splitPoint
             });
 
+            // Replace old edge with two new ones.
             _document.Edges.RemoveAt(edgeIndex);
             _document.Edges.Insert(edgeIndex, new CanvasEdge
             {
@@ -254,11 +243,14 @@ namespace DLN.EditorTools.ShapeStamper
                 }
             }
 
+            // Preserve minimum triangle for now.
             if (_document.Points.Count - pointIdsToDelete.Count < 3)
                 pointIdsToDelete.Clear();
 
             if (pointIdsToDelete.Count > 0)
+            {
                 DeletePointsAndConnectedData(_document, pointIdsToDelete);
+            }
 
             if (edgeIdsToDelete.Count > 0)
             {
@@ -267,7 +259,9 @@ namespace DLN.EditorTools.ShapeStamper
             }
 
             if (offsetIdsToDelete.Count > 0)
+            {
                 RemoveOffsetsById(_document, offsetIdsToDelete);
+            }
 
             _document.MarkDirty();
             canvas.Selection.Clear();
@@ -290,29 +284,19 @@ namespace DLN.EditorTools.ShapeStamper
             );
         }
 
-        private static int GetNextPointId(ShapeCanvasDocument document)
+        private static int GetNextPointId(ICanvasDocument document)
         {
             int maxId = -1;
-
-            for (int i = 0; i < document.OuterPoints.Count; i++)
-                maxId = Mathf.Max(maxId, document.OuterPoints[i].Id);
-
-            for (int i = 0; i < document.InnerPoints.Count; i++)
-                maxId = Mathf.Max(maxId, document.InnerPoints[i].Id);
-
+            foreach (CanvasPoint p in document.Points)
+                maxId = Mathf.Max(maxId, p.Id);
             return maxId + 1;
         }
 
-        private static int GetNextEdgeId(ShapeCanvasDocument document)
+        private static int GetNextEdgeId(ICanvasDocument document)
         {
             int maxId = -1;
-
-            for (int i = 0; i < document.OuterEdges.Count; i++)
-                maxId = Mathf.Max(maxId, document.OuterEdges[i].Id);
-
-            for (int i = 0; i < document.InnerEdges.Count; i++)
-                maxId = Mathf.Max(maxId, document.InnerEdges[i].Id);
-
+            foreach (CanvasEdge e in document.Edges)
+                maxId = Mathf.Max(maxId, e.Id);
             return maxId + 1;
         }
 
@@ -399,9 +383,8 @@ namespace DLN.EditorTools.ShapeStamper
 
         private void RemapOffsetsAfterSplit(int oldEdgeId, int newEdgeIdA, int newEdgeIdB)
         {
-            if (_document.IsEditingInnerLoop)
-                return;
-
+            // Simple default: move any old offset on the split edge onto the first new edge.
+            // You can later get fancier and preserve t / duplicate offsets if needed.
             for (int i = 0; i < _document.Offsets.Count; i++)
             {
                 CanvasOffsetConstraint offset = _document.Offsets[i];

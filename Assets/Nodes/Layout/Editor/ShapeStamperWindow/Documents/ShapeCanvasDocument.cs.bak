@@ -13,9 +13,8 @@ namespace DLN.EditorTools.ShapeStamper
         [SerializeField] private List<CanvasOffsetConstraint> offsets = new();
 
         [SerializeField] private bool hasInnerShape;
-        [SerializeField] private List<CanvasPoint> innerPoints = new();
-        [SerializeField] private List<CanvasEdge> innerEdges = new();
-
+        [SerializeField] public List<CanvasPoint> innerPoints = new();
+        [SerializeField] public List<CanvasEdge> innerEdges = new();
         public enum ShapeLoopEditMode
         {
             Outer = 0,
@@ -33,14 +32,8 @@ namespace DLN.EditorTools.ShapeStamper
         public bool HasInnerShape
         {
             get => hasInnerShape;
-            set
-            {
-                hasInnerShape = value;
-                if (!hasInnerShape && editMode == ShapeLoopEditMode.Inner)
-                    editMode = ShapeLoopEditMode.Outer;
-            }
+            set => hasInnerShape = value;
         }
-
         public Vector2 WorldSizeMeters
         {
             get => worldSizeMeters;
@@ -50,16 +43,9 @@ namespace DLN.EditorTools.ShapeStamper
             );
         }
 
-        public bool IsEditingInnerLoop => HasInnerShape && EditMode == ShapeLoopEditMode.Inner;
-
-        public IList<CanvasPoint> Points => IsEditingInnerLoop ? innerPoints : points;
-        public IList<CanvasEdge> Edges => IsEditingInnerLoop ? innerEdges : edges;
+        public IList<CanvasPoint> Points => points;
+        public IList<CanvasEdge> Edges => edges;
         public IList<CanvasOffsetConstraint> Offsets => offsets;
-
-        public IList<CanvasPoint> OuterPoints => points;
-        public IList<CanvasEdge> OuterEdges => edges;
-        public IList<CanvasPoint> InnerPoints => innerPoints;
-        public IList<CanvasEdge> InnerEdges => innerEdges;
 
         public int PointCount => points.Count;
         public bool IsClosed => true;
@@ -79,25 +65,6 @@ namespace DLN.EditorTools.ShapeStamper
 
             if (edges.Count != points.Count)
                 RebuildClosedEdges();
-
-            if (HasInnerShape)
-            {
-                if (innerPoints == null)
-                    innerPoints = new List<CanvasPoint>();
-
-                if (innerEdges == null)
-                    innerEdges = new List<CanvasEdge>();
-
-                if (innerPoints.Count < 3)
-                    EnsureDefaultInnerShape();
-                else
-                {
-                    ClampAllInnerPointsToWorld();
-
-                    if (innerEdges.Count != innerPoints.Count)
-                        RebuildClosedInnerEdges();
-                }
-            }
         }
 
         public void ResetToDefaultTriangle()
@@ -120,37 +87,17 @@ namespace DLN.EditorTools.ShapeStamper
             if (ids.Count == 0)
                 return;
 
-            List<CanvasPoint> activePoints = IsEditingInnerLoop ? innerPoints : points;
-            List<CanvasEdge> activeEdges = IsEditingInnerLoop ? innerEdges : edges;
+            points.RemoveAll(p => ids.Contains(p.Id));
 
-            activePoints.RemoveAll(p => ids.Contains(p.Id));
-
-            if (activePoints.Count < 3)
+            if (points.Count < 3)
             {
-                if (IsEditingInnerLoop)
-                {
-                    innerPoints.Clear();
-                    innerEdges.Clear();
-                    EnsureDefaultInnerShape();
-                }
-                else
-                {
-                    ResetToDefaultTriangle();
-                }
+                ResetToDefaultTriangle();
                 return;
             }
 
-            if (IsEditingInnerLoop)
-            {
-                RebuildClosedInnerEdges();
-                ClampAllInnerPointsToWorld();
-            }
-            else
-            {
-                RebuildClosedEdges();
-                offsets.Clear();
-                ClampAllPointsToWorld();
-            }
+            RebuildClosedEdges();
+            offsets.Clear();
+            ClampAllPointsToWorld();
         }
 
         public Rect GetCanvasFrameRect()
@@ -158,6 +105,34 @@ namespace DLN.EditorTools.ShapeStamper
             return new Rect(0f, 0f, WorldSizeMeters.x, WorldSizeMeters.y);
         }
 
+        private void ClampAllPointsToWorld()
+        {
+            for (int i = 0; i < points.Count; i++)
+            {
+                CanvasPoint p = points[i];
+                p.Position = new Vector2(
+                    Mathf.Clamp(p.Position.x, 0f, WorldSizeMeters.x),
+                    Mathf.Clamp(p.Position.y, 0f, WorldSizeMeters.y)
+                );
+                points[i] = p;
+            }
+        }
+
+        private void RebuildClosedEdges()
+        {
+            edges.Clear();
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                int next = (i + 1) % points.Count;
+                edges.Add(new CanvasEdge
+                {
+                    Id = i,
+                    A = points[i].Id,
+                    B = points[next].Id
+                });
+            }
+        }
         public void EnsureDefaultInnerShape()
         {
             WorldSizeMeters = worldSizeMeters;
@@ -183,7 +158,7 @@ namespace DLN.EditorTools.ShapeStamper
             float halfWidth = size.x * 0.12f;
             float halfHeight = size.y * 0.12f;
 
-            int nextId = GetNextPointIdAcrossAll();
+            int nextId = GetNextPointId(points, innerPoints);
 
             innerPoints.Add(new CanvasPoint
             {
@@ -206,20 +181,6 @@ namespace DLN.EditorTools.ShapeStamper
             RebuildClosedInnerEdges();
             ClampAllInnerPointsToWorld();
         }
-
-        private void ClampAllPointsToWorld()
-        {
-            for (int i = 0; i < points.Count; i++)
-            {
-                CanvasPoint p = points[i];
-                p.Position = new Vector2(
-                    Mathf.Clamp(p.Position.x, 0f, WorldSizeMeters.x),
-                    Mathf.Clamp(p.Position.y, 0f, WorldSizeMeters.y)
-                );
-                points[i] = p;
-            }
-        }
-
         private void ClampAllInnerPointsToWorld()
         {
             for (int i = 0; i < innerPoints.Count; i++)
@@ -233,58 +194,37 @@ namespace DLN.EditorTools.ShapeStamper
             }
         }
 
-        private void RebuildClosedEdges()
-        {
-            edges.Clear();
-
-            for (int i = 0; i < points.Count; i++)
-            {
-                int next = (i + 1) % points.Count;
-                edges.Add(new CanvasEdge
-                {
-                    Id = i,
-                    A = points[i].Id,
-                    B = points[next].Id
-                });
-            }
-        }
-
         private void RebuildClosedInnerEdges()
         {
             innerEdges.Clear();
-            int nextEdgeId = GetNextEdgeIdFromOuter();
 
             for (int i = 0; i < innerPoints.Count; i++)
             {
                 int next = (i + 1) % innerPoints.Count;
                 innerEdges.Add(new CanvasEdge
                 {
-                    Id = nextEdgeId++,
+                    Id = i,
                     A = innerPoints[i].Id,
                     B = innerPoints[next].Id
                 });
             }
         }
 
-        private int GetNextPointIdAcrossAll()
+        private static int GetNextPointId(IList<CanvasPoint> outerPoints, IList<CanvasPoint> innerPoints)
         {
             int maxId = -1;
 
-            for (int i = 0; i < points.Count; i++)
-                maxId = Mathf.Max(maxId, points[i].Id);
+            if (outerPoints != null)
+            {
+                for (int i = 0; i < outerPoints.Count; i++)
+                    maxId = Mathf.Max(maxId, outerPoints[i].Id);
+            }
 
-            for (int i = 0; i < innerPoints.Count; i++)
-                maxId = Mathf.Max(maxId, innerPoints[i].Id);
-
-            return maxId + 1;
-        }
-
-        private int GetNextEdgeIdFromOuter()
-        {
-            int maxId = -1;
-
-            for (int i = 0; i < edges.Count; i++)
-                maxId = Mathf.Max(maxId, edges[i].Id);
+            if (innerPoints != null)
+            {
+                for (int i = 0; i < innerPoints.Count; i++)
+                    maxId = Mathf.Max(maxId, innerPoints[i].Id);
+            }
 
             return maxId + 1;
         }

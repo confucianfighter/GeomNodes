@@ -4,61 +4,53 @@ using g4;
 
 namespace DLN.EditorTools.ShapeStamper
 {
+    /// <summary>
+    /// Builds a flat XY mesh from the current Shape Stamper closed loop.
+    /// Intended first for solid concave 2D faces.
+    /// 
+    /// Notes:
+    /// - Keeps geometry in local XY so face normal should point along local +Z.
+    /// - Reconstructs loop order from edges instead of trusting document.Points order.
+    /// - Structured so we can later swap Polygon2d -> GeneralPolygon2d for holes.
+    /// </summary>
     public static class ShapeStamperTessellator
     {
         public static Mesh BuildFlatShapeMesh(ShapeCanvasDocument document)
         {
-            if (document == null || document.OuterPoints == null || document.OuterEdges == null)
+            if (document == null || document.Points == null || document.Edges == null)
             {
                 Debug.LogWarning("ShapeStamperTessellator: Document is null or incomplete.");
                 return null;
             }
 
-            List<Vector2> outerLoop = BuildOrderedLoop(document.OuterPoints, document.OuterEdges);
-            if (outerLoop == null || outerLoop.Count < 3)
+            List<Vector2> orderedLoop = BuildOrderedLoop(document);
+            if (orderedLoop == null || orderedLoop.Count < 3)
             {
-                Debug.LogWarning("ShapeStamperTessellator: Failed to build ordered outer loop.");
+                Debug.LogWarning("ShapeStamperTessellator: Failed to build ordered loop.");
                 return null;
             }
 
-            RemoveDuplicateClosingPoint(outerLoop);
-            if (outerLoop.Count < 3)
+            RemoveDuplicateClosingPoint(orderedLoop);
+
+            if (orderedLoop.Count < 3)
             {
-                Debug.LogWarning("ShapeStamperTessellator: Outer loop has fewer than 3 unique points.");
+                Debug.LogWarning("ShapeStamperTessellator: Ordered loop has fewer than 3 unique points.");
                 return null;
             }
 
-            List<Vector2> innerLoop = null;
-            if (document.HasInnerShape && document.InnerPoints != null && document.InnerEdges != null && document.InnerPoints.Count >= 3)
-            {
-                innerLoop = BuildOrderedLoop(document.InnerPoints, document.InnerEdges);
-                if (innerLoop != null)
-                {
-                    RemoveDuplicateClosingPoint(innerLoop);
-                    if (innerLoop.Count < 3)
-                        innerLoop = null;
-                }
-            }
+            CenterLoop(orderedLoop);
+            EnsureCounterClockwise(orderedLoop);
 
-            Vector2 sharedCenter = CalculateCenter(outerLoop);
-            OffsetLoop(outerLoop, sharedCenter);
-            if (innerLoop != null)
-                OffsetLoop(innerLoop, sharedCenter);
-
-            EnsureCounterClockwise(outerLoop);
-            if (innerLoop != null)
-                EnsureClockwise(innerLoop);
-
-            return TriangulatePolygon(outerLoop, innerLoop);
+            return TriangulateSolidPolygon(orderedLoop);
         }
 
-        private static Mesh TriangulatePolygon(List<Vector2> outerLoop, List<Vector2> innerLoop)
+        private static Mesh TriangulateSolidPolygon(List<Vector2> loop)
         {
-            GeneralPolygon2d polygon = ToGeneralPolygon2d(outerLoop, innerLoop);
+            GeneralPolygon2d outer = ToPolygon2d(loop);
 
             TriangulatedPolygonGenerator generator = new TriangulatedPolygonGenerator
             {
-                Polygon = polygon
+                Polygon = outer
             };
 
             generator.Generate();
@@ -72,31 +64,19 @@ namespace DLN.EditorTools.ShapeStamper
 
             return ToUnityMesh(gmesh);
         }
-
-        private static GeneralPolygon2d ToGeneralPolygon2d(List<Vector2> outerLoop, List<Vector2> innerLoop)
+        private static GeneralPolygon2d ToPolygon2d(List<Vector2> loop)
         {
-            Polygon2d outer = new Polygon2d();
-            for (int i = 0; i < outerLoop.Count; i++)
+            // Most likely API shape; if your local fork prefers a constructor,
+            // adjust this one function only.
+            Polygon2d poly = new();
+
+            for (int i = 0; i < loop.Count; i++)
             {
-                Vector2 p = outerLoop[i];
-                outer.AppendVertex(new Vector2d(p.x, -p.y));
+                Vector2 p = loop[i];
+                poly.AppendVertex(new Vector2d(p.x, -p.y));
             }
 
-            GeneralPolygon2d polygon = new GeneralPolygon2d(outer);
-
-            if (innerLoop != null && innerLoop.Count >= 3)
-            {
-                Polygon2d hole = new Polygon2d();
-                for (int i = 0; i < innerLoop.Count; i++)
-                {
-                    Vector2 p = innerLoop[i];
-                    hole.AppendVertex(new Vector2d(p.x, -p.y));
-                }
-
-                polygon.AddHole(hole);
-            }
-
-            return polygon;
+            return new GeneralPolygon2d(poly);
         }
 
         private static Mesh ToUnityMesh(DMesh3 gmesh)
@@ -118,6 +98,8 @@ namespace DLN.EditorTools.ShapeStamper
                 Vector3d v = gmesh.GetVertex(vid);
                 int unityIndex = vertices.Count;
                 vidToUnityIndex.Add(vid, unityIndex);
+
+                // Keep final mesh in XY, with Z reserved for later bevel depth.
                 vertices.Add(new Vector3((float)v.x, (float)v.y, (float)v.z));
             }
 
@@ -139,35 +121,41 @@ namespace DLN.EditorTools.ShapeStamper
             return mesh;
         }
 
-        private static List<Vector2> BuildOrderedLoop(IList<CanvasPoint> points, IList<CanvasEdge> edges)
+        /// <summary>
+        /// Reconstruct loop order from the edge chain.
+        /// This avoids relying on document.Points list order, which can drift after edge splits.
+        /// </summary>
+        private static List<Vector2> BuildOrderedLoop(ShapeCanvasDocument document)
         {
-            if (points == null || edges == null || edges.Count < 3)
+            if (document.Edges.Count < 3)
                 return null;
 
-            Dictionary<int, CanvasPoint> pointById = new Dictionary<int, CanvasPoint>(points.Count);
-            for (int i = 0; i < points.Count; i++)
-                pointById[points[i].Id] = points[i];
+            Dictionary<int, CanvasPoint> pointById = new Dictionary<int, CanvasPoint>(document.Points.Count);
+            for (int i = 0; i < document.Points.Count; i++)
+                pointById[document.Points[i].Id] = document.Points[i];
 
-            Dictionary<int, CanvasEdge> edgeByStart = new Dictionary<int, CanvasEdge>(edges.Count);
-            for (int i = 0; i < edges.Count; i++)
+            Dictionary<int, CanvasEdge> edgeByStart = new Dictionary<int, CanvasEdge>(document.Edges.Count);
+            for (int i = 0; i < document.Edges.Count; i++)
             {
-                CanvasEdge edge = edges[i];
+                CanvasEdge edge = document.Edges[i];
+
                 if (edgeByStart.ContainsKey(edge.A))
                 {
                     Debug.LogWarning($"ShapeStamperTessellator: Multiple outgoing edges from point {edge.A}.");
                     return null;
                 }
+
                 edgeByStart.Add(edge.A, edge);
             }
 
-            CanvasEdge firstEdge = edges[0];
+            CanvasEdge firstEdge = document.Edges[0];
             int startPointId = firstEdge.A;
             int currentPointId = startPointId;
 
             HashSet<int> visitedStartPoints = new HashSet<int>();
-            List<Vector2> ordered = new List<Vector2>(edges.Count);
+            List<Vector2> ordered = new List<Vector2>(document.Edges.Count);
 
-            for (int i = 0; i < edges.Count; i++)
+            for (int i = 0; i < document.Edges.Count; i++)
             {
                 if (!pointById.TryGetValue(currentPointId, out CanvasPoint point))
                 {
@@ -210,27 +198,18 @@ namespace DLN.EditorTools.ShapeStamper
                 loop.RemoveAt(loop.Count - 1);
         }
 
-        private static Vector2 CalculateCenter(IList<Vector2> points)
+        private static void CenterLoop(List<Vector2> loop)
         {
-            Bounds2D bounds = CalculateBounds(points);
-            return bounds.Center;
-        }
+            Bounds2D bounds = CalculateBounds(loop);
+            Vector2 center = bounds.Center;
 
-        private static void OffsetLoop(List<Vector2> loop, Vector2 offset)
-        {
             for (int i = 0; i < loop.Count; i++)
-                loop[i] -= offset;
+                loop[i] -= center;
         }
 
         private static void EnsureCounterClockwise(List<Vector2> loop)
         {
             if (IsClockwise(loop))
-                loop.Reverse();
-        }
-
-        private static void EnsureClockwise(List<Vector2> loop)
-        {
-            if (!IsClockwise(loop))
                 loop.Reverse();
         }
 

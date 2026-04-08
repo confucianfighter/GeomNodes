@@ -118,43 +118,20 @@ namespace DLN.EditorTools.ShapeStamper
             float newProfileWidth = EditorGUILayout.FloatField(profileDocument.WorldSizeMeters.x, GUILayout.Width(70f));
             EditorGUILayout.LabelField("H", GUILayout.Width(16f));
             float newProfileHeight = EditorGUILayout.FloatField(profileDocument.WorldSizeMeters.y, GUILayout.Width(70f));
-
             if (GUILayout.Button("Bake", GUILayout.Width(100f)))
             {
                 ShapeStamperBakeService.BakeShapeFaceToScene(shapeDocument);
             }
-
             GUILayout.FlexibleSpace();
-
             bool newHasInnerShape = EditorGUILayout.ToggleLeft("Inner Shape", shapeDocument.HasInnerShape, GUILayout.Width(100f));
             if (newHasInnerShape && !shapeDocument.HasInnerShape)
             {
                 shapeDocument.HasInnerShape = true;
                 shapeDocument.EnsureDefaultInnerShape();
-                shapeDocument.EditMode = ShapeCanvasDocument.ShapeLoopEditMode.Inner;
-                shapeSelection.Clear();
-                shapeInteraction.Clear();
             }
             else if (!newHasInnerShape && shapeDocument.HasInnerShape)
             {
                 shapeDocument.HasInnerShape = false;
-                shapeDocument.EditMode = ShapeCanvasDocument.ShapeLoopEditMode.Outer;
-                shapeSelection.Clear();
-                shapeInteraction.Clear();
-            }
-
-            if (shapeDocument.HasInnerShape)
-            {
-                var newEditMode = (ShapeCanvasDocument.ShapeLoopEditMode)EditorGUILayout.EnumPopup(
-                    shapeDocument.EditMode,
-                    GUILayout.Width(90f));
-
-                if (newEditMode != shapeDocument.EditMode)
-                {
-                    shapeDocument.EditMode = newEditMode;
-                    shapeSelection.Clear();
-                    shapeInteraction.Clear();
-                }
             }
 
             if (GUILayout.Button("Reset Shape", GUILayout.Width(100f)))
@@ -208,10 +185,14 @@ namespace DLN.EditorTools.ShapeStamper
             GUILayout.FlexibleSpace();
 
             if (GUILayout.Button("Frame Shape", GUILayout.Width(100f)))
+            {
                 shapeView.ResetView();
+            }
 
             if (GUILayout.Button("Frame Profile", GUILayout.Width(100f)))
+            {
                 profileView.ResetView();
+            }
 
             EditorGUILayout.EndHorizontal();
 
