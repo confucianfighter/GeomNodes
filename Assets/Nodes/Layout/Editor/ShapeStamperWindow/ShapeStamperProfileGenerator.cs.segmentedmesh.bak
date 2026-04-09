@@ -1,47 +1,27 @@
-from pathlib import Path
-import textwrap
-
-ROOT = Path.cwd()
-GENERATOR_PATH = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/ShapeStamperProfileGenerator.cs"
-
-if not GENERATOR_PATH.exists():
-    raise FileNotFoundError(f"Missing file: {GENERATOR_PATH}")
-
-backup = GENERATOR_PATH.with_suffix(GENERATOR_PATH.suffix + ".segmentedmesh.bak")
-if not backup.exists():
-    backup.write_text(GENERATOR_PATH.read_text(encoding="utf-8"), encoding="utf-8")
-
-generator_content = r'''
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using g4;
 
 namespace DLN.EditorTools.ShapeStamper
 {
     /// <summary>
     /// Debug-first profile generator.
-    ///
+    /// 
+    /// Instead of building a filled solid preview, this version generates
+    /// visible 3D ring outlines in the scene so ring placement can be verified.
+    /// 
     /// Current behavior:
     /// - Builds ordered outer/inner loops
     /// - Converts from centered 2D loop space into mesh-space
     /// - Applies a first-pass parallel closed-loop offset using profile X
     /// - Places each ring at profile Y as Z in 3D
     /// - Draws each ring as a LineRenderer child under a preview root
-    /// - Builds a segmented bridge preview mesh:
-    ///     * one submesh per profile segment
-    ///     * one submesh for start cap
-    ///     * one submesh for end cap
-    ///
-    /// Notes:
-    /// - This is still a preview/debug seam.
-    /// - Ring placement remains authoritative. The line renderers stay visible.
-    /// - If later ring counts diverge, that is where MeshStitchLoops becomes more attractive.
+    /// 
+    /// This is intentionally a debug seam before stitching/bridging becomes authoritative.
     /// </summary>
     public static class ShapeStamperProfileGenerator
     {
         private const string PreviewRootName = "ShapeStamp_ProfileRings";
-        private const string PreviewMeshObjectName = "ShapeStamp_ProfileSegments";
         private const float ParallelEpsilon = 0.000001f;
         private const float DefaultLineWidth = 0.02f;
 
@@ -56,10 +36,6 @@ namespace DLN.EditorTools.ShapeStamper
             }
 
             CreateOrUpdateRingPreview(result);
-
-            Mesh segmentedMesh = BuildSegmentedBridgeMesh(result);
-            if (segmentedMesh != null)
-                CreateOrUpdateSegmentMeshPreview(segmentedMesh, result);
 
             Debug.Log(
                 $"ShapeStamperProfileGenerator: Built {result.OuterRings.Count} outer ring(s), " +
@@ -173,7 +149,7 @@ namespace DLN.EditorTools.ShapeStamper
 
             ClearChildrenImmediate(root.transform);
 
-            Material sharedMaterial = CreateLinePreviewMaterial();
+            Material sharedMaterial = CreatePreviewMaterial();
             float width = ComputePreviewWidth(result);
 
             for (int i = 0; i < result.OuterRings.Count; i++)
@@ -197,6 +173,9 @@ namespace DLN.EditorTools.ShapeStamper
                     width: width,
                     sharedMaterial: sharedMaterial);
             }
+
+            Selection.activeGameObject = root;
+            EditorGUIUtility.PingObject(root);
         }
 
         private static void CreateRingObject(
@@ -230,187 +209,7 @@ namespace DLN.EditorTools.ShapeStamper
             lr.SetPositions(ring.ToArray());
         }
 
-        private static Mesh BuildSegmentedBridgeMesh(ShapeStampRingBuildResult result)
-        {
-            if (result == null || result.OuterRings == null || result.OuterRings.Count < 2)
-                return null;
-
-            SegmentedMeshBuilder builder = new SegmentedMeshBuilder();
-
-            int segmentCount = result.OuterRings.Count - 1;
-
-            // One submesh per profile segment.
-            for (int i = 0; i < segmentCount; i++)
-                builder.AddSubmesh();
-
-            int startCapSubmesh = builder.AddSubmesh();
-            int endCapSubmesh = builder.AddSubmesh();
-
-            // Segment walls
-            for (int i = 0; i < segmentCount; i++)
-            {
-                AddRingBridge(builder, result.OuterRings[i], result.OuterRings[i + 1], i);
-
-                if (result.InnerRings != null && result.InnerRings.Count == result.OuterRings.Count)
-                {
-                    // Reverse bridge direction so inner wall normals face into the hole properly.
-                    AddRingBridge(builder, result.InnerRings[i + 1], result.InnerRings[i], i);
-                }
-            }
-
-            // Caps
-            AddCap(
-                builder,
-                result.OuterLoops2D[0],
-                result.InnerLoops2D.Count > 0 ? result.InnerLoops2D[0] : null,
-                result.ProfileSamples[0].Z,
-                startCapSubmesh,
-                reverseWinding: true);
-
-            int last = result.ProfileSamples.Count - 1;
-            AddCap(
-                builder,
-                result.OuterLoops2D[last],
-                result.InnerLoops2D.Count > 0 ? result.InnerLoops2D[last] : null,
-                result.ProfileSamples[last].Z,
-                endCapSubmesh,
-                reverseWinding: false);
-
-            return builder.ToMesh("ShapeStamp_ProfileSegmentsMesh");
-        }
-
-        private static void AddCap(
-            SegmentedMeshBuilder builder,
-            List<Vector2> outerLoop,
-            List<Vector2> innerLoop,
-            float z,
-            int submeshIndex,
-            bool reverseWinding)
-        {
-            if (outerLoop == null || outerLoop.Count < 3)
-                return;
-
-            GeneralPolygon2d polygon = ToGeneralPolygon2d(outerLoop, innerLoop);
-
-            TriangulatedPolygonGenerator generator = new TriangulatedPolygonGenerator
-            {
-                Polygon = polygon
-            };
-
-            generator.Generate();
-            DMesh3 gmesh = generator.MakeDMesh();
-            if (gmesh == null || gmesh.TriangleCount == 0)
-                return;
-
-            Dictionary<int, int> vidToBuilder = new Dictionary<int, int>(gmesh.VertexCount);
-
-            for (int vid = 0; vid < gmesh.MaxVertexID; vid++)
-            {
-                if (!gmesh.IsVertex(vid))
-                    continue;
-
-                Vector3d v = gmesh.GetVertex(vid);
-                int builderIndex = builder.AddVertex(new Vector3((float)v.x, (float)v.y, z));
-                vidToBuilder.Add(vid, builderIndex);
-            }
-
-            for (int tid = 0; tid < gmesh.MaxTriangleID; tid++)
-            {
-                if (!gmesh.IsTriangle(tid))
-                    continue;
-
-                Index3i tri = gmesh.GetTriangle(tid);
-                int a = vidToBuilder[tri.a];
-                int b = vidToBuilder[tri.b];
-                int c = vidToBuilder[tri.c];
-
-                if (reverseWinding)
-                    builder.AddTriangle(submeshIndex, a, c, b);
-                else
-                    builder.AddTriangle(submeshIndex, a, b, c);
-            }
-        }
-
-        private static void AddRingBridge(SegmentedMeshBuilder builder, List<Vector3> ringA, List<Vector3> ringB, int submeshIndex)
-        {
-            if (ringA == null || ringB == null)
-                return;
-
-            if (ringA.Count < 3 || ringB.Count < 3)
-                return;
-
-            if (ringA.Count != ringB.Count)
-            {
-                Debug.LogWarning("ShapeStamperProfileGenerator: Ring bridge currently requires equal vertex counts.");
-                return;
-            }
-
-            int count = ringA.Count;
-            List<int> aIndices = new List<int>(count);
-            List<int> bIndices = new List<int>(count);
-
-            for (int i = 0; i < count; i++)
-            {
-                aIndices.Add(builder.AddVertex(ringA[i]));
-                bIndices.Add(builder.AddVertex(ringB[i]));
-            }
-
-            for (int i = 0; i < count; i++)
-            {
-                int next = (i + 1) % count;
-
-                int a0 = aIndices[i];
-                int a1 = aIndices[next];
-                int b0 = bIndices[i];
-                int b1 = bIndices[next];
-
-                builder.AddTriangle(submeshIndex, a0, b1, b0);
-                builder.AddTriangle(submeshIndex, a0, a1, b1);
-            }
-        }
-
-        private static void CreateOrUpdateSegmentMeshPreview(Mesh mesh, ShapeStampRingBuildResult result)
-        {
-            GameObject go = GameObject.Find(PreviewMeshObjectName);
-            if (go == null)
-            {
-                go = new GameObject(PreviewMeshObjectName);
-                Undo.RegisterCreatedObjectUndo(go, "Create ShapeStamp Profile Segment Preview");
-                go.AddComponent<MeshFilter>();
-                go.AddComponent<MeshRenderer>();
-            }
-
-            MeshFilter mf = go.GetComponent<MeshFilter>();
-            if (mf == null)
-                mf = go.AddComponent<MeshFilter>();
-
-            MeshRenderer mr = go.GetComponent<MeshRenderer>();
-            if (mr == null)
-                mr = go.AddComponent<MeshRenderer>();
-
-            if (mf.sharedMesh != null)
-            {
-                Object oldMesh = mf.sharedMesh;
-                mf.sharedMesh = null;
-                Object.DestroyImmediate(oldMesh);
-            }
-
-            mf.sharedMesh = mesh;
-
-            int segmentCount = Mathf.Max(0, result.OuterRings.Count - 1);
-            int totalSubmeshes = segmentCount + 2;
-
-            Material[] mats = new Material[totalSubmeshes];
-            for (int i = 0; i < segmentCount; i++)
-                mats[i] = CreateSegmentMaterial(i, segmentCount);
-
-            mats[segmentCount] = CreateCapMaterial(new Color(0.85f, 0.85f, 0.85f));
-            mats[segmentCount + 1] = CreateCapMaterial(new Color(0.65f, 0.65f, 0.65f));
-
-            mr.sharedMaterials = mats;
-        }
-
-        private static Material CreateLinePreviewMaterial()
+        private static Material CreatePreviewMaterial()
         {
             Shader shader = Shader.Find("Sprites/Default");
             if (shader == null)
@@ -423,57 +222,12 @@ namespace DLN.EditorTools.ShapeStamper
             return mat;
         }
 
-        private static Material CreateSegmentMaterial(int index, int count)
-        {
-            Shader shader = Shader.Find("Standard");
-            if (shader == null)
-                shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null)
-                shader = Shader.Find("Unlit/Color");
-            if (shader == null)
-                shader = Shader.Find("Sprites/Default");
-
-            Material mat = new Material(shader);
-            mat.name = $"ShapeStamp_ProfileSegment_{index}_Mat";
-            Color color = Color.Lerp(
-                new Color(0.25f, 0.85f, 1f),
-                new Color(1f, 0.55f, 0.2f),
-                Safe01(index, Mathf.Max(2, count))
-            );
-
-            if (mat.HasProperty("_Color"))
-                mat.color = color;
-            else if (mat.HasProperty("_BaseColor"))
-                mat.SetColor("_BaseColor", color);
-
-            return mat;
-        }
-
-        private static Material CreateCapMaterial(Color color)
-        {
-            Shader shader = Shader.Find("Standard");
-            if (shader == null)
-                shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null)
-                shader = Shader.Find("Unlit/Color");
-            if (shader == null)
-                shader = Shader.Find("Sprites/Default");
-
-            Material mat = new Material(shader);
-            mat.name = "ShapeStamp_ProfileCap_Mat";
-
-            if (mat.HasProperty("_Color"))
-                mat.color = color;
-            else if (mat.HasProperty("_BaseColor"))
-                mat.SetColor("_BaseColor", color);
-
-            return mat;
-        }
-
         private static void ClearChildrenImmediate(Transform parent)
         {
             for (int i = parent.childCount - 1; i >= 0; i--)
+            {
                 Object.DestroyImmediate(parent.GetChild(i).gameObject);
+            }
         }
 
         private static float ComputePreviewWidth(ShapeStampRingBuildResult result)
@@ -654,32 +408,6 @@ namespace DLN.EditorTools.ShapeStamper
             return ring;
         }
 
-        private static GeneralPolygon2d ToGeneralPolygon2d(List<Vector2> outerLoop, List<Vector2> innerLoop)
-        {
-            Polygon2d outer = new Polygon2d();
-            for (int i = 0; i < outerLoop.Count; i++)
-            {
-                Vector2 p = outerLoop[i];
-                outer.AppendVertex(new Vector2d(p.x, p.y));
-            }
-
-            GeneralPolygon2d polygon = new GeneralPolygon2d(outer);
-
-            if (innerLoop != null && innerLoop.Count >= 3)
-            {
-                Polygon2d hole = new Polygon2d();
-                for (int i = 0; i < innerLoop.Count; i++)
-                {
-                    Vector2 p = innerLoop[i];
-                    hole.AppendVertex(new Vector2d(p.x, p.y));
-                }
-
-                polygon.AddHole(hole);
-            }
-
-            return polygon;
-        }
-
         private static void RemoveDuplicateClosingPoint(List<Vector2> loop, float epsilon = 0.00001f)
         {
             if (loop == null || loop.Count < 2)
@@ -764,53 +492,5 @@ namespace DLN.EditorTools.ShapeStamper
             public float Offset;
             public float Z;
         }
-
-        private sealed class SegmentedMeshBuilder
-        {
-            private readonly List<Vector3> _vertices = new();
-            private readonly List<List<int>> _submeshTriangles = new();
-
-            public int AddSubmesh()
-            {
-                _submeshTriangles.Add(new List<int>());
-                return _submeshTriangles.Count - 1;
-            }
-
-            public int AddVertex(Vector3 v)
-            {
-                _vertices.Add(v);
-                return _vertices.Count - 1;
-            }
-
-            public void AddTriangle(int submeshIndex, int a, int b, int c)
-            {
-                _submeshTriangles[submeshIndex].Add(a);
-                _submeshTriangles[submeshIndex].Add(b);
-                _submeshTriangles[submeshIndex].Add(c);
-            }
-
-            public Mesh ToMesh(string name)
-            {
-                Mesh mesh = new Mesh
-                {
-                    name = name
-                };
-
-                mesh.SetVertices(_vertices);
-                mesh.subMeshCount = _submeshTriangles.Count;
-
-                for (int i = 0; i < _submeshTriangles.Count; i++)
-                    mesh.SetTriangles(_submeshTriangles[i], i);
-
-                mesh.RecalculateBounds();
-                mesh.RecalculateNormals();
-                return mesh;
-            }
-        }
     }
 }
-'''
-
-GENERATOR_PATH.write_text(textwrap.dedent(generator_content).lstrip("\n"), encoding="utf-8")
-print(f"Patched {GENERATOR_PATH.relative_to(ROOT)}")
-print(f"Backup written: {backup.name}")

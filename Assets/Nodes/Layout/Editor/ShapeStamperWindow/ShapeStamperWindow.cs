@@ -119,6 +119,11 @@ namespace DLN.EditorTools.ShapeStamper
             EditorGUILayout.LabelField("H", GUILayout.Width(16f));
             float newProfileHeight = EditorGUILayout.FloatField(profileDocument.WorldSizeMeters.y, GUILayout.Width(70f));
 
+            if (GUILayout.Button("Generate Profile", GUILayout.Width(120f)))
+            {
+                ShapeStamperProfileGenerator.Generate(shapeDocument, profileDocument);
+            }
+
             if (GUILayout.Button("Bake", GUILayout.Width(100f)))
             {
                 ShapeStamperBakeService.BakeShapeFaceToScene(shapeDocument);

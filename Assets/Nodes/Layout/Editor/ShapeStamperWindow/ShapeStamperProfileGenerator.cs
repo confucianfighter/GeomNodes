@@ -1,17 +1,3 @@
-from pathlib import Path
-import textwrap
-
-ROOT = Path.cwd()
-GENERATOR_PATH = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/ShapeStamperProfileGenerator.cs"
-
-if not GENERATOR_PATH.exists():
-    raise FileNotFoundError(f"Missing file: {GENERATOR_PATH}")
-
-backup = GENERATOR_PATH.with_suffix(GENERATOR_PATH.suffix + ".segmentedmesh.bak")
-if not backup.exists():
-    backup.write_text(GENERATOR_PATH.read_text(encoding="utf-8"), encoding="utf-8")
-
-generator_content = r'''
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -809,8 +795,3 @@ namespace DLN.EditorTools.ShapeStamper
         }
     }
 }
-'''
-
-GENERATOR_PATH.write_text(textwrap.dedent(generator_content).lstrip("\n"), encoding="utf-8")
-print(f"Patched {GENERATOR_PATH.relative_to(ROOT)}")
-print(f"Backup written: {backup.name}")

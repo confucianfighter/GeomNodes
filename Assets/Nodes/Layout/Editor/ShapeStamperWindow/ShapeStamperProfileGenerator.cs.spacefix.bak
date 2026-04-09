@@ -1,0 +1,508 @@
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
+using g4;
+
+namespace DLN.EditorTools.ShapeStamper
+{
+    /// <summary>
+    /// Builds preview geometry from shape + profile.
+    /// Current version:
+    /// - Builds ordered outer/inner loops
+    /// - Converts profile points into Z-stepped rings
+    /// - Generates caps using geometry4Sharp triangulation
+    /// - Generates side walls between rings
+    /// - Writes/updates a preview object in the scene
+    ///
+    /// Note:
+    /// Profile sample X (Inset) is stored but not yet applied to ring shape.
+    /// Rings are currently vertically stacked copies of the current outer/inner loop.
+    /// This gives us a working geometry preview seam before bevel inset math is layered in.
+    /// </summary>
+    public static class ShapeStamperProfileGenerator
+    {
+        private const string PreviewObjectName = "ShapeStamp_ProfilePreview";
+
+        public static void Generate(ShapeCanvasDocument shapeDocument, ProfileCanvasDocument profileDocument)
+        {
+            ShapeStampRingBuildResult result = BuildRings(shapeDocument, profileDocument);
+
+            if (result == null)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Failed to build profile rings.");
+                return;
+            }
+
+            Mesh previewMesh = BuildPreviewMesh(result);
+            if (previewMesh == null)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Failed to build preview mesh.");
+                return;
+            }
+
+            CreateOrUpdatePreviewObject(previewMesh);
+
+            Debug.Log(
+                $"ShapeStamperProfileGenerator: Built preview mesh with " +
+                $"{result.OuterRings.Count} outer ring(s), " +
+                $"{result.InnerRings.Count} inner ring set(s), " +
+                $"{result.ProfileSamples.Count} profile sample(s).");
+        }
+
+        public static ShapeStampRingBuildResult BuildRings(
+            ShapeCanvasDocument shapeDocument,
+            ProfileCanvasDocument profileDocument)
+        {
+            if (shapeDocument == null || profileDocument == null)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Missing shape or profile document.");
+                return null;
+            }
+
+            if (shapeDocument.OuterPoints == null || shapeDocument.OuterEdges == null || shapeDocument.OuterPoints.Count < 3)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Outer shape is incomplete.");
+                return null;
+            }
+
+            if (profileDocument.Points == null || profileDocument.Points.Count < 2)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Profile needs at least 2 points.");
+                return null;
+            }
+
+            List<Vector2> outerLoop2D = BuildOrderedLoop(shapeDocument.OuterPoints, shapeDocument.OuterEdges);
+            if (outerLoop2D == null || outerLoop2D.Count < 3)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Failed to build ordered outer loop.");
+                return null;
+            }
+
+            List<Vector2> innerLoop2D = null;
+            if (shapeDocument.HasInnerShape && shapeDocument.InnerPoints != null && shapeDocument.InnerEdges != null && shapeDocument.InnerPoints.Count >= 3)
+            {
+                innerLoop2D = BuildOrderedLoop(shapeDocument.InnerPoints, shapeDocument.InnerEdges);
+                if (innerLoop2D != null && innerLoop2D.Count < 3)
+                    innerLoop2D = null;
+            }
+
+            Vector2 sharedCenter = CalculateCenter(outerLoop2D);
+            OffsetLoop(outerLoop2D, sharedCenter);
+            if (innerLoop2D != null)
+                OffsetLoop(innerLoop2D, sharedCenter);
+
+            EnsureCounterClockwise(outerLoop2D);
+            if (innerLoop2D != null)
+                EnsureClockwise(innerLoop2D);
+
+            ShapeStampRingBuildResult result = new ShapeStampRingBuildResult
+            {
+                OuterLoop2D = new List<Vector2>(outerLoop2D),
+                InnerLoop2D = innerLoop2D != null ? new List<Vector2>(innerLoop2D) : null
+            };
+
+            for (int i = 0; i < profileDocument.Points.Count; i++)
+            {
+                CanvasPoint p = profileDocument.Points[i];
+                ProfileSample sample = new ProfileSample
+                {
+                    Index = i,
+                    Inset = p.Position.x,
+                    Z = p.Position.y
+                };
+                result.ProfileSamples.Add(sample);
+
+                List<Vector3> outerRing = LiftLoopTo3D(outerLoop2D, sample.Z);
+                result.OuterRings.Add(outerRing);
+
+                if (innerLoop2D != null && innerLoop2D.Count >= 3)
+                {
+                    List<Vector3> innerRing = LiftLoopTo3D(innerLoop2D, sample.Z);
+                    result.InnerRings.Add(innerRing);
+                }
+            }
+
+            return result;
+        }
+
+        private static Mesh BuildPreviewMesh(ShapeStampRingBuildResult result)
+        {
+            if (result == null || result.OuterRings == null || result.OuterRings.Count < 2)
+                return null;
+
+            MeshBuilder builder = new MeshBuilder();
+
+            // Start cap
+            AddCap(
+                builder,
+                result.OuterLoop2D,
+                result.InnerLoop2D,
+                result.ProfileSamples[0].Z,
+                reverseWinding: true);
+
+            // End cap
+            AddCap(
+                builder,
+                result.OuterLoop2D,
+                result.InnerLoop2D,
+                result.ProfileSamples[result.ProfileSamples.Count - 1].Z,
+                reverseWinding: false);
+
+            // Outer walls
+            for (int i = 0; i < result.OuterRings.Count - 1; i++)
+            {
+                AddRingBridge(builder, result.OuterRings[i], result.OuterRings[i + 1]);
+            }
+
+            // Inner walls
+            if (result.InnerRings != null && result.InnerRings.Count > 1)
+            {
+                for (int i = 0; i < result.InnerRings.Count - 1; i++)
+                {
+                    // Reverse bridge direction so normals face into hole volume consistently.
+                    AddRingBridge(builder, result.InnerRings[i + 1], result.InnerRings[i]);
+                }
+            }
+
+            return builder.ToMesh("ShapeStamp_ProfilePreviewMesh");
+        }
+
+        private static void AddCap(
+            MeshBuilder builder,
+            List<Vector2> outerLoop,
+            List<Vector2> innerLoop,
+            float z,
+            bool reverseWinding)
+        {
+            if (outerLoop == null || outerLoop.Count < 3)
+                return;
+
+            GeneralPolygon2d polygon = ToGeneralPolygon2d(outerLoop, innerLoop);
+
+            TriangulatedPolygonGenerator generator = new TriangulatedPolygonGenerator
+            {
+                Polygon = polygon
+            };
+
+            generator.Generate();
+            DMesh3 gmesh = generator.MakeDMesh();
+            if (gmesh == null || gmesh.TriangleCount == 0)
+                return;
+
+            Dictionary<int, int> vidToBuilder = new Dictionary<int, int>(gmesh.VertexCount);
+
+            for (int vid = 0; vid < gmesh.MaxVertexID; vid++)
+            {
+                if (!gmesh.IsVertex(vid))
+                    continue;
+
+                Vector3d v = gmesh.GetVertex(vid);
+                int builderIndex = builder.AddVertex(new Vector3((float)v.x, (float)v.y, z));
+                vidToBuilder.Add(vid, builderIndex);
+            }
+
+            for (int tid = 0; tid < gmesh.MaxTriangleID; tid++)
+            {
+                if (!gmesh.IsTriangle(tid))
+                    continue;
+
+                Index3i tri = gmesh.GetTriangle(tid);
+                int a = vidToBuilder[tri.a];
+                int b = vidToBuilder[tri.b];
+                int c = vidToBuilder[tri.c];
+
+                if (reverseWinding)
+                    builder.AddTriangle(a, c, b);
+                else
+                    builder.AddTriangle(a, b, c);
+            }
+        }
+
+        private static void AddRingBridge(MeshBuilder builder, List<Vector3> ringA, List<Vector3> ringB)
+        {
+            if (ringA == null || ringB == null)
+                return;
+
+            if (ringA.Count < 3 || ringB.Count < 3)
+                return;
+
+            if (ringA.Count != ringB.Count)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Ring bridge currently requires equal vertex counts.");
+                return;
+            }
+
+            int count = ringA.Count;
+            List<int> aIndices = new List<int>(count);
+            List<int> bIndices = new List<int>(count);
+
+            for (int i = 0; i < count; i++)
+            {
+                aIndices.Add(builder.AddVertex(ringA[i]));
+                bIndices.Add(builder.AddVertex(ringB[i]));
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                int next = (i + 1) % count;
+
+                int a0 = aIndices[i];
+                int a1 = aIndices[next];
+                int b0 = bIndices[i];
+                int b1 = bIndices[next];
+
+                // Winding chosen for outward-facing walls for CCW outer loops.
+                builder.AddTriangle(a0, b1, b0);
+                builder.AddTriangle(a0, a1, b1);
+            }
+        }
+
+        private static GeneralPolygon2d ToGeneralPolygon2d(List<Vector2> outerLoop, List<Vector2> innerLoop)
+        {
+            Polygon2d outer = new Polygon2d();
+            for (int i = 0; i < outerLoop.Count; i++)
+            {
+                Vector2 p = outerLoop[i];
+                outer.AppendVertex(new Vector2d(p.x, -p.y));
+            }
+
+            GeneralPolygon2d polygon = new GeneralPolygon2d(outer);
+
+            if (innerLoop != null && innerLoop.Count >= 3)
+            {
+                Polygon2d hole = new Polygon2d();
+                for (int i = 0; i < innerLoop.Count; i++)
+                {
+                    Vector2 p = innerLoop[i];
+                    hole.AppendVertex(new Vector2d(p.x, -p.y));
+                }
+
+                polygon.AddHole(hole);
+            }
+
+            return polygon;
+        }
+
+        private static List<Vector2> BuildOrderedLoop(IList<CanvasPoint> points, IList<CanvasEdge> edges)
+        {
+            if (points == null || edges == null || edges.Count < 3)
+                return null;
+
+            Dictionary<int, CanvasPoint> pointById = new Dictionary<int, CanvasPoint>(points.Count);
+            for (int i = 0; i < points.Count; i++)
+                pointById[points[i].Id] = points[i];
+
+            Dictionary<int, CanvasEdge> edgeByStart = new Dictionary<int, CanvasEdge>(edges.Count);
+            for (int i = 0; i < edges.Count; i++)
+            {
+                CanvasEdge edge = edges[i];
+                if (edgeByStart.ContainsKey(edge.A))
+                {
+                    Debug.LogWarning($"ShapeStamperProfileGenerator: Multiple outgoing edges from point {edge.A}.");
+                    return null;
+                }
+
+                edgeByStart.Add(edge.A, edge);
+            }
+
+            CanvasEdge firstEdge = edges[0];
+            int startPointId = firstEdge.A;
+            int currentPointId = startPointId;
+
+            HashSet<int> visitedStartPoints = new HashSet<int>();
+            List<Vector2> ordered = new List<Vector2>(edges.Count);
+
+            for (int i = 0; i < edges.Count; i++)
+            {
+                if (!pointById.TryGetValue(currentPointId, out CanvasPoint point))
+                {
+                    Debug.LogWarning($"ShapeStamperProfileGenerator: Missing point id {currentPointId}.");
+                    return null;
+                }
+
+                ordered.Add(point.Position);
+
+                if (!edgeByStart.TryGetValue(currentPointId, out CanvasEdge edge))
+                {
+                    Debug.LogWarning($"ShapeStamperProfileGenerator: No outgoing edge from point id {currentPointId}.");
+                    return null;
+                }
+
+                if (!visitedStartPoints.Add(currentPointId))
+                {
+                    Debug.LogWarning("ShapeStamperProfileGenerator: Loop revisited a point before clean closure.");
+                    return null;
+                }
+
+                currentPointId = edge.B;
+            }
+
+            if (currentPointId != startPointId)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Edge walk did not close.");
+                return null;
+            }
+
+            RemoveDuplicateClosingPoint(ordered);
+            return ordered;
+        }
+
+        private static List<Vector3> LiftLoopTo3D(IList<Vector2> loop, float z)
+        {
+            List<Vector3> ring = new List<Vector3>(loop.Count);
+            for (int i = 0; i < loop.Count; i++)
+            {
+                Vector2 p = loop[i];
+                // Flip Y to match the existing tessellation/orientation correction.
+                ring.Add(new Vector3(p.x, -p.y, z));
+            }
+            return ring;
+        }
+
+        private static void RemoveDuplicateClosingPoint(List<Vector2> loop, float epsilon = 0.00001f)
+        {
+            if (loop == null || loop.Count < 2)
+                return;
+
+            if ((loop[0] - loop[loop.Count - 1]).sqrMagnitude <= epsilon * epsilon)
+                loop.RemoveAt(loop.Count - 1);
+        }
+
+        private static Vector2 CalculateCenter(IList<Vector2> points)
+        {
+            Vector2 min = points[0];
+            Vector2 max = points[0];
+
+            for (int i = 1; i < points.Count; i++)
+            {
+                Vector2 p = points[i];
+                min = Vector2.Min(min, p);
+                max = Vector2.Max(max, p);
+            }
+
+            return (min + max) * 0.5f;
+        }
+
+        private static void OffsetLoop(List<Vector2> loop, Vector2 offset)
+        {
+            for (int i = 0; i < loop.Count; i++)
+                loop[i] -= offset;
+        }
+
+        private static void EnsureCounterClockwise(List<Vector2> loop)
+        {
+            if (IsClockwise(loop))
+                loop.Reverse();
+        }
+
+        private static void EnsureClockwise(List<Vector2> loop)
+        {
+            if (!IsClockwise(loop))
+                loop.Reverse();
+        }
+
+        private static bool IsClockwise(IList<Vector2> points)
+        {
+            float signedAreaTwice = 0f;
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                Vector2 a = points[i];
+                Vector2 b = points[(i + 1) % points.Count];
+                signedAreaTwice += (a.x * b.y) - (b.x * a.y);
+            }
+
+            return signedAreaTwice < 0f;
+        }
+
+        private static void CreateOrUpdatePreviewObject(Mesh mesh)
+        {
+            GameObject go = GameObject.Find(PreviewObjectName);
+            if (go == null)
+            {
+                go = new GameObject(PreviewObjectName);
+                Undo.RegisterCreatedObjectUndo(go, "Create ShapeStamp Profile Preview");
+                go.AddComponent<MeshFilter>();
+                go.AddComponent<MeshRenderer>();
+            }
+
+            MeshFilter mf = go.GetComponent<MeshFilter>();
+            if (mf == null)
+                mf = go.AddComponent<MeshFilter>();
+
+            MeshRenderer mr = go.GetComponent<MeshRenderer>();
+            if (mr == null)
+                mr = go.AddComponent<MeshRenderer>();
+
+            if (mf.sharedMesh != null)
+            {
+                Object oldMesh = mf.sharedMesh;
+                mf.sharedMesh = null;
+                Object.DestroyImmediate(oldMesh);
+            }
+
+            mf.sharedMesh = mesh;
+
+            if (mr.sharedMaterial == null)
+            {
+                Shader shader = Shader.Find("Standard");
+                if (shader != null)
+                    mr.sharedMaterial = new Material(shader);
+            }
+
+            Selection.activeGameObject = go;
+            EditorGUIUtility.PingObject(go);
+        }
+
+        [System.Serializable]
+        public sealed class ShapeStampRingBuildResult
+        {
+            public List<Vector2> OuterLoop2D = new();
+            public List<Vector2> InnerLoop2D;
+            public List<List<Vector3>> OuterRings = new();
+            public List<List<Vector3>> InnerRings = new();
+            public List<ProfileSample> ProfileSamples = new();
+        }
+
+        [System.Serializable]
+        public struct ProfileSample
+        {
+            public int Index;
+            public float Inset;
+            public float Z;
+        }
+
+        private sealed class MeshBuilder
+        {
+            private readonly List<Vector3> _vertices = new();
+            private readonly List<int> _triangles = new();
+
+            public int AddVertex(Vector3 v)
+            {
+                _vertices.Add(v);
+                return _vertices.Count - 1;
+            }
+
+            public void AddTriangle(int a, int b, int c)
+            {
+                _triangles.Add(a);
+                _triangles.Add(b);
+                _triangles.Add(c);
+            }
+
+            public Mesh ToMesh(string name)
+            {
+                Mesh mesh = new Mesh
+                {
+                    name = name
+                };
+
+                mesh.SetVertices(_vertices);
+                mesh.SetTriangles(_triangles, 0);
+                mesh.RecalculateBounds();
+                mesh.RecalculateNormals();
+                return mesh;
+            }
+        }
+    }
+}

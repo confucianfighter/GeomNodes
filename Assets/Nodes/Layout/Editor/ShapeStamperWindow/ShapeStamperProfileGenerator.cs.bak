@@ -1,0 +1,218 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace DLN.EditorTools.ShapeStamper
+{
+    /// <summary>
+    /// First-stage profile generation seam.
+    /// Reads the current shape + profile and produces ring data we can later stitch into bevel geometry.
+    /// 
+    /// For now this generates debug-ready ring samples and logs the result.
+    /// It is intentionally separated from final mesh baking so ring generation can be verified independently.
+    /// </summary>
+    public static class ShapeStamperProfileGenerator
+    {
+        public static void Generate(ShapeCanvasDocument shapeDocument, ProfileCanvasDocument profileDocument)
+        {
+            ShapeStampRingBuildResult result = BuildRings(shapeDocument, profileDocument);
+
+            if (result == null)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Failed to build profile rings.");
+                return;
+            }
+
+            Debug.Log(
+                $"ShapeStamperProfileGenerator: Built {result.OuterRings.Count} outer ring(s), " +
+                $"{result.InnerRings.Count} inner ring set(s), " +
+                $"{result.ProfileSamples.Count} profile sample(s).");
+        }
+
+        public static ShapeStampRingBuildResult BuildRings(
+            ShapeCanvasDocument shapeDocument,
+            ProfileCanvasDocument profileDocument)
+        {
+            if (shapeDocument == null || profileDocument == null)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Missing shape or profile document.");
+                return null;
+            }
+
+            if (shapeDocument.OuterPoints == null || shapeDocument.OuterEdges == null || shapeDocument.OuterPoints.Count < 3)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Outer shape is incomplete.");
+                return null;
+            }
+
+            if (profileDocument.Points == null || profileDocument.Points.Count < 2)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Profile needs at least 2 points.");
+                return null;
+            }
+
+            List<Vector2> outerLoop2D = BuildOrderedLoop(shapeDocument.OuterPoints, shapeDocument.OuterEdges);
+            if (outerLoop2D == null || outerLoop2D.Count < 3)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Failed to build ordered outer loop.");
+                return null;
+            }
+
+            List<Vector2> innerLoop2D = null;
+            if (shapeDocument.HasInnerShape && shapeDocument.InnerPoints != null && shapeDocument.InnerEdges != null && shapeDocument.InnerPoints.Count >= 3)
+            {
+                innerLoop2D = BuildOrderedLoop(shapeDocument.InnerPoints, shapeDocument.InnerEdges);
+            }
+
+            Vector2 sharedCenter = CalculateCenter(outerLoop2D);
+            OffsetLoop(outerLoop2D, sharedCenter);
+            if (innerLoop2D != null)
+                OffsetLoop(innerLoop2D, sharedCenter);
+
+            ShapeStampRingBuildResult result = new ShapeStampRingBuildResult();
+
+            for (int i = 0; i < profileDocument.Points.Count; i++)
+            {
+                CanvasPoint p = profileDocument.Points[i];
+                ProfileSample sample = new ProfileSample
+                {
+                    Index = i,
+                    Inset = p.Position.x,
+                    Z = p.Position.y
+                };
+                result.ProfileSamples.Add(sample);
+
+                List<Vector3> outerRing = LiftLoopTo3D(outerLoop2D, sample.Z);
+                result.OuterRings.Add(outerRing);
+
+                if (innerLoop2D != null && innerLoop2D.Count >= 3)
+                {
+                    List<Vector3> innerRing = LiftLoopTo3D(innerLoop2D, sample.Z);
+                    result.InnerRings.Add(innerRing);
+                }
+            }
+
+            return result;
+        }
+
+        private static List<Vector2> BuildOrderedLoop(IList<CanvasPoint> points, IList<CanvasEdge> edges)
+        {
+            if (points == null || edges == null || edges.Count < 3)
+                return null;
+
+            Dictionary<int, CanvasPoint> pointById = new Dictionary<int, CanvasPoint>(points.Count);
+            for (int i = 0; i < points.Count; i++)
+                pointById[points[i].Id] = points[i];
+
+            Dictionary<int, CanvasEdge> edgeByStart = new Dictionary<int, CanvasEdge>(edges.Count);
+            for (int i = 0; i < edges.Count; i++)
+            {
+                CanvasEdge edge = edges[i];
+                if (edgeByStart.ContainsKey(edge.A))
+                {
+                    Debug.LogWarning($"ShapeStamperProfileGenerator: Multiple outgoing edges from point {edge.A}.");
+                    return null;
+                }
+
+                edgeByStart.Add(edge.A, edge);
+            }
+
+            CanvasEdge firstEdge = edges[0];
+            int startPointId = firstEdge.A;
+            int currentPointId = startPointId;
+
+            HashSet<int> visitedStartPoints = new HashSet<int>();
+            List<Vector2> ordered = new List<Vector2>(edges.Count);
+
+            for (int i = 0; i < edges.Count; i++)
+            {
+                if (!pointById.TryGetValue(currentPointId, out CanvasPoint point))
+                {
+                    Debug.LogWarning($"ShapeStamperProfileGenerator: Missing point id {currentPointId}.");
+                    return null;
+                }
+
+                ordered.Add(point.Position);
+
+                if (!edgeByStart.TryGetValue(currentPointId, out CanvasEdge edge))
+                {
+                    Debug.LogWarning($"ShapeStamperProfileGenerator: No outgoing edge from point id {currentPointId}.");
+                    return null;
+                }
+
+                if (!visitedStartPoints.Add(currentPointId))
+                {
+                    Debug.LogWarning("ShapeStamperProfileGenerator: Loop revisited a point before clean closure.");
+                    return null;
+                }
+
+                currentPointId = edge.B;
+            }
+
+            if (currentPointId != startPointId)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Edge walk did not close.");
+                return null;
+            }
+
+            RemoveDuplicateClosingPoint(ordered);
+            return ordered;
+        }
+
+        private static List<Vector3> LiftLoopTo3D(IList<Vector2> loop, float z)
+        {
+            List<Vector3> ring = new List<Vector3>(loop.Count);
+            for (int i = 0; i < loop.Count; i++)
+            {
+                Vector2 p = loop[i];
+                ring.Add(new Vector3(p.x, p.y, z));
+            }
+            return ring;
+        }
+
+        private static void RemoveDuplicateClosingPoint(List<Vector2> loop, float epsilon = 0.00001f)
+        {
+            if (loop == null || loop.Count < 2)
+                return;
+
+            if ((loop[0] - loop[loop.Count - 1]).sqrMagnitude <= epsilon * epsilon)
+                loop.RemoveAt(loop.Count - 1);
+        }
+
+        private static Vector2 CalculateCenter(IList<Vector2> points)
+        {
+            Vector2 min = points[0];
+            Vector2 max = points[0];
+
+            for (int i = 1; i < points.Count; i++)
+            {
+                Vector2 p = points[i];
+                min = Vector2.Min(min, p);
+                max = Vector2.Max(max, p);
+            }
+
+            return (min + max) * 0.5f;
+        }
+
+        private static void OffsetLoop(List<Vector2> loop, Vector2 offset)
+        {
+            for (int i = 0; i < loop.Count; i++)
+                loop[i] -= offset;
+        }
+    }
+
+    [System.Serializable]
+    public sealed class ShapeStampRingBuildResult
+    {
+        public List<List<Vector3>> OuterRings = new();
+        public List<List<Vector3>> InnerRings = new();
+        public List<ProfileSample> ProfileSamples = new();
+    }
+
+    [System.Serializable]
+    public struct ProfileSample
+    {
+        public int Index;
+        public float Inset;
+        public float Z;
+    }
+}
