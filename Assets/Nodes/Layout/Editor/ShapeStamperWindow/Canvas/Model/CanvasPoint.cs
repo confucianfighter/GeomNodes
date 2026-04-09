@@ -20,8 +20,8 @@ namespace DLN
             Id = id;
             Position = position;
 
-            XAnchor = CanvasAnchorX.None;
-            YAnchor = CanvasAnchorY.None;
+            XAnchor = CanvasAnchorX.Floating;
+            YAnchor = CanvasAnchorY.Floating;
 
             OffsetX = 0f;
             OffsetY = 0f;

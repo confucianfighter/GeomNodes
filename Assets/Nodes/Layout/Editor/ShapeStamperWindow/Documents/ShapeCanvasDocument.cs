@@ -158,6 +158,34 @@ namespace DLN.EditorTools.ShapeStamper
             return new Rect(0f, 0f, WorldSizeMeters.x, WorldSizeMeters.y);
         }
 
+        public void ResizeWorld(Vector2 newSize)
+        {
+            Rect oldBounds = GetCanvasFrameRect();
+
+            WorldSizeMeters = new Vector2(
+                Mathf.Max(0.0001f, newSize.x),
+                Mathf.Max(0.0001f, newSize.y)
+            );
+
+            Rect newBounds = GetCanvasFrameRect();
+
+            ResizePointList(points, oldBounds, newBounds);
+            ResizePointList(innerPoints, oldBounds, newBounds);
+        }
+
+        private static void ResizePointList(List<CanvasPoint> list, Rect oldBounds, Rect newBounds)
+        {
+            if (list == null)
+                return;
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                CanvasPoint p = list[i];
+                ShapeCanvasPointResolver.ResizePointPreservingBehavior(ref p, oldBounds, newBounds);
+                list[i] = p;
+            }
+        }
+
         public void EnsureDefaultInnerShape()
         {
             WorldSizeMeters = worldSizeMeters;

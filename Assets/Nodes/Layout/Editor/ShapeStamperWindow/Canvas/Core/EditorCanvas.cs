@@ -655,6 +655,8 @@ namespace DLN.EditorTools.ShapeStamper
 
         private void SetPointPosition(int pointId, Vector2 position)
         {
+            Rect bounds = CanvasMath.GetWorldRect(Document);
+
             for (int i = 0; i < Document.Points.Count; i++)
             {
                 if (Document.Points[i].Id != pointId)
@@ -662,6 +664,7 @@ namespace DLN.EditorTools.ShapeStamper
 
                 CanvasPoint p = Document.Points[i];
                 p.Position = position;
+                ShapeCanvasPointResolver.RecalculateOffsets(ref p, bounds);
                 Document.Points[i] = p;
                 return;
             }

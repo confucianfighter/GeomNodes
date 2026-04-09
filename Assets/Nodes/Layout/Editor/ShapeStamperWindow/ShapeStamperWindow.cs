@@ -194,15 +194,20 @@ namespace DLN.EditorTools.ShapeStamper
 
             EditorGUILayout.EndHorizontal();
 
-            shapeDocument.WorldSizeMeters = new Vector2(
+            Vector2 requestedShapeSize = new Vector2(
                 Mathf.Max(0.0001f, newShapeWidth),
                 Mathf.Max(0.0001f, newShapeHeight)
             );
+
+            if (requestedShapeSize != shapeDocument.WorldSizeMeters)
+                shapeDocument.ResizeWorld(requestedShapeSize);
 
             profileDocument.WorldSizeMeters = new Vector2(
                 Mathf.Max(0.0001f, newProfileWidth),
                 Mathf.Max(0.0001f, newProfileHeight)
             );
+
+            DrawSelectedShapePointInspector();
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Canvas %", GUILayout.Width(82f));
@@ -245,6 +250,61 @@ namespace DLN.EditorTools.ShapeStamper
             EditorGUILayout.EndHorizontal();
 
             DrawMaterialSettings();
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private void DrawSelectedShapePointInspector()
+        {
+            if (shapeSelection == null || shapeSelection.Count != 1)
+                return;
+
+            CanvasElementRef selected = default;
+            foreach (CanvasElementRef element in shapeSelection.Elements)
+            {
+                selected = element;
+                break;
+            }
+
+            if (!selected.IsPoint)
+                return;
+
+            IList<CanvasPoint> points = shapeDocument.Points;
+            int index = -1;
+            for (int i = 0; i < points.Count; i++)
+            {
+                if (points[i].Id == selected.Id)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index < 0)
+                return;
+
+            CanvasPoint point = points[index];
+            Rect bounds = shapeDocument.GetCanvasFrameRect();
+
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField($"Point {point.Id}", EditorStyles.boldLabel);
+
+            EditorGUI.BeginChangeCheck();
+
+            CanvasAnchorX newXAnchor = (CanvasAnchorX)EditorGUILayout.EnumPopup("X Anchor", point.XAnchor);
+            CanvasAnchorY newYAnchor = (CanvasAnchorY)EditorGUILayout.EnumPopup("Y Anchor", point.YAnchor);
+
+            EditorGUILayout.LabelField("Position", $"{point.Position.x:0.###}, {point.Position.y:0.###}");
+            EditorGUILayout.LabelField("Offset", $"{point.OffsetX:0.###}, {point.OffsetY:0.###}");
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                ShapeCanvasPointResolver.SetAnchorsPreservePosition(ref point, newXAnchor, newYAnchor, bounds);
+                points[index] = point;
+                shapeDocument.MarkDirty();
+                Repaint();
+            }
 
             EditorGUILayout.EndVertical();
         }
