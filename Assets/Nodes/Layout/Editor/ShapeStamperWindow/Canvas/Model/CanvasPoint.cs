@@ -1,9 +1,30 @@
+using System;
 using UnityEngine;
-public struct CanvasPoint
+
+namespace DLN
 {
-    public int Id;
-    public Vector2 Position;
+    [Serializable]
+    public struct CanvasPoint
+    {
+        public int Id;
+        public Vector2 Position;
+
+        public CanvasAnchorX XAnchor;
+        public CanvasAnchorY YAnchor;
+
+        public float OffsetX;
+        public float OffsetY;
+
+        public CanvasPoint(int id, Vector2 position)
+        {
+            Id = id;
+            Position = position;
+
+            XAnchor = CanvasAnchorX.None;
+            YAnchor = CanvasAnchorY.None;
+
+            OffsetX = 0f;
+            OffsetY = 0f;
+        }
+    }
 }
-
-
-
