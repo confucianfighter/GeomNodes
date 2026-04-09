@@ -2,14 +2,421 @@ from pathlib import Path
 import textwrap
 
 ROOT = Path.cwd()
+
+WINDOW_PATH = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/ShapeStamperWindow.cs"
 GENERATOR_PATH = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/ShapeStamperProfileGenerator.cs"
 
-if not GENERATOR_PATH.exists():
-    raise FileNotFoundError(f"Missing file: {GENERATOR_PATH}")
+for path in (WINDOW_PATH, GENERATOR_PATH):
+    if not path.exists():
+        raise FileNotFoundError(f"Missing file: {path}")
 
-backup = GENERATOR_PATH.with_suffix(GENERATOR_PATH.suffix + ".segmentedmesh.bak")
-if not backup.exists():
-    backup.write_text(GENERATOR_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+for path in (WINDOW_PATH, GENERATOR_PATH):
+    backup = path.with_suffix(path.suffix + ".materials.bak")
+    if not backup.exists():
+        backup.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+
+window_content = r'''
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
+
+namespace DLN.EditorTools.ShapeStamper
+{
+    public class ShapeStamperWindow : EditorWindow
+    {
+        private const float TopBarHeight = 260f;
+        private const float CanvasPadding = 12f;
+
+        private const float DividerWidth = 6f;
+        private const float DividerHitWidth = 12f;
+        private const float MinPanelWidth = 120f;
+
+        [SerializeField] private ShapeCanvasDocument shapeDocument = new();
+        [SerializeField] private ProfileCanvasDocument profileDocument = new();
+        [SerializeField] private Vector2 canvasPercentOfWindow = new Vector2(0.8f, 0.8f);
+        [SerializeField] private float verticalDividerPercent = 0.65f;
+
+        [SerializeField] private CanvasSelection shapeSelection = new();
+        [SerializeField] private CanvasInteractionState shapeInteraction = new();
+        [SerializeField] private CanvasViewState shapeView = new();
+
+        [SerializeField] private CanvasSelection profileSelection = new();
+        [SerializeField] private CanvasInteractionState profileInteraction = new();
+        [SerializeField] private CanvasViewState profileView = new();
+
+        [SerializeField] private bool showMaterialSettings = true;
+        [SerializeField] private List<Material> segmentMaterials = new();
+        [SerializeField] private Material startCapMaterial;
+        [SerializeField] private Material endCapMaterial;
+
+        private EditorCanvas _shapeCanvas;
+        private EditorCanvas _profileCanvas;
+
+        private ICanvasToolPolicy _shapePolicy;
+        private ICanvasToolPolicy _profilePolicy;
+
+        private bool _isDraggingDivider;
+
+        [MenuItem("Tools/DLN/Shape Stamper")]
+        public static void Open()
+        {
+            ShapeStamperWindow window = GetWindow<ShapeStamperWindow>();
+            window.titleContent = new GUIContent("Shape Stamper");
+            window.minSize = new Vector2(700f, 420f);
+            window.Show();
+        }
+
+        private void OnEnable()
+        {
+            shapeDocument ??= new ShapeCanvasDocument();
+            profileDocument ??= new ProfileCanvasDocument();
+
+            shapeSelection ??= new CanvasSelection();
+            shapeInteraction ??= new CanvasInteractionState();
+            shapeView ??= new CanvasViewState();
+
+            profileSelection ??= new CanvasSelection();
+            profileInteraction ??= new CanvasInteractionState();
+            profileView ??= new CanvasViewState();
+
+            segmentMaterials ??= new List<Material>();
+
+            shapeDocument.EnsureValidShape();
+            profileDocument.EnsureValidProfile();
+
+            _shapePolicy ??= new ShapeCanvasPolicy(shapeDocument);
+            _profilePolicy ??= new ProfileCanvasPolicy(profileDocument);
+
+            _shapeCanvas = new EditorCanvas(shapeDocument, _shapePolicy, shapeSelection, shapeInteraction, shapeView);
+            _profileCanvas = new EditorCanvas(profileDocument, _profilePolicy, profileSelection, profileInteraction, profileView);
+        }
+
+        private void OnGUI()
+        {
+            shapeDocument ??= new ShapeCanvasDocument();
+            profileDocument ??= new ProfileCanvasDocument();
+            segmentMaterials ??= new List<Material>();
+
+            shapeDocument.EnsureValidShape();
+            profileDocument.EnsureValidProfile();
+
+            DrawTopBar();
+
+            Rect fullCanvasArea = new Rect(
+                0f,
+                TopBarHeight,
+                position.width,
+                Mathf.Max(0f, position.height - TopBarHeight)
+            );
+
+            ComputeSplitRects(fullCanvasArea, out Rect leftPanelRect, out Rect dividerRect, out Rect dividerHitRect, out Rect rightPanelRect);
+            HandleDividerInput(dividerHitRect);
+
+            Rect leftAllowedRect = ShapeCanvasUtility.GetAllowedCanvasRect(leftPanelRect, canvasPercentOfWindow, CanvasPadding);
+            Rect rightAllowedRect = ShapeCanvasUtility.GetAllowedCanvasRect(rightPanelRect, canvasPercentOfWindow, CanvasPadding);
+
+            DrawPanelBackground(leftPanelRect);
+            DrawPanelBackground(rightPanelRect);
+            DrawDivider(dividerRect, dividerHitRect);
+
+            _shapeCanvas.Draw(leftAllowedRect);
+            _profileCanvas.Draw(rightAllowedRect);
+
+            if (Event.current.type == EventType.Repaint)
+                Repaint();
+        }
+
+        private void DrawTopBar()
+        {
+            EditorGUILayout.BeginVertical(GUILayout.Height(TopBarHeight));
+            EditorGUILayout.Space(6f);
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Shape World", GUILayout.Width(82f));
+            EditorGUILayout.LabelField("W", GUILayout.Width(16f));
+            float newShapeWidth = EditorGUILayout.FloatField(shapeDocument.WorldSizeMeters.x, GUILayout.Width(70f));
+            EditorGUILayout.LabelField("H", GUILayout.Width(16f));
+            float newShapeHeight = EditorGUILayout.FloatField(shapeDocument.WorldSizeMeters.y, GUILayout.Width(70f));
+
+            GUILayout.Space(18f);
+
+            EditorGUILayout.LabelField("Profile World", GUILayout.Width(84f));
+            EditorGUILayout.LabelField("W", GUILayout.Width(16f));
+            float newProfileWidth = EditorGUILayout.FloatField(profileDocument.WorldSizeMeters.x, GUILayout.Width(70f));
+            EditorGUILayout.LabelField("H", GUILayout.Width(16f));
+            float newProfileHeight = EditorGUILayout.FloatField(profileDocument.WorldSizeMeters.y, GUILayout.Width(70f));
+
+            if (GUILayout.Button("Generate Profile", GUILayout.Width(120f)))
+            {
+                ShapeStamperProfileGenerator.Generate(
+                    shapeDocument,
+                    profileDocument,
+                    BuildPreviewMaterialSettings());
+            }
+
+            if (GUILayout.Button("Bake", GUILayout.Width(100f)))
+            {
+                ShapeStamperBakeService.BakeShapeFaceToScene(shapeDocument);
+            }
+
+            GUILayout.FlexibleSpace();
+
+            bool newHasInnerShape = EditorGUILayout.ToggleLeft("Inner Shape", shapeDocument.HasInnerShape, GUILayout.Width(100f));
+            if (newHasInnerShape && !shapeDocument.HasInnerShape)
+            {
+                shapeDocument.HasInnerShape = true;
+                shapeDocument.EnsureDefaultInnerShape();
+                shapeDocument.EditMode = ShapeCanvasDocument.ShapeLoopEditMode.Inner;
+                shapeSelection.Clear();
+                shapeInteraction.Clear();
+            }
+            else if (!newHasInnerShape && shapeDocument.HasInnerShape)
+            {
+                shapeDocument.HasInnerShape = false;
+                shapeDocument.EditMode = ShapeCanvasDocument.ShapeLoopEditMode.Outer;
+                shapeSelection.Clear();
+                shapeInteraction.Clear();
+            }
+
+            if (shapeDocument.HasInnerShape)
+            {
+                var newEditMode = (ShapeCanvasDocument.ShapeLoopEditMode)EditorGUILayout.EnumPopup(
+                    shapeDocument.EditMode,
+                    GUILayout.Width(90f));
+
+                if (newEditMode != shapeDocument.EditMode)
+                {
+                    shapeDocument.EditMode = newEditMode;
+                    shapeSelection.Clear();
+                    shapeInteraction.Clear();
+                }
+            }
+
+            if (GUILayout.Button("Reset Shape", GUILayout.Width(100f)))
+            {
+                shapeDocument.ResetToDefaultTriangle();
+                shapeSelection.Clear();
+                shapeInteraction.Clear();
+                shapeView.ResetView();
+                GUI.FocusControl(null);
+            }
+
+            if (GUILayout.Button("Reset Profile", GUILayout.Width(100f)))
+            {
+                profileDocument.ResetDefaultProfile();
+                profileSelection.Clear();
+                profileInteraction.Clear();
+                profileView.ResetView();
+                GUI.FocusControl(null);
+            }
+
+            EditorGUILayout.EndHorizontal();
+
+            shapeDocument.WorldSizeMeters = new Vector2(
+                Mathf.Max(0.0001f, newShapeWidth),
+                Mathf.Max(0.0001f, newShapeHeight)
+            );
+
+            profileDocument.WorldSizeMeters = new Vector2(
+                Mathf.Max(0.0001f, newProfileWidth),
+                Mathf.Max(0.0001f, newProfileHeight)
+            );
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Canvas %", GUILayout.Width(82f));
+
+            EditorGUILayout.LabelField("W", GUILayout.Width(16f));
+            float newPercentWidth = EditorGUILayout.FloatField(canvasPercentOfWindow.x * 100f, GUILayout.Width(70f));
+
+            EditorGUILayout.LabelField("H", GUILayout.Width(16f));
+            float newPercentHeight = EditorGUILayout.FloatField(canvasPercentOfWindow.y * 100f, GUILayout.Width(70f));
+
+            canvasPercentOfWindow = new Vector2(
+                Mathf.Clamp(newPercentWidth, 5f, 100f) / 100f,
+                Mathf.Clamp(newPercentHeight, 5f, 100f) / 100f
+            );
+
+            GUILayout.Space(18f);
+            EditorGUILayout.LabelField("Split", GUILayout.Width(30f));
+            verticalDividerPercent = GUILayout.HorizontalSlider(verticalDividerPercent, 0.2f, 0.8f, GUILayout.Width(140f));
+
+            GUILayout.FlexibleSpace();
+
+            if (GUILayout.Button("Frame Shape", GUILayout.Width(100f)))
+                shapeView.ResetView();
+
+            if (GUILayout.Button("Frame Profile", GUILayout.Width(100f)))
+                profileView.ResetView();
+
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(
+                $"Shape Points: {shapeDocument.PointCount}   Selected: {shapeSelection.Count}",
+                EditorStyles.miniLabel
+            );
+            GUILayout.Space(20f);
+            EditorGUILayout.LabelField(
+                $"Profile Points: {profileDocument.Points.Count}   Selected: {profileSelection.Count}",
+                EditorStyles.miniLabel
+            );
+            EditorGUILayout.EndHorizontal();
+
+            DrawMaterialSettings();
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private void DrawMaterialSettings()
+        {
+            EditorGUILayout.Space(6f);
+            showMaterialSettings = EditorGUILayout.Foldout(showMaterialSettings, "Materials", true);
+
+            if (!showMaterialSettings)
+                return;
+
+            EditorGUI.indentLevel++;
+
+            int requiredSegments = Mathf.Max(0, profileDocument.Points.Count - 1);
+            EditorGUILayout.LabelField(
+                $"Profile segments currently needed: {requiredSegments}",
+                EditorStyles.miniLabel);
+
+            int newSize = EditorGUILayout.IntField("Segment Slots", segmentMaterials.Count);
+            newSize = Mathf.Max(0, newSize);
+
+            while (segmentMaterials.Count < newSize)
+                segmentMaterials.Add(null);
+
+            while (segmentMaterials.Count > newSize)
+                segmentMaterials.RemoveAt(segmentMaterials.Count - 1);
+
+            for (int i = 0; i < segmentMaterials.Count; i++)
+            {
+                segmentMaterials[i] = (Material)EditorGUILayout.ObjectField(
+                    $"Segment {i}",
+                    segmentMaterials[i],
+                    typeof(Material),
+                    false);
+            }
+
+            startCapMaterial = (Material)EditorGUILayout.ObjectField(
+                "Start Cap",
+                startCapMaterial,
+                typeof(Material),
+                false);
+
+            endCapMaterial = (Material)EditorGUILayout.ObjectField(
+                "End Cap",
+                endCapMaterial,
+                typeof(Material),
+                false);
+
+            EditorGUI.indentLevel--;
+        }
+
+        private ShapeStampPreviewMaterialSettings BuildPreviewMaterialSettings()
+        {
+            ShapeStampPreviewMaterialSettings settings = new ShapeStampPreviewMaterialSettings();
+            settings.StartCapMaterial = startCapMaterial;
+            settings.EndCapMaterial = endCapMaterial;
+
+            if (segmentMaterials != null)
+            {
+                for (int i = 0; i < segmentMaterials.Count; i++)
+                    settings.SegmentMaterials.Add(segmentMaterials[i]);
+            }
+
+            return settings;
+        }
+
+        private void ComputeSplitRects(
+            Rect fullCanvasArea,
+            out Rect leftPanelRect,
+            out Rect dividerRect,
+            out Rect dividerHitRect,
+            out Rect rightPanelRect)
+        {
+            float clampedPercent = Mathf.Clamp(verticalDividerPercent, 0.2f, 0.8f);
+
+            float totalWidth = fullCanvasArea.width;
+            float availableWidth = Mathf.Max(0f, totalWidth - DividerWidth);
+
+            float leftWidth = Mathf.Round(availableWidth * clampedPercent);
+            float rightWidth = availableWidth - leftWidth;
+
+            if (leftWidth < MinPanelWidth)
+            {
+                leftWidth = MinPanelWidth;
+                rightWidth = availableWidth - leftWidth;
+            }
+
+            if (rightWidth < MinPanelWidth)
+            {
+                rightWidth = MinPanelWidth;
+                leftWidth = availableWidth - rightWidth;
+            }
+
+            float dividerX = fullCanvasArea.x + leftWidth;
+
+            leftPanelRect = new Rect(fullCanvasArea.x, fullCanvasArea.y, Mathf.Max(0f, leftWidth), fullCanvasArea.height);
+            dividerRect = new Rect(dividerX, fullCanvasArea.y, DividerWidth, fullCanvasArea.height);
+            dividerHitRect = new Rect(dividerRect.center.x - DividerHitWidth * 0.5f, fullCanvasArea.y, DividerHitWidth, fullCanvasArea.height);
+            rightPanelRect = new Rect(dividerRect.xMax, fullCanvasArea.y, Mathf.Max(0f, rightWidth), fullCanvasArea.height);
+        }
+
+        private void HandleDividerInput(Rect dividerHitRect)
+        {
+            Event evt = Event.current;
+            EditorGUIUtility.AddCursorRect(dividerHitRect, MouseCursor.ResizeHorizontal);
+
+            switch (evt.type)
+            {
+                case EventType.MouseDown:
+                    if (evt.button == 0 && dividerHitRect.Contains(evt.mousePosition))
+                    {
+                        _isDraggingDivider = true;
+                        evt.Use();
+                    }
+                    break;
+
+                case EventType.MouseDrag:
+                    if (_isDraggingDivider && evt.button == 0)
+                    {
+                        float usableWidth = Mathf.Max(1f, position.width - DividerWidth);
+                        verticalDividerPercent = Mathf.Clamp(evt.mousePosition.x / usableWidth, 0.2f, 0.8f);
+                        evt.Use();
+                    }
+                    break;
+
+                case EventType.MouseUp:
+                    if (_isDraggingDivider && evt.button == 0)
+                    {
+                        _isDraggingDivider = false;
+                        evt.Use();
+                    }
+                    break;
+            }
+        }
+
+        private void DrawPanelBackground(Rect panelRect)
+        {
+            EditorGUI.DrawRect(panelRect, new Color(0.10f, 0.10f, 0.10f));
+        }
+
+        private void DrawDivider(Rect dividerRect, Rect dividerHitRect)
+        {
+            Color dividerColor = _isDraggingDivider
+                ? new Color(0.55f, 0.55f, 0.55f)
+                : (dividerHitRect.Contains(Event.current.mousePosition)
+                    ? new Color(0.42f, 0.42f, 0.42f)
+                    : new Color(0.28f, 0.28f, 0.28f));
+
+            EditorGUI.DrawRect(dividerRect, dividerColor);
+        }
+    }
+}
+'''
 
 generator_content = r'''
 using System.Collections.Generic;
@@ -19,25 +426,14 @@ using g4;
 
 namespace DLN.EditorTools.ShapeStamper
 {
-    /// <summary>
-    /// Debug-first profile generator.
-    ///
-    /// Current behavior:
-    /// - Builds ordered outer/inner loops
-    /// - Converts from centered 2D loop space into mesh-space
-    /// - Applies a first-pass parallel closed-loop offset using profile X
-    /// - Places each ring at profile Y as Z in 3D
-    /// - Draws each ring as a LineRenderer child under a preview root
-    /// - Builds a segmented bridge preview mesh:
-    ///     * one submesh per profile segment
-    ///     * one submesh for start cap
-    ///     * one submesh for end cap
-    ///
-    /// Notes:
-    /// - This is still a preview/debug seam.
-    /// - Ring placement remains authoritative. The line renderers stay visible.
-    /// - If later ring counts diverge, that is where MeshStitchLoops becomes more attractive.
-    /// </summary>
+    [System.Serializable]
+    public sealed class ShapeStampPreviewMaterialSettings
+    {
+        public List<Material> SegmentMaterials = new();
+        public Material StartCapMaterial;
+        public Material EndCapMaterial;
+    }
+
     public static class ShapeStamperProfileGenerator
     {
         private const string PreviewRootName = "ShapeStamp_ProfileRings";
@@ -45,7 +441,10 @@ namespace DLN.EditorTools.ShapeStamper
         private const float ParallelEpsilon = 0.000001f;
         private const float DefaultLineWidth = 0.02f;
 
-        public static void Generate(ShapeCanvasDocument shapeDocument, ProfileCanvasDocument profileDocument)
+        public static void Generate(
+            ShapeCanvasDocument shapeDocument,
+            ProfileCanvasDocument profileDocument,
+            ShapeStampPreviewMaterialSettings materialSettings = null)
         {
             ShapeStampRingBuildResult result = BuildRings(shapeDocument, profileDocument);
 
@@ -59,7 +458,7 @@ namespace DLN.EditorTools.ShapeStamper
 
             Mesh segmentedMesh = BuildSegmentedBridgeMesh(result);
             if (segmentedMesh != null)
-                CreateOrUpdateSegmentMeshPreview(segmentedMesh, result);
+                CreateOrUpdateSegmentMeshPreview(segmentedMesh, result, materialSettings);
 
             Debug.Log(
                 $"ShapeStamperProfileGenerator: Built {result.OuterRings.Count} outer ring(s), " +
@@ -109,7 +508,6 @@ namespace DLN.EditorTools.ShapeStamper
             if (baseInnerLoop2D != null)
                 OffsetLoop(baseInnerLoop2D, sharedCenter);
 
-            // Convert once from canvas-like space into mesh-space.
             FlipLoopY(baseOuterLoop2D);
             if (baseInnerLoop2D != null)
                 FlipLoopY(baseInnerLoop2D);
@@ -226,7 +624,6 @@ namespace DLN.EditorTools.ShapeStamper
             lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             lr.receiveShadows = false;
             lr.alignment = LineAlignment.View;
-
             lr.SetPositions(ring.ToArray());
         }
 
@@ -238,27 +635,22 @@ namespace DLN.EditorTools.ShapeStamper
             SegmentedMeshBuilder builder = new SegmentedMeshBuilder();
 
             int segmentCount = result.OuterRings.Count - 1;
-
-            // One submesh per profile segment.
             for (int i = 0; i < segmentCount; i++)
                 builder.AddSubmesh();
 
             int startCapSubmesh = builder.AddSubmesh();
             int endCapSubmesh = builder.AddSubmesh();
 
-            // Segment walls
             for (int i = 0; i < segmentCount; i++)
             {
                 AddRingBridge(builder, result.OuterRings[i], result.OuterRings[i + 1], i);
 
                 if (result.InnerRings != null && result.InnerRings.Count == result.OuterRings.Count)
                 {
-                    // Reverse bridge direction so inner wall normals face into the hole properly.
                     AddRingBridge(builder, result.InnerRings[i + 1], result.InnerRings[i], i);
                 }
             }
 
-            // Caps
             AddCap(
                 builder,
                 result.OuterLoops2D[0],
@@ -369,7 +761,10 @@ namespace DLN.EditorTools.ShapeStamper
             }
         }
 
-        private static void CreateOrUpdateSegmentMeshPreview(Mesh mesh, ShapeStampRingBuildResult result)
+        private static void CreateOrUpdateSegmentMeshPreview(
+            Mesh mesh,
+            ShapeStampRingBuildResult result,
+            ShapeStampPreviewMaterialSettings materialSettings)
         {
             GameObject go = GameObject.Find(PreviewMeshObjectName);
             if (go == null)
@@ -402,12 +797,45 @@ namespace DLN.EditorTools.ShapeStamper
 
             Material[] mats = new Material[totalSubmeshes];
             for (int i = 0; i < segmentCount; i++)
-                mats[i] = CreateSegmentMaterial(i, segmentCount);
+                mats[i] = ResolveSegmentMaterial(materialSettings, i, segmentCount);
 
-            mats[segmentCount] = CreateCapMaterial(new Color(0.85f, 0.85f, 0.85f));
-            mats[segmentCount + 1] = CreateCapMaterial(new Color(0.65f, 0.65f, 0.65f));
+            mats[segmentCount] = ResolveStartCapMaterial(materialSettings);
+            mats[segmentCount + 1] = ResolveEndCapMaterial(materialSettings);
 
             mr.sharedMaterials = mats;
+        }
+
+        private static Material ResolveSegmentMaterial(ShapeStampPreviewMaterialSettings settings, int index, int count)
+        {
+            if (settings != null && settings.SegmentMaterials != null)
+            {
+                if (index >= 0 && index < settings.SegmentMaterials.Count && settings.SegmentMaterials[index] != null)
+                    return settings.SegmentMaterials[index];
+
+                for (int i = settings.SegmentMaterials.Count - 1; i >= 0; i--)
+                {
+                    if (settings.SegmentMaterials[i] != null)
+                        return settings.SegmentMaterials[i];
+                }
+            }
+
+            return CreateSegmentMaterial(index, count);
+        }
+
+        private static Material ResolveStartCapMaterial(ShapeStampPreviewMaterialSettings settings)
+        {
+            if (settings != null && settings.StartCapMaterial != null)
+                return settings.StartCapMaterial;
+
+            return CreateCapMaterial(new Color(0.85f, 0.85f, 0.85f), "ShapeStamp_StartCap_Mat");
+        }
+
+        private static Material ResolveEndCapMaterial(ShapeStampPreviewMaterialSettings settings)
+        {
+            if (settings != null && settings.EndCapMaterial != null)
+                return settings.EndCapMaterial;
+
+            return CreateCapMaterial(new Color(0.65f, 0.65f, 0.65f), "ShapeStamp_EndCap_Mat");
         }
 
         private static Material CreateLinePreviewMaterial()
@@ -449,7 +877,7 @@ namespace DLN.EditorTools.ShapeStamper
             return mat;
         }
 
-        private static Material CreateCapMaterial(Color color)
+        private static Material CreateCapMaterial(Color color, string name)
         {
             Shader shader = Shader.Find("Standard");
             if (shader == null)
@@ -460,7 +888,7 @@ namespace DLN.EditorTools.ShapeStamper
                 shader = Shader.Find("Sprites/Default");
 
             Material mat = new Material(shader);
-            mat.name = "ShapeStamp_ProfileCap_Mat";
+            mat.name = name;
 
             if (mat.HasProperty("_Color"))
                 mat.color = color;
@@ -811,6 +1239,9 @@ namespace DLN.EditorTools.ShapeStamper
 }
 '''
 
+WINDOW_PATH.write_text(textwrap.dedent(window_content).lstrip("\n"), encoding="utf-8")
 GENERATOR_PATH.write_text(textwrap.dedent(generator_content).lstrip("\n"), encoding="utf-8")
+
+print(f"Patched {WINDOW_PATH.relative_to(ROOT)}")
 print(f"Patched {GENERATOR_PATH.relative_to(ROOT)}")
-print(f"Backup written: {backup.name}")
+print("\nBackups were written as *.materials.bak")
