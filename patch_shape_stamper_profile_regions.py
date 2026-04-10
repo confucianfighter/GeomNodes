@@ -1,4 +1,7 @@
-using System.Collections.Generic;
+from pathlib import Path
+ROOT = Path.cwd()
+
+GENERATOR = """using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using g4;
@@ -1247,3 +1250,7 @@ namespace DLN.EditorTools.ShapeStamper
         }
     }
 }
+"""
+path = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/ShapeStamperProfileGenerator.cs"
+path.write_text(GENERATOR, encoding="utf-8", newline="\n")
+print(f"Wrote {path}")
