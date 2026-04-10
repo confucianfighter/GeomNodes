@@ -12,6 +12,18 @@ namespace DLN.EditorTools.ShapeStamper
         [SerializeField] private List<CanvasEdge> edges = new();
         [SerializeField] private List<CanvasOffsetConstraint> offsets = new();
 
+        [SerializeField] private float leftPadding;
+        [SerializeField] private float rightPadding;
+        [SerializeField] private float topPadding;
+        [SerializeField] private float bottomPadding;
+
+        [SerializeField] private float leftBorder;
+        [SerializeField] private float rightBorder;
+        [SerializeField] private float topBorder;
+        [SerializeField] private float bottomBorder;
+
+        [SerializeField, HideInInspector] private int revision;
+
         public Vector2 WorldSizeMeters
         {
             get => worldSizeMeters;
@@ -21,14 +33,31 @@ namespace DLN.EditorTools.ShapeStamper
             );
         }
 
+        public float LeftPadding { get => leftPadding; set => leftPadding = Mathf.Max(0f, value); }
+        public float RightPadding { get => rightPadding; set => rightPadding = Mathf.Max(0f, value); }
+        public float TopPadding { get => topPadding; set => topPadding = Mathf.Max(0f, value); }
+        public float BottomPadding { get => bottomPadding; set => bottomPadding = Mathf.Max(0f, value); }
+
+        public float LeftBorder { get => leftBorder; set => leftBorder = Mathf.Max(0f, value); }
+        public float RightBorder { get => rightBorder; set => rightBorder = Mathf.Max(0f, value); }
+        public float TopBorder { get => topBorder; set => topBorder = Mathf.Max(0f, value); }
+        public float BottomBorder { get => bottomBorder; set => bottomBorder = Mathf.Max(0f, value); }
+
+        public float AveragePadding => (leftPadding + rightPadding + topPadding + bottomPadding) * 0.25f;
+        public float AverageBorder => (leftBorder + rightBorder + topBorder + bottomBorder) * 0.25f;
+        public float PaddingGuideX => Mathf.Clamp(AveragePadding, 0f, WorldSizeMeters.x);
+        public float BorderGuideX => Mathf.Clamp(AveragePadding + AverageBorder, 0f, WorldSizeMeters.x);
+
         public IList<CanvasPoint> Points => points;
         public IList<CanvasEdge> Edges => edges;
         public IList<CanvasOffsetConstraint> Offsets => offsets;
 
         public bool IsClosed => false;
+        public int Revision => revision;
 
         public void MarkDirty()
         {
+            revision++;
         }
 
         public void EnsureValidProfile()
@@ -50,16 +79,112 @@ namespace DLN.EditorTools.ShapeStamper
             edges.Clear();
             offsets.Clear();
 
-            points.Add(new CanvasPoint { Id = 0, Position = new Vector2(0.10f, 0.10f) });
-            points.Add(new CanvasPoint { Id = 1, Position = new Vector2(0.30f, 0.20f) });
-            points.Add(new CanvasPoint { Id = 2, Position = new Vector2(0.50f, 0.50f) });
+            points.Add(new CanvasPoint { Id = 0, Position = new Vector2(0.00f, 0.10f), ProfileXAnchor = ProfileAnchorX.Content, YAnchor = CanvasAnchorY.Top });
+            points.Add(new CanvasPoint { Id = 1, Position = new Vector2(0.08f, 0.25f), ProfileXAnchor = ProfileAnchorX.Padding, YAnchor = CanvasAnchorY.Floating });
+            points.Add(new CanvasPoint { Id = 2, Position = new Vector2(0.16f, 0.55f), ProfileXAnchor = ProfileAnchorX.Border, YAnchor = CanvasAnchorY.Bottom });
 
             RebuildOpenEdges();
+            RefreshAnchoredPointsForGuideChange(0f, 0f);
+            MarkDirty();
         }
 
         public Rect GetCanvasFrameRect()
         {
             return new Rect(0f, 0f, WorldSizeMeters.x, WorldSizeMeters.y);
+        }
+
+        public void ResizeWorld(Vector2 newSize)
+        {
+            Rect oldBounds = GetCanvasFrameRect();
+            float oldPaddingGuideX = PaddingGuideX;
+            float oldBorderGuideX = BorderGuideX;
+
+            WorldSizeMeters = new Vector2(
+                Mathf.Max(0.0001f, newSize.x),
+                Mathf.Max(0.0001f, newSize.y)
+            );
+
+            Rect newBounds = GetCanvasFrameRect();
+            float newPaddingGuideX = PaddingGuideX;
+            float newBorderGuideX = BorderGuideX;
+
+            ResizePointList(points, oldBounds, newBounds, oldPaddingGuideX, oldBorderGuideX, newPaddingGuideX, newBorderGuideX);
+            MarkDirty();
+        }
+
+        public void SetGuideValues(
+            float newLeftPadding,
+            float newRightPadding,
+            float newTopPadding,
+            float newBottomPadding,
+            float newLeftBorder,
+            float newRightBorder,
+            float newTopBorder,
+            float newBottomBorder)
+        {
+            float oldPaddingGuideX = PaddingGuideX;
+            float oldBorderGuideX = BorderGuideX;
+
+            LeftPadding = newLeftPadding;
+            RightPadding = newRightPadding;
+            TopPadding = newTopPadding;
+            BottomPadding = newBottomPadding;
+
+            LeftBorder = newLeftBorder;
+            RightBorder = newRightBorder;
+            TopBorder = newTopBorder;
+            BottomBorder = newBottomBorder;
+
+            RefreshAnchoredPointsForGuideChange(oldPaddingGuideX, oldBorderGuideX);
+            MarkDirty();
+        }
+
+        public void RefreshAnchoredPointsForGuideChange(float oldPaddingGuideX, float oldBorderGuideX)
+        {
+            Rect bounds = GetCanvasFrameRect();
+            float newPaddingGuideX = PaddingGuideX;
+            float newBorderGuideX = BorderGuideX;
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                CanvasPoint p = points[i];
+                ProfileCanvasPointResolver.ResizePointPreservingBehavior(
+                    ref p,
+                    bounds,
+                    bounds,
+                    oldPaddingGuideX,
+                    oldBorderGuideX,
+                    newPaddingGuideX,
+                    newBorderGuideX);
+                points[i] = p;
+            }
+        }
+
+        private static void ResizePointList(
+            List<CanvasPoint> list,
+            Rect oldBounds,
+            Rect newBounds,
+            float oldPaddingGuideX,
+            float oldBorderGuideX,
+            float newPaddingGuideX,
+            float newBorderGuideX)
+        {
+            if (list == null)
+                return;
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                CanvasPoint p = list[i];
+                ProfileCanvasPointResolver.ResizePointPreservingBehavior(
+                    ref p,
+                    oldBounds,
+                    newBounds,
+                    oldPaddingGuideX,
+                    oldBorderGuideX,
+                    newPaddingGuideX,
+                    newBorderGuideX);
+                list[i] = p;
+            }
         }
 
         private void ClampAllPointsToWorld()
@@ -85,7 +210,8 @@ namespace DLN.EditorTools.ShapeStamper
                 {
                     Id = i,
                     A = points[i].Id,
-                    B = points[i + 1].Id
+                    B = points[i + 1].Id,
+                    ProfileXScale = 1f
                 });
             }
         }

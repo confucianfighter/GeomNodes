@@ -6,7 +6,7 @@ namespace DLN.EditorTools.ShapeStamper
 {
     public class ShapeStamperWindow : EditorWindow
     {
-        private const float TopBarHeight = 260f;
+        private const float TopBarHeight = 470f;
         private const float CanvasPadding = 12f;
 
         private const float DividerWidth = 6f;
@@ -27,9 +27,13 @@ namespace DLN.EditorTools.ShapeStamper
         [SerializeField] private CanvasViewState profileView = new();
 
         [SerializeField] private bool showMaterialSettings = true;
+        [SerializeField] private bool autoRegeneratePreview = true;
         [SerializeField] private List<Material> segmentMaterials = new();
+        [SerializeField] private List<Color> segmentColors = new();
         [SerializeField] private Material startCapMaterial;
         [SerializeField] private Material endCapMaterial;
+        [SerializeField] private Color startCapColor = new Color(0.85f, 0.85f, 0.85f, 1f);
+        [SerializeField] private Color endCapColor = new Color(0.65f, 0.65f, 0.65f, 1f);
 
         private EditorCanvas _shapeCanvas;
         private EditorCanvas _profileCanvas;
@@ -38,13 +42,17 @@ namespace DLN.EditorTools.ShapeStamper
         private ICanvasToolPolicy _profilePolicy;
 
         private bool _isDraggingDivider;
+        private int _lastShapeRevision = -1;
+        private int _lastProfileRevision = -1;
+        private int _lastMaterialHash;
+        private bool _forcePreviewRefresh = true;
 
         [MenuItem("Tools/DLN/Shape Stamper")]
         public static void Open()
         {
             ShapeStamperWindow window = GetWindow<ShapeStamperWindow>();
             window.titleContent = new GUIContent("Shape Stamper");
-            window.minSize = new Vector2(700f, 420f);
+            window.minSize = new Vector2(700f, 540f);
             window.Show();
         }
 
@@ -62,6 +70,7 @@ namespace DLN.EditorTools.ShapeStamper
             profileView ??= new CanvasViewState();
 
             segmentMaterials ??= new List<Material>();
+            segmentColors ??= new List<Color>();
 
             shapeDocument.EnsureValidShape();
             profileDocument.EnsureValidProfile();
@@ -71,6 +80,8 @@ namespace DLN.EditorTools.ShapeStamper
 
             _shapeCanvas = new EditorCanvas(shapeDocument, _shapePolicy, shapeSelection, shapeInteraction, shapeView);
             _profileCanvas = new EditorCanvas(profileDocument, _profilePolicy, profileSelection, profileInteraction, profileView);
+
+            _forcePreviewRefresh = true;
         }
 
         private void OnGUI()
@@ -78,6 +89,7 @@ namespace DLN.EditorTools.ShapeStamper
             shapeDocument ??= new ShapeCanvasDocument();
             profileDocument ??= new ProfileCanvasDocument();
             segmentMaterials ??= new List<Material>();
+            segmentColors ??= new List<Color>();
 
             shapeDocument.EnsureValidShape();
             profileDocument.EnsureValidProfile();
@@ -103,6 +115,8 @@ namespace DLN.EditorTools.ShapeStamper
 
             _shapeCanvas.Draw(leftAllowedRect);
             _profileCanvas.Draw(rightAllowedRect);
+
+            MaybeAutoRegeneratePreview();
 
             if (Event.current.type == EventType.Repaint)
                 Repaint();
@@ -130,10 +144,7 @@ namespace DLN.EditorTools.ShapeStamper
 
             if (GUILayout.Button("Generate Profile", GUILayout.Width(120f)))
             {
-                ShapeStamperProfileGenerator.Generate(
-                    shapeDocument,
-                    profileDocument,
-                    BuildPreviewMaterialSettings());
+                RegeneratePreview();
             }
 
             if (GUILayout.Button("Bake", GUILayout.Width(100f)))
@@ -143,21 +154,27 @@ namespace DLN.EditorTools.ShapeStamper
 
             GUILayout.FlexibleSpace();
 
+            autoRegeneratePreview = EditorGUILayout.ToggleLeft("Auto Preview", autoRegeneratePreview, GUILayout.Width(100f));
+
             bool newHasInnerShape = EditorGUILayout.ToggleLeft("Inner Shape", shapeDocument.HasInnerShape, GUILayout.Width(100f));
             if (newHasInnerShape && !shapeDocument.HasInnerShape)
             {
                 shapeDocument.HasInnerShape = true;
                 shapeDocument.EnsureDefaultInnerShape();
                 shapeDocument.EditMode = ShapeCanvasDocument.ShapeLoopEditMode.Inner;
+                shapeDocument.MarkDirty();
                 shapeSelection.Clear();
                 shapeInteraction.Clear();
+                _forcePreviewRefresh = true;
             }
             else if (!newHasInnerShape && shapeDocument.HasInnerShape)
             {
                 shapeDocument.HasInnerShape = false;
                 shapeDocument.EditMode = ShapeCanvasDocument.ShapeLoopEditMode.Outer;
+                shapeDocument.MarkDirty();
                 shapeSelection.Clear();
                 shapeInteraction.Clear();
+                _forcePreviewRefresh = true;
             }
 
             if (shapeDocument.HasInnerShape)
@@ -181,6 +198,7 @@ namespace DLN.EditorTools.ShapeStamper
                 shapeInteraction.Clear();
                 shapeView.ResetView();
                 GUI.FocusControl(null);
+                _forcePreviewRefresh = true;
             }
 
             if (GUILayout.Button("Reset Profile", GUILayout.Width(100f)))
@@ -190,6 +208,7 @@ namespace DLN.EditorTools.ShapeStamper
                 profileInteraction.Clear();
                 profileView.ResetView();
                 GUI.FocusControl(null);
+                _forcePreviewRefresh = true;
             }
 
             EditorGUILayout.EndHorizontal();
@@ -200,14 +219,25 @@ namespace DLN.EditorTools.ShapeStamper
             );
 
             if (requestedShapeSize != shapeDocument.WorldSizeMeters)
+            {
                 shapeDocument.ResizeWorld(requestedShapeSize);
+                _forcePreviewRefresh = true;
+            }
 
-            profileDocument.WorldSizeMeters = new Vector2(
+            Vector2 requestedProfileSize = new Vector2(
                 Mathf.Max(0.0001f, newProfileWidth),
                 Mathf.Max(0.0001f, newProfileHeight)
             );
 
-            DrawSelectedShapePointInspector();
+            if (requestedProfileSize != profileDocument.WorldSizeMeters)
+            {
+                profileDocument.ResizeWorld(requestedProfileSize);
+                _forcePreviewRefresh = true;
+            }
+
+            DrawProfileGuideInputs();
+            DrawSelectedShapeElementInspector();
+            DrawSelectedProfilePointInspector();
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Canvas %", GUILayout.Width(82f));
@@ -254,32 +284,98 @@ namespace DLN.EditorTools.ShapeStamper
             EditorGUILayout.EndVertical();
         }
 
-        private void DrawSelectedShapePointInspector()
+        private void DrawProfileGuideInputs()
+        {
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("Profile Guides", EditorStyles.boldLabel);
+
+            float newLeftPadding = profileDocument.LeftPadding;
+            float newRightPadding = profileDocument.RightPadding;
+            float newTopPadding = profileDocument.TopPadding;
+            float newBottomPadding = profileDocument.BottomPadding;
+
+            float newLeftBorder = profileDocument.LeftBorder;
+            float newRightBorder = profileDocument.RightBorder;
+            float newTopBorder = profileDocument.TopBorder;
+            float newBottomBorder = profileDocument.BottomBorder;
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Padding", GUILayout.Width(60f));
+            EditorGUILayout.LabelField("L", GUILayout.Width(12f));
+            newLeftPadding = EditorGUILayout.FloatField(newLeftPadding, GUILayout.Width(60f));
+            EditorGUILayout.LabelField("R", GUILayout.Width(12f));
+            newRightPadding = EditorGUILayout.FloatField(newRightPadding, GUILayout.Width(60f));
+            EditorGUILayout.LabelField("T", GUILayout.Width(12f));
+            newTopPadding = EditorGUILayout.FloatField(newTopPadding, GUILayout.Width(60f));
+            EditorGUILayout.LabelField("B", GUILayout.Width(12f));
+            newBottomPadding = EditorGUILayout.FloatField(newBottomPadding, GUILayout.Width(60f));
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Border", GUILayout.Width(60f));
+            EditorGUILayout.LabelField("L", GUILayout.Width(12f));
+            newLeftBorder = EditorGUILayout.FloatField(newLeftBorder, GUILayout.Width(60f));
+            EditorGUILayout.LabelField("R", GUILayout.Width(12f));
+            newRightBorder = EditorGUILayout.FloatField(newRightBorder, GUILayout.Width(60f));
+            EditorGUILayout.LabelField("T", GUILayout.Width(12f));
+            newTopBorder = EditorGUILayout.FloatField(newTopBorder, GUILayout.Width(60f));
+            EditorGUILayout.LabelField("B", GUILayout.Width(12f));
+            newBottomBorder = EditorGUILayout.FloatField(newBottomBorder, GUILayout.Width(60f));
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.LabelField(
+                $"Padding Guide X: {profileDocument.PaddingGuideX:0.###}   Border Guide X: {profileDocument.BorderGuideX:0.###}",
+                EditorStyles.miniLabel);
+
+            bool changed =
+                !Mathf.Approximately(newLeftPadding, profileDocument.LeftPadding) ||
+                !Mathf.Approximately(newRightPadding, profileDocument.RightPadding) ||
+                !Mathf.Approximately(newTopPadding, profileDocument.TopPadding) ||
+                !Mathf.Approximately(newBottomPadding, profileDocument.BottomPadding) ||
+                !Mathf.Approximately(newLeftBorder, profileDocument.LeftBorder) ||
+                !Mathf.Approximately(newRightBorder, profileDocument.RightBorder) ||
+                !Mathf.Approximately(newTopBorder, profileDocument.TopBorder) ||
+                !Mathf.Approximately(newBottomBorder, profileDocument.BottomBorder);
+
+            if (changed)
+            {
+                profileDocument.SetGuideValues(
+                    newLeftPadding,
+                    newRightPadding,
+                    newTopPadding,
+                    newBottomPadding,
+                    newLeftBorder,
+                    newRightBorder,
+                    newTopBorder,
+                    newBottomBorder);
+                _forcePreviewRefresh = true;
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private void DrawSelectedShapeElementInspector()
         {
             if (shapeSelection == null || shapeSelection.Count != 1)
                 return;
 
-            CanvasElementRef selected = default;
-            foreach (CanvasElementRef element in shapeSelection.Elements)
-            {
-                selected = element;
-                break;
-            }
-
-            if (!selected.IsPoint)
+            CanvasElementRef selected = GetSingleSelection(shapeSelection);
+            if (!selected.IsValid)
                 return;
 
-            IList<CanvasPoint> points = shapeDocument.Points;
-            int index = -1;
-            for (int i = 0; i < points.Count; i++)
-            {
-                if (points[i].Id == selected.Id)
-                {
-                    index = i;
-                    break;
-                }
-            }
+            if (selected.IsPoint)
+                DrawSelectedShapePointInspector(selected.Id);
+            else if (selected.IsEdge)
+                DrawSelectedShapeEdgeInspector(selected.Id);
+        }
 
+        private void DrawSelectedShapePointInspector(int pointId)
+        {
+            IList<CanvasPoint> points = shapeDocument.Points;
+            int index = FindPointIndex(points, pointId);
             if (index < 0)
                 return;
 
@@ -288,25 +384,186 @@ namespace DLN.EditorTools.ShapeStamper
 
             EditorGUILayout.Space(6f);
             EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField($"Point {point.Id}", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"Shape Point {point.Id}", EditorStyles.boldLabel);
 
             EditorGUI.BeginChangeCheck();
 
             CanvasAnchorX newXAnchor = (CanvasAnchorX)EditorGUILayout.EnumPopup("X Anchor", point.XAnchor);
             CanvasAnchorY newYAnchor = (CanvasAnchorY)EditorGUILayout.EnumPopup("Y Anchor", point.YAnchor);
 
-            EditorGUILayout.LabelField("Position", $"{point.Position.x:0.###}, {point.Position.y:0.###}");
-            EditorGUILayout.LabelField("Offset", $"{point.OffsetX:0.###}, {point.OffsetY:0.###}");
+            Vector2 newPosition = EditorGUILayout.Vector2Field("Position", point.Position);
+
+            bool canEditOffsetX = point.XAnchor != CanvasAnchorX.Floating;
+            bool canEditOffsetY = point.YAnchor != CanvasAnchorY.Floating;
+
+            EditorGUI.BeginDisabledGroup(!canEditOffsetX);
+            float newOffsetX = EditorGUILayout.FloatField("Offset X", point.OffsetX);
+            EditorGUI.EndDisabledGroup();
+
+            EditorGUI.BeginDisabledGroup(!canEditOffsetY);
+            float newOffsetY = EditorGUILayout.FloatField("Offset Y", point.OffsetY);
+            EditorGUI.EndDisabledGroup();
 
             if (EditorGUI.EndChangeCheck())
             {
-                ShapeCanvasPointResolver.SetAnchorsPreservePosition(ref point, newXAnchor, newYAnchor, bounds);
+                if (newXAnchor != point.XAnchor || newYAnchor != point.YAnchor)
+                    ShapeCanvasPointResolver.SetAnchorsPreservePosition(ref point, newXAnchor, newYAnchor, bounds);
+
+                point.Position = new Vector2(
+                    Mathf.Clamp(newPosition.x, 0f, shapeDocument.WorldSizeMeters.x),
+                    Mathf.Clamp(newPosition.y, 0f, shapeDocument.WorldSizeMeters.y));
+
+                if (point.XAnchor != CanvasAnchorX.Floating)
+                    point.OffsetX = newOffsetX;
+                if (point.YAnchor != CanvasAnchorY.Floating)
+                    point.OffsetY = newOffsetY;
+
+                point.Position = ShapeCanvasPointResolver.ResolvePoint(point, bounds, bounds);
                 points[index] = point;
                 shapeDocument.MarkDirty();
+                _forcePreviewRefresh = true;
                 Repaint();
             }
 
             EditorGUILayout.EndVertical();
+        }
+
+        private void DrawSelectedShapeEdgeInspector(int edgeId)
+        {
+            IList<CanvasEdge> edges = shapeDocument.Edges;
+            int index = FindEdgeIndex(edges, edgeId);
+            if (index < 0)
+                return;
+
+            CanvasEdge edge = edges[index];
+
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField($"Shape Edge {edge.Id}", EditorStyles.boldLabel);
+
+            EditorGUI.BeginChangeCheck();
+            float newScale = EditorGUILayout.FloatField("Profile X Scale", edge.ProfileXScale);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                edge.ProfileXScale = Mathf.Max(0f, newScale);
+                edges[index] = edge;
+                shapeDocument.MarkDirty();
+                _forcePreviewRefresh = true;
+                Repaint();
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private void DrawSelectedProfilePointInspector()
+        {
+            if (profileSelection == null || profileSelection.Count != 1)
+                return;
+
+            CanvasElementRef selected = GetSingleSelection(profileSelection);
+            if (!selected.IsPoint)
+                return;
+
+            IList<CanvasPoint> points = profileDocument.Points;
+            int index = FindPointIndex(points, selected.Id);
+            if (index < 0)
+                return;
+
+            CanvasPoint point = points[index];
+            Rect bounds = profileDocument.GetCanvasFrameRect();
+            float paddingGuideX = profileDocument.PaddingGuideX;
+            float borderGuideX = profileDocument.BorderGuideX;
+
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField($"Profile Point {point.Id}", EditorStyles.boldLabel);
+
+            EditorGUI.BeginChangeCheck();
+
+            ProfileAnchorX newXAnchor = (ProfileAnchorX)EditorGUILayout.EnumPopup("Profile X Anchor", point.ProfileXAnchor);
+            CanvasAnchorY newYAnchor = (CanvasAnchorY)EditorGUILayout.EnumPopup("Profile Y Anchor", point.YAnchor);
+            Vector2 newPosition = EditorGUILayout.Vector2Field("Position", point.Position);
+
+            bool canEditOffsetX = point.ProfileXAnchor != ProfileAnchorX.Floating;
+            bool canEditOffsetY = point.YAnchor != CanvasAnchorY.Floating;
+
+            EditorGUI.BeginDisabledGroup(!canEditOffsetX);
+            float newOffsetX = EditorGUILayout.FloatField("Offset X", point.OffsetX);
+            EditorGUI.EndDisabledGroup();
+
+            EditorGUI.BeginDisabledGroup(!canEditOffsetY);
+            float newOffsetY = EditorGUILayout.FloatField("Offset Y", point.OffsetY);
+            EditorGUI.EndDisabledGroup();
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                if (newXAnchor != point.ProfileXAnchor || newYAnchor != point.YAnchor)
+                {
+                    ProfileCanvasPointResolver.SetAnchorsPreservePosition(
+                        ref point,
+                        newXAnchor,
+                        newYAnchor,
+                        bounds,
+                        paddingGuideX,
+                        borderGuideX);
+                }
+
+                point.Position = new Vector2(
+                    Mathf.Clamp(newPosition.x, 0f, profileDocument.WorldSizeMeters.x),
+                    Mathf.Clamp(newPosition.y, 0f, profileDocument.WorldSizeMeters.y));
+
+                if (point.ProfileXAnchor != ProfileAnchorX.Floating)
+                    point.OffsetX = newOffsetX;
+                if (point.YAnchor != CanvasAnchorY.Floating)
+                    point.OffsetY = newOffsetY;
+
+                point.Position = ProfileCanvasPointResolver.ResolvePoint(
+                    point,
+                    bounds,
+                    bounds,
+                    paddingGuideX,
+                    borderGuideX,
+                    paddingGuideX,
+                    borderGuideX);
+
+                points[index] = point;
+                profileDocument.MarkDirty();
+                _forcePreviewRefresh = true;
+                Repaint();
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private static CanvasElementRef GetSingleSelection(CanvasSelection selection)
+        {
+            foreach (CanvasElementRef element in selection.Elements)
+                return element;
+
+            return default;
+        }
+
+        private static int FindPointIndex(IList<CanvasPoint> points, int pointId)
+        {
+            for (int i = 0; i < points.Count; i++)
+            {
+                if (points[i].Id == pointId)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private static int FindEdgeIndex(IList<CanvasEdge> edges, int edgeId)
+        {
+            for (int i = 0; i < edges.Count; i++)
+            {
+                if (edges[i].Id == edgeId)
+                    return i;
+            }
+
+            return -1;
         }
 
         private void DrawMaterialSettings()
@@ -330,31 +587,111 @@ namespace DLN.EditorTools.ShapeStamper
             while (segmentMaterials.Count < newSize)
                 segmentMaterials.Add(null);
 
+            while (segmentColors.Count < newSize)
+            {
+                float gray = Mathf.Lerp(0.3f, 0.8f, newSize <= 1 ? 0f : (segmentColors.Count / (float)(newSize - 1)));
+                segmentColors.Add(new Color(gray, gray, gray, 1f));
+            }
+
             while (segmentMaterials.Count > newSize)
                 segmentMaterials.RemoveAt(segmentMaterials.Count - 1);
 
+            while (segmentColors.Count > newSize)
+                segmentColors.RemoveAt(segmentColors.Count - 1);
+
             for (int i = 0; i < segmentMaterials.Count; i++)
             {
+                EditorGUILayout.BeginHorizontal();
                 segmentMaterials[i] = (Material)EditorGUILayout.ObjectField(
-                    $"Segment {i}",
+                    $"Segment {i} Material",
                     segmentMaterials[i],
                     typeof(Material),
                     false);
+
+                segmentColors[i] = EditorGUILayout.ColorField(
+                    $"Color",
+                    segmentColors[i],
+                    GUILayout.Width(180f));
+                EditorGUILayout.EndHorizontal();
             }
 
+            EditorGUILayout.BeginHorizontal();
             startCapMaterial = (Material)EditorGUILayout.ObjectField(
-                "Start Cap",
+                "Start Cap Material",
                 startCapMaterial,
                 typeof(Material),
                 false);
+            startCapColor = EditorGUILayout.ColorField("Color", startCapColor, GUILayout.Width(180f));
+            EditorGUILayout.EndHorizontal();
 
+            EditorGUILayout.BeginHorizontal();
             endCapMaterial = (Material)EditorGUILayout.ObjectField(
-                "End Cap",
+                "End Cap Material",
                 endCapMaterial,
                 typeof(Material),
                 false);
+            endCapColor = EditorGUILayout.ColorField("Color", endCapColor, GUILayout.Width(180f));
+            EditorGUILayout.EndHorizontal();
 
             EditorGUI.indentLevel--;
+        }
+
+        private void MaybeAutoRegeneratePreview()
+        {
+            if (!autoRegeneratePreview)
+                return;
+
+            int materialHash = ComputeMaterialHash();
+            bool changed =
+                _forcePreviewRefresh ||
+                _lastShapeRevision != shapeDocument.Revision ||
+                _lastProfileRevision != profileDocument.Revision ||
+                _lastMaterialHash != materialHash;
+
+            if (!changed)
+                return;
+
+            RegeneratePreview();
+        }
+
+        private void RegeneratePreview()
+        {
+            ShapeStamperProfileGenerator.Generate(
+                shapeDocument,
+                profileDocument,
+                BuildPreviewMaterialSettings());
+
+            _lastShapeRevision = shapeDocument.Revision;
+            _lastProfileRevision = profileDocument.Revision;
+            _lastMaterialHash = ComputeMaterialHash();
+            _forcePreviewRefresh = false;
+        }
+
+        private int ComputeMaterialHash()
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 31 + (startCapMaterial != null ? startCapMaterial.GetInstanceID() : 0);
+                hash = hash * 31 + (endCapMaterial != null ? endCapMaterial.GetInstanceID() : 0);
+
+                if (segmentMaterials != null)
+                {
+                    for (int i = 0; i < segmentMaterials.Count; i++)
+                        hash = hash * 31 + (segmentMaterials[i] != null ? segmentMaterials[i].GetInstanceID() : 0);
+                }
+
+                if (segmentColors != null)
+                {
+                    for (int i = 0; i < segmentColors.Count; i++)
+                        hash = hash * 31 + segmentColors[i].GetHashCode();
+                }
+
+                hash = hash * 31 + startCapColor.GetHashCode();
+                hash = hash * 31 + endCapColor.GetHashCode();
+
+                return hash;
+            }
         }
 
         private ShapeStampPreviewMaterialSettings BuildPreviewMaterialSettings()
@@ -362,11 +699,19 @@ namespace DLN.EditorTools.ShapeStamper
             ShapeStampPreviewMaterialSettings settings = new ShapeStampPreviewMaterialSettings();
             settings.StartCapMaterial = startCapMaterial;
             settings.EndCapMaterial = endCapMaterial;
+            settings.StartCapColor = startCapColor;
+            settings.EndCapColor = endCapColor;
 
             if (segmentMaterials != null)
             {
                 for (int i = 0; i < segmentMaterials.Count; i++)
                     settings.SegmentMaterials.Add(segmentMaterials[i]);
+            }
+
+            if (segmentColors != null)
+            {
+                for (int i = 0; i < segmentColors.Count; i++)
+                    settings.SegmentColors.Add(segmentColors[i]);
             }
 
             return settings;

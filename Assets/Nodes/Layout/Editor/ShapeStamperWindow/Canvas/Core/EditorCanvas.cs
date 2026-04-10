@@ -664,7 +664,20 @@ namespace DLN.EditorTools.ShapeStamper
 
                 CanvasPoint p = Document.Points[i];
                 p.Position = position;
-                ShapeCanvasPointResolver.RecalculateOffsets(ref p, bounds);
+
+                if (Document is ShapeCanvasDocument)
+                {
+                    ShapeCanvasPointResolver.RecalculateOffsets(ref p, bounds);
+                }
+                else if (Document is ProfileCanvasDocument profileDocument)
+                {
+                    ProfileCanvasPointResolver.RecalculateOffsets(
+                        ref p,
+                        bounds,
+                        profileDocument.PaddingGuideX,
+                        profileDocument.BorderGuideX);
+                }
+
                 Document.Points[i] = p;
                 return;
             }

@@ -9,8 +9,11 @@ namespace DLN.EditorTools.ShapeStamper
     public sealed class ShapeStampPreviewMaterialSettings
     {
         public List<Material> SegmentMaterials = new();
+        public List<Color> SegmentColors = new();
         public Material StartCapMaterial;
         public Material EndCapMaterial;
+        public Color StartCapColor = new Color(0.85f, 0.85f, 0.85f, 1f);
+        public Color EndCapColor = new Color(0.65f, 0.65f, 0.65f, 1f);
     }
 
     public static class ShapeStamperProfileGenerator
@@ -19,6 +22,7 @@ namespace DLN.EditorTools.ShapeStamper
         private const string PreviewMeshObjectName = "ShapeStamp_ProfileSegments";
         private const float ParallelEpsilon = 0.000001f;
         private const float DefaultLineWidth = 0.02f;
+        private const float SafeEpsilon = 0.000001f;
 
         public static void Generate(
             ShapeCanvasDocument shapeDocument,
@@ -67,19 +71,25 @@ namespace DLN.EditorTools.ShapeStamper
                 return null;
             }
 
-            List<Vector2> baseOuterLoop2D = BuildOrderedLoop(shapeDocument.OuterPoints, shapeDocument.OuterEdges);
+            List<Vector2> baseOuterLoop2D = BuildOrderedLoop(shapeDocument.OuterPoints, shapeDocument.OuterEdges, out List<float> outerEdgeScales);
             if (baseOuterLoop2D == null || baseOuterLoop2D.Count < 3)
             {
                 Debug.LogWarning("ShapeStamperProfileGenerator: Failed to build ordered outer loop.");
                 return null;
             }
 
+            CleanupLoopInPlace(baseOuterLoop2D);
+
             List<Vector2> baseInnerLoop2D = null;
+            List<float> innerEdgeScales = null;
             if (shapeDocument.HasInnerShape && shapeDocument.InnerPoints != null && shapeDocument.InnerEdges != null && shapeDocument.InnerPoints.Count >= 3)
             {
-                baseInnerLoop2D = BuildOrderedLoop(shapeDocument.InnerPoints, shapeDocument.InnerEdges);
+                baseInnerLoop2D = BuildOrderedLoop(shapeDocument.InnerPoints, shapeDocument.InnerEdges, out innerEdgeScales);
                 if (baseInnerLoop2D != null && baseInnerLoop2D.Count < 3)
                     baseInnerLoop2D = null;
+
+                if (baseInnerLoop2D != null)
+                    CleanupLoopInPlace(baseInnerLoop2D);
             }
 
             Vector2 sharedCenter = CalculateCenter(baseOuterLoop2D);
@@ -91,14 +101,16 @@ namespace DLN.EditorTools.ShapeStamper
             if (baseInnerLoop2D != null)
                 FlipLoopY(baseInnerLoop2D);
 
-            EnsureCounterClockwise(baseOuterLoop2D);
+            EnsureCounterClockwise(baseOuterLoop2D, outerEdgeScales);
             if (baseInnerLoop2D != null)
-                EnsureClockwise(baseInnerLoop2D);
+                EnsureClockwise(baseInnerLoop2D, innerEdgeScales);
 
             ShapeStampRingBuildResult result = new ShapeStampRingBuildResult
             {
                 BaseOuterLoop2D = new List<Vector2>(baseOuterLoop2D),
-                BaseInnerLoop2D = baseInnerLoop2D != null ? new List<Vector2>(baseInnerLoop2D) : null
+                BaseInnerLoop2D = baseInnerLoop2D != null ? new List<Vector2>(baseInnerLoop2D) : null,
+                OuterEdgeScales = outerEdgeScales != null ? new List<float>(outerEdgeScales) : new List<float>(),
+                InnerEdgeScales = innerEdgeScales != null ? new List<float>(innerEdgeScales) : new List<float>()
             };
 
             for (int i = 0; i < profileDocument.Points.Count; i++)
@@ -108,14 +120,23 @@ namespace DLN.EditorTools.ShapeStamper
                 {
                     Index = i,
                     Offset = p.Position.x,
-                    Z = p.Position.y
+                    Z = p.Position.y,
+                    Point = p
                 };
                 result.ProfileSamples.Add(sample);
 
-                List<Vector2> outerLoopForSample = OffsetClosedLoop(result.BaseOuterLoop2D, sample.Offset);
+                List<float> outerDistances = BuildEdgeOffsetDistances(result.BaseOuterLoop2D, result.OuterEdgeScales, profileDocument, p);
+                List<Vector2> outerLoopForSample = OffsetClosedLoop(result.BaseOuterLoop2D, outerDistances);
                 if (outerLoopForSample == null || outerLoopForSample.Count < 3)
                 {
                     Debug.LogWarning($"ShapeStamperProfileGenerator: Failed to offset outer loop for profile sample {i}.");
+                    return null;
+                }
+
+                CleanupLoopInPlace(outerLoopForSample);
+                if (outerLoopForSample.Count < 3)
+                {
+                    Debug.LogWarning($"ShapeStamperProfileGenerator: Outer loop collapsed after cleanup for profile sample {i}.");
                     return null;
                 }
 
@@ -124,10 +145,18 @@ namespace DLN.EditorTools.ShapeStamper
 
                 if (result.BaseInnerLoop2D != null && result.BaseInnerLoop2D.Count >= 3)
                 {
-                    List<Vector2> innerLoopForSample = OffsetClosedLoop(result.BaseInnerLoop2D, sample.Offset);
+                    List<float> innerDistances = BuildEdgeOffsetDistances(result.BaseInnerLoop2D, result.InnerEdgeScales, profileDocument, p);
+                    List<Vector2> innerLoopForSample = OffsetClosedLoop(result.BaseInnerLoop2D, innerDistances);
                     if (innerLoopForSample == null || innerLoopForSample.Count < 3)
                     {
                         Debug.LogWarning($"ShapeStamperProfileGenerator: Failed to offset inner loop for profile sample {i}.");
+                        return null;
+                    }
+
+                    CleanupLoopInPlace(innerLoopForSample);
+                    if (innerLoopForSample.Count < 3)
+                    {
+                        Debug.LogWarning($"ShapeStamperProfileGenerator: Inner loop collapsed after cleanup for profile sample {i}.");
                         return null;
                     }
 
@@ -137,6 +166,123 @@ namespace DLN.EditorTools.ShapeStamper
             }
 
             return result;
+        }
+
+        private static List<float> BuildEdgeOffsetDistances(
+            IList<Vector2> loop,
+            IList<float> edgeScales,
+            ProfileCanvasDocument profileDocument,
+            CanvasPoint point)
+        {
+            List<float> distances = new List<float>();
+            if (loop == null || loop.Count < 3)
+                return distances;
+
+            bool isClockwise = IsClockwise(loop);
+
+            for (int i = 0; i < loop.Count; i++)
+            {
+                Vector2 a = loop[i];
+                Vector2 b = loop[(i + 1) % loop.Count];
+                Vector2 dir = b - a;
+
+                if (dir.sqrMagnitude < SafeEpsilon)
+                {
+                    distances.Add(0f);
+                    continue;
+                }
+
+                dir.Normalize();
+                Vector2 outward = GetOutwardNormal(dir, isClockwise);
+                EdgeProfileDrive drive = BuildEdgeProfileDrive(outward, edgeScales, i, profileDocument);
+
+                float baseX = ResolveProfilePointX(point, drive);
+                float distance = SafeFinite(baseX * drive.Scale, 0f);
+                distances.Add(distance);
+            }
+
+            return distances;
+        }
+
+        private static EdgeProfileDrive BuildEdgeProfileDrive(
+            Vector2 outwardNormal,
+            IList<float> edgeScales,
+            int edgeIndex,
+            ProfileCanvasDocument profileDocument)
+        {
+            outwardNormal = SafeNormalized(outwardNormal, Vector2.right);
+
+            float rightW = Mathf.Max(0f, outwardNormal.x);
+            float leftW = Mathf.Max(0f, -outwardNormal.x);
+            float topW = Mathf.Max(0f, -outwardNormal.y);
+            float bottomW = Mathf.Max(0f, outwardNormal.y);
+
+            float sum = rightW + leftW + topW + bottomW;
+            if (sum > SafeEpsilon)
+            {
+                float inv = 1f / sum;
+                rightW *= inv;
+                leftW *= inv;
+                topW *= inv;
+                bottomW *= inv;
+            }
+            else
+            {
+                rightW = leftW = topW = bottomW = 0.25f;
+            }
+
+            float blendedPadding =
+                leftW * profileDocument.LeftPadding +
+                rightW * profileDocument.RightPadding +
+                topW * profileDocument.TopPadding +
+                bottomW * profileDocument.BottomPadding;
+
+            float blendedBorder =
+                leftW * profileDocument.LeftBorder +
+                rightW * profileDocument.RightBorder +
+                topW * profileDocument.TopBorder +
+                bottomW * profileDocument.BottomBorder;
+
+            float scale = 1f;
+            if (edgeScales != null && edgeIndex >= 0 && edgeIndex < edgeScales.Count)
+                scale = Mathf.Max(0f, edgeScales[edgeIndex]);
+
+            return new EdgeProfileDrive
+            {
+                LeftWeight = leftW,
+                RightWeight = rightW,
+                TopWeight = topW,
+                BottomWeight = bottomW,
+                BlendedPadding = SafeFinite(blendedPadding, 0f),
+                BlendedBorder = SafeFinite(blendedBorder, 0f),
+                Scale = SafeFinite(scale, 1f)
+            };
+        }
+
+        private static float ResolveProfilePointX(CanvasPoint point, EdgeProfileDrive drive)
+        {
+            float raw;
+            switch (point.ProfileXAnchor)
+            {
+                case ProfileAnchorX.Content:
+                    raw = point.OffsetX;
+                    break;
+
+                case ProfileAnchorX.Padding:
+                    raw = drive.BlendedPadding + point.OffsetX;
+                    break;
+
+                case ProfileAnchorX.Border:
+                    raw = drive.BlendedPadding + drive.BlendedBorder + point.OffsetX;
+                    break;
+
+                case ProfileAnchorX.Floating:
+                default:
+                    raw = point.Position.x;
+                    break;
+            }
+
+            return Mathf.Max(0f, SafeFinite(raw, 0f));
         }
 
         private static void CreateOrUpdateRingPreview(ShapeStampRingBuildResult result)
@@ -390,15 +536,10 @@ namespace DLN.EditorTools.ShapeStamper
             {
                 if (index >= 0 && index < settings.SegmentMaterials.Count && settings.SegmentMaterials[index] != null)
                     return settings.SegmentMaterials[index];
-
-                for (int i = settings.SegmentMaterials.Count - 1; i >= 0; i--)
-                {
-                    if (settings.SegmentMaterials[i] != null)
-                        return settings.SegmentMaterials[i];
-                }
             }
 
-            return CreateSegmentMaterial(index, count);
+            Color color = GetSegmentColor(settings, index, count);
+            return CreatePreviewMaterial(color, $"ShapeStamp_ProfileSegment_{index}_Mat");
         }
 
         private static Material ResolveStartCapMaterial(ShapeStampPreviewMaterialSettings settings)
@@ -406,7 +547,8 @@ namespace DLN.EditorTools.ShapeStamper
             if (settings != null && settings.StartCapMaterial != null)
                 return settings.StartCapMaterial;
 
-            return CreateCapMaterial(new Color(0.85f, 0.85f, 0.85f), "ShapeStamp_StartCap_Mat");
+            Color color = settings != null ? settings.StartCapColor : new Color(0.85f, 0.85f, 0.85f, 1f);
+            return CreatePreviewMaterial(color, "ShapeStamp_StartCap_Mat");
         }
 
         private static Material ResolveEndCapMaterial(ShapeStampPreviewMaterialSettings settings)
@@ -414,67 +556,55 @@ namespace DLN.EditorTools.ShapeStamper
             if (settings != null && settings.EndCapMaterial != null)
                 return settings.EndCapMaterial;
 
-            return CreateCapMaterial(new Color(0.65f, 0.65f, 0.65f), "ShapeStamp_EndCap_Mat");
+            Color color = settings != null ? settings.EndCapColor : new Color(0.65f, 0.65f, 0.65f, 1f);
+            return CreatePreviewMaterial(color, "ShapeStamp_EndCap_Mat");
+        }
+
+        private static Color GetSegmentColor(ShapeStampPreviewMaterialSettings settings, int index, int count)
+        {
+            if (settings != null && settings.SegmentColors != null && index >= 0 && index < settings.SegmentColors.Count)
+                return settings.SegmentColors[index];
+
+            float t = Safe01(index, Mathf.Max(2, count));
+            float gray = Mathf.Lerp(0.3f, 0.8f, t);
+            return new Color(gray, gray, gray, 1f);
         }
 
         private static Material CreateLinePreviewMaterial()
         {
-            Shader shader = Shader.Find("Sprites/Default");
+            return CreatePreviewMaterial(new Color(0.72f, 0.72f, 0.72f, 1f), "ShapeStamp_ProfileRingPreview_Mat");
+        }
+
+        private static Material CreatePreviewMaterial(Color color, string name)
+        {
+            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
             if (shader == null)
                 shader = Shader.Find("Unlit/Color");
+            if (shader == null)
+                shader = Shader.Find("Sprites/Default");
             if (shader == null)
                 shader = Shader.Find("Standard");
 
             Material mat = new Material(shader);
-            mat.name = "ShapeStamp_ProfileRingPreview_Mat";
-            return mat;
-        }
-
-        private static Material CreateSegmentMaterial(int index, int count)
-        {
-            Shader shader = Shader.Find("Standard");
-            if (shader == null)
-                shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null)
-                shader = Shader.Find("Unlit/Color");
-            if (shader == null)
-                shader = Shader.Find("Sprites/Default");
-
-            Material mat = new Material(shader);
-            mat.name = $"ShapeStamp_ProfileSegment_{index}_Mat";
-            Color color = Color.Lerp(
-                new Color(0.25f, 0.85f, 1f),
-                new Color(1f, 0.55f, 0.2f),
-                Safe01(index, Mathf.Max(2, count))
-            );
-
-            if (mat.HasProperty("_Color"))
-                mat.color = color;
-            else if (mat.HasProperty("_BaseColor"))
-                mat.SetColor("_BaseColor", color);
-
-            return mat;
-        }
-
-        private static Material CreateCapMaterial(Color color, string name)
-        {
-            Shader shader = Shader.Find("Standard");
-            if (shader == null)
-                shader = Shader.Find("Universal Render Pipeline/Lit");
-            if (shader == null)
-                shader = Shader.Find("Unlit/Color");
-            if (shader == null)
-                shader = Shader.Find("Sprites/Default");
-
-            Material mat = new Material(shader);
             mat.name = name;
+            SetMaterialColor(mat, color);
 
-            if (mat.HasProperty("_Color"))
-                mat.color = color;
-            else if (mat.HasProperty("_BaseColor"))
-                mat.SetColor("_BaseColor", color);
+            if (mat.HasProperty("_Surface"))
+                mat.SetFloat("_Surface", 0f);
 
             return mat;
+        }
+
+        private static void SetMaterialColor(Material mat, Color color)
+        {
+            if (mat == null)
+                return;
+
+            if (mat.HasProperty("_BaseColor"))
+                mat.SetColor("_BaseColor", color);
+
+            if (mat.HasProperty("_Color"))
+                mat.SetColor("_Color", color);
         }
 
         private static void ClearChildrenImmediate(Transform parent)
@@ -509,13 +639,13 @@ namespace DLN.EditorTools.ShapeStamper
             return Mathf.Clamp01(index / (float)(count - 1));
         }
 
-        private static List<Vector2> OffsetClosedLoop(IList<Vector2> loop, float distance)
+        private static List<Vector2> OffsetClosedLoop(IList<Vector2> loop, IList<float> edgeDistances)
         {
             if (loop == null || loop.Count < 3)
                 return null;
 
-            if (Mathf.Abs(distance) < 0.000001f)
-                return new List<Vector2>(loop);
+            if (edgeDistances == null || edgeDistances.Count != loop.Count)
+                return null;
 
             bool isClockwise = IsClockwise(loop);
             int count = loop.Count;
@@ -527,20 +657,26 @@ namespace DLN.EditorTools.ShapeStamper
                 Vector2 curr = loop[i];
                 Vector2 next = loop[(i + 1) % count];
 
-                Vector2 prevDir = (curr - prev).normalized;
-                Vector2 nextDir = (next - curr).normalized;
+                Vector2 prevDir = SafeNormalized(curr - prev, Vector2.right);
+                Vector2 nextDir = SafeNormalized(next - curr, Vector2.right);
 
-                if (prevDir.sqrMagnitude < ParallelEpsilon || nextDir.sqrMagnitude < ParallelEpsilon)
+                if (prevDir.sqrMagnitude < SafeEpsilon || nextDir.sqrMagnitude < SafeEpsilon)
                 {
                     result.Add(curr);
                     continue;
                 }
 
+                int prevEdgeIndex = (i - 1 + count) % count;
+                int nextEdgeIndex = i;
+
+                float prevDistance = SafeFinite(edgeDistances[prevEdgeIndex], 0f);
+                float nextDistance = SafeFinite(edgeDistances[nextEdgeIndex], 0f);
+
                 Vector2 prevOut = GetOutwardNormal(prevDir, isClockwise);
                 Vector2 nextOut = GetOutwardNormal(nextDir, isClockwise);
 
-                Vector2 line1Point = curr + prevOut * distance;
-                Vector2 line2Point = curr + nextOut * distance;
+                Vector2 line1Point = curr + prevOut * prevDistance;
+                Vector2 line2Point = curr + nextOut * nextDistance;
 
                 if (TryIntersectLines(line1Point, prevDir, line2Point, nextDir, out Vector2 intersection))
                 {
@@ -548,11 +684,10 @@ namespace DLN.EditorTools.ShapeStamper
                 }
                 else
                 {
-                    Vector2 avg = prevOut + nextOut;
+                    Vector2 avg = prevOut * prevDistance + nextOut * nextDistance;
                     if (avg.sqrMagnitude < ParallelEpsilon)
-                        avg = prevOut;
-                    avg.Normalize();
-                    result.Add(curr + avg * distance);
+                        avg = prevOut * prevDistance;
+                    result.Add(curr + avg);
                 }
             }
 
@@ -586,8 +721,10 @@ namespace DLN.EditorTools.ShapeStamper
             return a.x * b.y - a.y * b.x;
         }
 
-        private static List<Vector2> BuildOrderedLoop(IList<CanvasPoint> points, IList<CanvasEdge> edges)
+        private static List<Vector2> BuildOrderedLoop(IList<CanvasPoint> points, IList<CanvasEdge> edges, out List<float> orderedEdgeScales)
         {
+            orderedEdgeScales = new List<float>();
+
             if (points == null || edges == null || edges.Count < 3)
                 return null;
 
@@ -630,6 +767,8 @@ namespace DLN.EditorTools.ShapeStamper
                     Debug.LogWarning($"ShapeStamperProfileGenerator: No outgoing edge from point id {currentPointId}.");
                     return null;
                 }
+
+                orderedEdgeScales.Add(Mathf.Max(0f, edge.ProfileXScale) <= 0f ? 1f : edge.ProfileXScale);
 
                 if (!visitedStartPoints.Add(currentPointId))
                 {
@@ -687,6 +826,88 @@ namespace DLN.EditorTools.ShapeStamper
             return polygon;
         }
 
+        private static void CleanupLoopInPlace(List<Vector2> loop, float epsilon = 0.0001f)
+        {
+            if (loop == null || loop.Count < 3)
+                return;
+
+            RemoveDuplicateClosingPoint(loop, epsilon);
+            RemoveNearDuplicateNeighbors(loop, epsilon);
+            RemoveNearlyCollinearVertices(loop, epsilon);
+            RemoveNearDuplicateNeighbors(loop, epsilon);
+            RemoveDuplicateClosingPoint(loop, epsilon);
+        }
+
+        private static void RemoveNearDuplicateNeighbors(List<Vector2> loop, float epsilon)
+        {
+            if (loop == null || loop.Count < 2)
+                return;
+
+            float epsilonSq = epsilon * epsilon;
+
+            for (int i = loop.Count - 1; i >= 0; i--)
+            {
+                if (loop.Count < 2)
+                    return;
+
+                int next = (i + 1) % loop.Count;
+                if (i == next)
+                    continue;
+
+                if ((loop[i] - loop[next]).sqrMagnitude <= epsilonSq)
+                {
+                    loop.RemoveAt(i);
+
+                    if (loop.Count < 3)
+                        return;
+                }
+            }
+        }
+
+        private static void RemoveNearlyCollinearVertices(List<Vector2> loop, float epsilon)
+        {
+            if (loop == null || loop.Count < 3)
+                return;
+
+            float epsilonSq = epsilon * epsilon;
+
+            bool removedAny = true;
+            while (removedAny && loop.Count >= 3)
+            {
+                removedAny = false;
+
+                for (int i = loop.Count - 1; i >= 0; i--)
+                {
+                    int prev = (i - 1 + loop.Count) % loop.Count;
+                    int next = (i + 1) % loop.Count;
+
+                    Vector2 a = loop[prev];
+                    Vector2 b = loop[i];
+                    Vector2 c = loop[next];
+
+                    Vector2 ab = b - a;
+                    Vector2 bc = c - b;
+
+                    if (ab.sqrMagnitude <= epsilonSq || bc.sqrMagnitude <= epsilonSq)
+                    {
+                        loop.RemoveAt(i);
+                        removedAny = true;
+                        break;
+                    }
+
+                    float cross = Mathf.Abs(ab.x * bc.y - ab.y * bc.x);
+                    float dot = Vector2.Dot(ab.normalized, bc.normalized);
+
+                    if (cross <= epsilon && dot > 0.9999f)
+                    {
+                        loop.RemoveAt(i);
+                        removedAny = true;
+                        break;
+                    }
+                }
+            }
+        }
+
         private static void RemoveDuplicateClosingPoint(List<Vector2> loop, float epsilon = 0.00001f)
         {
             if (loop == null || loop.Count < 2)
@@ -726,16 +947,40 @@ namespace DLN.EditorTools.ShapeStamper
             }
         }
 
-        private static void EnsureCounterClockwise(List<Vector2> loop)
+        private static void EnsureCounterClockwise(List<Vector2> loop, List<float> edgeScales = null)
         {
             if (IsClockwise(loop))
-                loop.Reverse();
+                ReverseLoopAndEdgeScalesTogether(loop, edgeScales);
         }
 
-        private static void EnsureClockwise(List<Vector2> loop)
+        private static void EnsureClockwise(List<Vector2> loop, List<float> edgeScales = null)
         {
             if (!IsClockwise(loop))
-                loop.Reverse();
+                ReverseLoopAndEdgeScalesTogether(loop, edgeScales);
+        }
+
+        private static void ReverseLoopAndEdgeScalesTogether(List<Vector2> loop, List<float> edgeScales)
+        {
+            if (loop == null)
+                return;
+
+            loop.Reverse();
+
+            if (edgeScales == null || edgeScales.Count != loop.Count)
+                return;
+
+            List<float> remapped = new List<float>(edgeScales.Count);
+            remapped.AddRange(edgeScales);
+
+            int count = loop.Count;
+            for (int i = 0; i < count; i++)
+            {
+                int originalEdgeIndex = (count - 2 - i + count) % count;
+                remapped[i] = edgeScales[originalEdgeIndex];
+            }
+
+            for (int i = 0; i < count; i++)
+                edgeScales[i] = remapped[i];
         }
 
         private static bool IsClockwise(IList<Vector2> points)
@@ -752,11 +997,29 @@ namespace DLN.EditorTools.ShapeStamper
             return signedAreaTwice < 0f;
         }
 
+        private static float SafeFinite(float value, float fallback = 0f)
+        {
+            return (float.IsNaN(value) || float.IsInfinity(value)) ? fallback : value;
+        }
+
+        private static Vector2 SafeNormalized(Vector2 value, Vector2 fallback)
+        {
+            if (float.IsNaN(value.x) || float.IsNaN(value.y) || float.IsInfinity(value.x) || float.IsInfinity(value.y))
+                return fallback.normalized;
+
+            if (value.sqrMagnitude < SafeEpsilon)
+                return fallback.normalized;
+
+            return value.normalized;
+        }
+
         [System.Serializable]
         public sealed class ShapeStampRingBuildResult
         {
             public List<Vector2> BaseOuterLoop2D = new();
             public List<Vector2> BaseInnerLoop2D;
+            public List<float> OuterEdgeScales = new();
+            public List<float> InnerEdgeScales = new();
             public List<List<Vector2>> OuterLoops2D = new();
             public List<List<Vector2>> InnerLoops2D = new();
             public List<List<Vector3>> OuterRings = new();
@@ -770,6 +1033,18 @@ namespace DLN.EditorTools.ShapeStamper
             public int Index;
             public float Offset;
             public float Z;
+            public CanvasPoint Point;
+        }
+
+        private struct EdgeProfileDrive
+        {
+            public float LeftWeight;
+            public float RightWeight;
+            public float TopWeight;
+            public float BottomWeight;
+            public float BlendedPadding;
+            public float BlendedBorder;
+            public float Scale;
         }
 
         private sealed class SegmentedMeshBuilder

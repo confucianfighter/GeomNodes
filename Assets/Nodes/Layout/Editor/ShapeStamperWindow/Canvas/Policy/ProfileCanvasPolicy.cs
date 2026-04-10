@@ -99,7 +99,9 @@ namespace DLN.EditorTools.ShapeStamper
             _document.Points.Add(new CanvasPoint
             {
                 Id = newPointId,
-                Position = newPos
+                Position = newPos,
+                ProfileXAnchor = ProfileAnchorX.Floating,
+                YAnchor = CanvasAnchorY.Floating
             });
 
             RebuildOpenEdges();
@@ -119,7 +121,8 @@ namespace DLN.EditorTools.ShapeStamper
                 {
                     Id = i,
                     A = _document.Points[i].Id,
-                    B = _document.Points[i + 1].Id
+                    B = _document.Points[i + 1].Id,
+                    ProfileXScale = 1f
                 });
             }
         }
@@ -149,7 +152,9 @@ namespace DLN.EditorTools.ShapeStamper
             _document.Points.Add(new CanvasPoint
             {
                 Id = newPointId,
-                Position = splitPoint
+                Position = splitPoint,
+                ProfileXAnchor = ProfileAnchorX.Floating,
+                YAnchor = CanvasAnchorY.Floating
             });
 
             _document.Edges.RemoveAt(edgeIndex);
@@ -157,13 +162,15 @@ namespace DLN.EditorTools.ShapeStamper
             {
                 Id = newEdgeIdB,
                 A = newPointId,
-                B = edge.B
+                B = edge.B,
+                ProfileXScale = 1f
             });
             _document.Edges.Insert(edgeIndex, new CanvasEdge
             {
                 Id = newEdgeIdA,
                 A = edge.A,
-                B = newPointId
+                B = newPointId,
+                ProfileXScale = 1f
             });
 
             RemapOffsetsAfterSplit(edge.Id, newEdgeIdA);

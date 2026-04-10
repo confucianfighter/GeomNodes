@@ -16,6 +16,8 @@ namespace DLN.EditorTools.ShapeStamper
         [SerializeField] private List<CanvasPoint> innerPoints = new();
         [SerializeField] private List<CanvasEdge> innerEdges = new();
 
+        [SerializeField, HideInInspector] private int revision;
+
         public enum ShapeLoopEditMode
         {
             Outer = 0,
@@ -63,9 +65,11 @@ namespace DLN.EditorTools.ShapeStamper
 
         public int PointCount => points.Count;
         public bool IsClosed => true;
+        public int Revision => revision;
 
         public void MarkDirty()
         {
+            revision++;
         }
 
         public void EnsureValidShape()
@@ -80,6 +84,8 @@ namespace DLN.EditorTools.ShapeStamper
             if (edges.Count != points.Count)
                 RebuildClosedEdges();
 
+            SanitizeEdgeScales(edges, 1f);
+
             if (HasInnerShape)
             {
                 if (innerPoints == null)
@@ -89,13 +95,17 @@ namespace DLN.EditorTools.ShapeStamper
                     innerEdges = new List<CanvasEdge>();
 
                 if (innerPoints.Count < 3)
+                {
                     EnsureDefaultInnerShape();
+                }
                 else
                 {
                     ClampAllInnerPointsToWorld();
 
                     if (innerEdges.Count != innerPoints.Count)
                         RebuildClosedInnerEdges();
+
+                    SanitizeEdgeScales(innerEdges, 0.25f);
                 }
             }
         }
@@ -111,6 +121,7 @@ namespace DLN.EditorTools.ShapeStamper
             points.Add(new CanvasPoint { Id = 2, Position = new Vector2(0.50f, 0.80f) });
 
             RebuildClosedEdges();
+            MarkDirty();
         }
 
         public void DeletePoints(IEnumerable<int> pointIds)
@@ -121,8 +132,6 @@ namespace DLN.EditorTools.ShapeStamper
                 return;
 
             List<CanvasPoint> activePoints = IsEditingInnerLoop ? innerPoints : points;
-            List<CanvasEdge> activeEdges = IsEditingInnerLoop ? innerEdges : edges;
-
             activePoints.RemoveAll(p => ids.Contains(p.Id));
 
             if (activePoints.Count < 3)
@@ -151,6 +160,8 @@ namespace DLN.EditorTools.ShapeStamper
                 offsets.Clear();
                 ClampAllPointsToWorld();
             }
+
+            MarkDirty();
         }
 
         public Rect GetCanvasFrameRect()
@@ -171,6 +182,7 @@ namespace DLN.EditorTools.ShapeStamper
 
             ResizePointList(points, oldBounds, newBounds);
             ResizePointList(innerPoints, oldBounds, newBounds);
+            MarkDirty();
         }
 
         private static void ResizePointList(List<CanvasPoint> list, Rect oldBounds, Rect newBounds)
@@ -199,6 +211,7 @@ namespace DLN.EditorTools.ShapeStamper
             if (innerPoints.Count >= 3 && innerEdges.Count == innerPoints.Count)
             {
                 ClampAllInnerPointsToWorld();
+                SanitizeEdgeScales(innerEdges, 0.25f);
                 return;
             }
 
@@ -233,6 +246,7 @@ namespace DLN.EditorTools.ShapeStamper
 
             RebuildClosedInnerEdges();
             ClampAllInnerPointsToWorld();
+            MarkDirty();
         }
 
         private void ClampAllPointsToWorld()
@@ -272,7 +286,8 @@ namespace DLN.EditorTools.ShapeStamper
                 {
                     Id = i,
                     A = points[i].Id,
-                    B = points[next].Id
+                    B = points[next].Id,
+                    ProfileXScale = 1f
                 });
             }
         }
@@ -289,8 +304,23 @@ namespace DLN.EditorTools.ShapeStamper
                 {
                     Id = nextEdgeId++,
                     A = innerPoints[i].Id,
-                    B = innerPoints[next].Id
+                    B = innerPoints[next].Id,
+                    ProfileXScale = 0.25f
                 });
+            }
+        }
+
+        private static void SanitizeEdgeScales(List<CanvasEdge> list, float defaultScale)
+        {
+            if (list == null)
+                return;
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                CanvasEdge edge = list[i];
+                if (edge.ProfileXScale <= 0f)
+                    edge.ProfileXScale = defaultScale;
+                list[i] = edge;
             }
         }
 

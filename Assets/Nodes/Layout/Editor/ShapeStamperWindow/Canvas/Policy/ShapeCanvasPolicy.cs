@@ -194,6 +194,7 @@ namespace DLN.EditorTools.ShapeStamper
             int newPointId = GetNextPointId(_document);
             int newEdgeIdA = GetNextEdgeId(_document);
             int newEdgeIdB = newEdgeIdA + 1;
+            float inheritedProfileXScale = Mathf.Max(0.0001f, edge.ProfileXScale);
 
             int edgeIndex = GetEdgeIndexById(_document, edge.Id);
             if (edgeIndex < 0)
@@ -210,13 +211,15 @@ namespace DLN.EditorTools.ShapeStamper
             {
                 Id = newEdgeIdB,
                 A = newPointId,
-                B = edge.B
+                B = edge.B,
+                ProfileXScale = inheritedProfileXScale
             });
             _document.Edges.Insert(edgeIndex, new CanvasEdge
             {
                 Id = newEdgeIdA,
                 A = edge.A,
-                B = newPointId
+                B = newPointId,
+                ProfileXScale = inheritedProfileXScale
             });
 
             RemapOffsetsAfterSplit(edge.Id, newEdgeIdA, newEdgeIdB);
