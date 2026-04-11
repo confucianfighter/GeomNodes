@@ -4,107 +4,166 @@ import sys
 
 ROOT = Path.cwd()
 
+ADAPTIVE_SHAPE = ROOT / "Assets/Nodes/Layout/AdaptiveShape.cs"
 WINDOW = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/ShapeStamperWindow.cs"
-SHAPE_DOC = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Documents/ShapeCanvasDocument.cs"
-GUIDES = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Core/CanvasGuideDrawing.cs"
-
 
 def read(path: Path) -> str:
     if not path.exists():
         raise FileNotFoundError(f"Missing file: {path}")
     return path.read_text(encoding="utf-8")
 
-
 def write(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8", newline="\n")
 
+def replace_or_fail(text: str, old: str, new: str, where: str) -> str:
+    if old not in text:
+        raise RuntimeError(f"Could not find expected block in {where}:\n{old[:160]}...")
+    return text.replace(old, new, 1)
 
-def ensure_contains(text: str, needle: str, where: str) -> None:
-    if needle not in text:
-        raise RuntimeError(f"Expected to find {needle!r} in {where}, but did not.")
+def sub_or_fail(pattern: str, repl: str, text: str, where: str, flags=re.DOTALL) -> str:
+    new_text, count = re.subn(pattern, repl, text, count=1, flags=flags)
+    if count != 1:
+        raise RuntimeError(f"Could not replace pattern in {where}:\n{pattern}")
+    return new_text
 
+def write_adaptive_shape() -> None:
+    code = """using UnityEngine;
 
-def patch_shape_canvas_document() -> None:
-    text = read(SHAPE_DOC)
+#if UNITY_EDITOR
+using DLN.EditorTools.ShapeStamper;
+#endif
 
-    if "private float leftPadding;" in text:
-        print("ShapeCanvasDocument.cs already appears patched.")
-        return
+namespace DLN
+{
+    [DisallowMultipleComponent]
+    public class AdaptiveShape : MonoBehaviour
+    {
+        [SerializeField] private SmartBounds smartBounds;
+        [SerializeField] private bool preferSmartBoundsBordersPadding = true;
+        [SerializeField] private BordersPadding fallbackBordersPadding = BordersPadding.Default;
 
-    anchor = """        [SerializeField] private bool hasInnerShape;
-        [SerializeField] private List<CanvasPoint> innerPoints = new();
-        [SerializeField] private List<CanvasEdge> innerEdges = new();
+#if UNITY_EDITOR
+        [SerializeField] private ShapeCanvasDocument shapeDocument = new();
+        [SerializeField] private ProfileCanvasDocument profileDocument = new();
+#endif
 
-        [SerializeField, HideInInspector] private int revision;
-"""
-    replacement = """        [SerializeField] private bool hasInnerShape;
-        [SerializeField] private List<CanvasPoint> innerPoints = new();
-        [SerializeField] private List<CanvasEdge> innerEdges = new();
-
-        [SerializeField] private float leftPadding;
-        [SerializeField] private float rightPadding;
-        [SerializeField] private float topPadding;
-        [SerializeField] private float bottomPadding;
-
-        [SerializeField] private float leftBorder;
-        [SerializeField] private float rightBorder;
-        [SerializeField] private float topBorder;
-        [SerializeField] private float bottomBorder;
-
-        [SerializeField, HideInInspector] private int revision;
-"""
-    ensure_contains(text, anchor, "ShapeCanvasDocument.cs")
-    text = text.replace(anchor, replacement, 1)
-
-    prop_anchor = """        public bool HasInnerShape
+        public SmartBounds SmartBounds => smartBounds;
+        public bool PreferSmartBoundsBordersPadding
         {
-            get => hasInnerShape;
+            get => preferSmartBoundsBordersPadding;
+            set => preferSmartBoundsBordersPadding = value;
+        }
+
+        public BordersPadding FallbackBordersPadding
+        {
+            get => fallbackBordersPadding;
             set
             {
-                hasInnerShape = value;
-                if (!hasInnerShape && editMode == ShapeLoopEditMode.Inner)
-                    editMode = ShapeLoopEditMode.Outer;
+                fallbackBordersPadding = value;
+                fallbackBordersPadding.ClampToValid();
             }
         }
 
-        public Vector2 WorldSizeMeters
-"""
-    prop_replacement = """        public bool HasInnerShape
+#if UNITY_EDITOR
+        public ShapeCanvasDocument ShapeDocument
         {
-            get => hasInnerShape;
-            set
+            get
             {
-                hasInnerShape = value;
-                if (!hasInnerShape && editMode == ShapeLoopEditMode.Inner)
-                    editMode = ShapeLoopEditMode.Outer;
+                EnsureEditorState();
+                return shapeDocument;
             }
         }
 
-        public float LeftPadding { get => leftPadding; set => leftPadding = Mathf.Max(0f, value); }
-        public float RightPadding { get => rightPadding; set => rightPadding = Mathf.Max(0f, value); }
-        public float TopPadding { get => topPadding; set => topPadding = Mathf.Max(0f, value); }
-        public float BottomPadding { get => bottomPadding; set => bottomPadding = Mathf.Max(0f, value); }
+        public ProfileCanvasDocument ProfileDocument
+        {
+            get
+            {
+                EnsureEditorState();
+                return profileDocument;
+            }
+        }
+#endif
 
-        public float LeftBorder { get => leftBorder; set => leftBorder = Mathf.Max(0f, value); }
-        public float RightBorder { get => rightBorder; set => rightBorder = Mathf.Max(0f, value); }
-        public float TopBorder { get => topBorder; set => topBorder = Mathf.Max(0f, value); }
-        public float BottomBorder { get => bottomBorder; set => bottomBorder = Mathf.Max(0f, value); }
+        private void Reset()
+        {
+            EnsureReferences();
+            fallbackBordersPadding.ClampToValid();
+#if UNITY_EDITOR
+            EnsureEditorState();
+#endif
+        }
 
-        public Vector2 WorldSizeMeters
+        private void OnValidate()
+        {
+            EnsureReferences();
+            fallbackBordersPadding.ClampToValid();
+#if UNITY_EDITOR
+            EnsureEditorState();
+#endif
+        }
+
+        public void EnsureReferences()
+        {
+            if (smartBounds == null)
+                TryGetComponent(out smartBounds);
+        }
+
+        public BordersPadding GetEffectiveBordersPadding()
+        {
+            EnsureReferences();
+
+            BordersPadding result;
+            if (preferSmartBoundsBordersPadding && smartBounds != null)
+                result = smartBounds.bordersPadding;
+            else
+                result = fallbackBordersPadding;
+
+            result.ClampToValid();
+            return result;
+        }
+
+        public void PullFromSmartBounds()
+        {
+            EnsureReferences();
+            if (smartBounds == null)
+                return;
+
+            fallbackBordersPadding = smartBounds.bordersPadding;
+            fallbackBordersPadding.ClampToValid();
+        }
+
+        public void PushFallbackToSmartBounds()
+        {
+            EnsureReferences();
+            if (smartBounds == null)
+                return;
+
+            BordersPadding value = fallbackBordersPadding;
+            value.ClampToValid();
+            smartBounds.bordersPadding = value;
+        }
+
+#if UNITY_EDITOR
+        public void EnsureEditorState()
+        {
+            if (shapeDocument == null)
+                shapeDocument = new ShapeCanvasDocument();
+
+            if (profileDocument == null)
+                profileDocument = new ProfileCanvasDocument();
+
+            shapeDocument.EnsureValidShape();
+            profileDocument.EnsureValidProfile();
+        }
+#endif
+    }
+}
 """
-    ensure_contains(text, prop_anchor, "ShapeCanvasDocument.cs")
-    text = text.replace(prop_anchor, prop_replacement, 1)
+    write(ADAPTIVE_SHAPE, code)
+    print("Wrote AdaptiveShape.cs")
 
-    write(SHAPE_DOC, text)
-    print("Patched ShapeCanvasDocument.cs")
-
-
-def patch_shape_stamper_window() -> None:
+def patch_window() -> None:
     text = read(WINDOW)
-
-    if "private DLN.SmartBounds _targetSmartBounds;" in text:
-        print("ShapeStamperWindow.cs already appears patched.")
-        return
 
     if "using DLN;" not in text:
         text = text.replace(
@@ -113,75 +172,70 @@ def patch_shape_stamper_window() -> None:
             1,
         )
 
-    field_anchor = """        [SerializeField] private bool showMaterialSettings = true;
-        [SerializeField] private bool autoRegeneratePreview = true;
-        [SerializeField] private List<Material> segmentMaterials = new();
-"""
-    field_replacement = """        [SerializeField] private bool showMaterialSettings = true;
-        [SerializeField] private bool autoRegeneratePreview = true;
-        [SerializeField] private GameObject targetObject;
-        [SerializeField] private List<Material> segmentMaterials = new();
-"""
-    ensure_contains(text, field_anchor, "ShapeStamperWindow.cs")
-    text = text.replace(field_anchor, field_replacement, 1)
+    # Field swap
+    text = replace_or_fail(
+        text,
+        '[SerializeField] private GameObject targetObject;\n',
+        '[SerializeField] private AdaptiveShape adaptiveShape;\n',
+        "ShapeStamperWindow.cs",
+    )
 
-    private_field_anchor = """        private bool _isDraggingDivider;
-        private int _lastShapeRevision = -1;
-"""
-    private_field_replacement = """        private bool _isDraggingDivider;
-        private DLN.SmartBounds _targetSmartBounds;
-        private int _lastShapeRevision = -1;
-"""
-    ensure_contains(text, private_field_anchor, "ShapeStamperWindow.cs")
-    text = text.replace(private_field_anchor, private_field_replacement, 1)
+    text = replace_or_fail(
+        text,
+        '        private bool _isDraggingDivider;\n        private DLN.SmartBounds _targetSmartBounds;\n',
+        '        private bool _isDraggingDivider;\n        private SmartBounds _activeSmartBounds;\n',
+        "ShapeStamperWindow.cs",
+    )
 
-    on_enable_anchor = """            shapeDocument.EnsureValidShape();
-            profileDocument.EnsureValidProfile();
-
-            _shapePolicy ??= new ShapeCanvasPolicy(shapeDocument);
-"""
-    on_enable_replacement = """            shapeDocument.EnsureValidShape();
-            profileDocument.EnsureValidProfile();
-
-            DLN.SmartBounds smartBounds = EnsureTargetSmartBounds();
+    # OnEnable sync block
+    text = replace_or_fail(
+        text,
+        """            DLN.SmartBounds smartBounds = EnsureTargetSmartBounds();
             if (smartBounds != null)
                 SyncDocumentsFromSmartBounds(smartBounds);
 
             _shapePolicy ??= new ShapeCanvasPolicy(shapeDocument);
-"""
-    ensure_contains(text, on_enable_anchor, "ShapeStamperWindow.cs")
-    text = text.replace(on_enable_anchor, on_enable_replacement, 1)
+            _profilePolicy ??= new ProfileCanvasPolicy(profileDocument);
 
-    on_gui_anchor = """            shapeDocument.EnsureValidShape();
-            profileDocument.EnsureValidProfile();
+            _shapeCanvas = new EditorCanvas(shapeDocument, _shapePolicy, shapeSelection, shapeInteraction, shapeView);
+            _profileCanvas = new EditorCanvas(profileDocument, _profilePolicy, profileSelection, profileInteraction, profileView);
+""",
+        """            BindToAdaptiveShape(adaptiveShape);
 
-            DrawTopBar();
-"""
-    on_gui_replacement = """            shapeDocument.EnsureValidShape();
-            profileDocument.EnsureValidProfile();
+            _forcePreviewRefresh = true;
+        }
 
-            DLN.SmartBounds smartBounds = EnsureTargetSmartBounds();
+        private void RecreateCanvasBindings()
+        {
+            _shapePolicy = new ShapeCanvasPolicy(shapeDocument);
+            _profilePolicy = new ProfileCanvasPolicy(profileDocument);
+
+            _shapeCanvas = new EditorCanvas(shapeDocument, _shapePolicy, shapeSelection, shapeInteraction, shapeView);
+            _profileCanvas = new EditorCanvas(profileDocument, _profilePolicy, profileSelection, profileInteraction, profileView);
+""",
+        "ShapeStamperWindow.cs",
+    )
+
+    # remove old smartbounds sync in OnGUI
+    text = replace_or_fail(
+        text,
+        """            DLN.SmartBounds smartBounds = EnsureTargetSmartBounds();
             if (smartBounds != null)
                 SyncDocumentsFromSmartBounds(smartBounds);
 
             DrawTopBar();
-"""
-    ensure_contains(text, on_gui_anchor, "ShapeStamperWindow.cs")
-    text = text.replace(on_gui_anchor, on_gui_replacement, 1)
+""",
+        """            SyncDocumentsFromAdaptiveShape();
 
-    topbar_anchor = """        private void DrawTopBar()
-        {
-            EditorGUILayout.BeginVertical(GUILayout.Height(TopBarHeight));
-            EditorGUILayout.Space(6f);
+            DrawTopBar();
+""",
+        "ShapeStamperWindow.cs",
+    )
 
-            EditorGUILayout.BeginHorizontal();
-"""
-    topbar_replacement = """        private void DrawTopBar()
-        {
-            EditorGUILayout.BeginVertical(GUILayout.Height(TopBarHeight));
-            EditorGUILayout.Space(6f);
-
-            EditorGUILayout.BeginHorizontal();
+    # top bar header block swap
+    text = replace_or_fail(
+        text,
+        """            EditorGUILayout.BeginHorizontal();
             GameObject newTargetObject = (GameObject)EditorGUILayout.ObjectField(
                 "Target",
                 targetObject,
@@ -205,395 +259,247 @@ def patch_shape_stamper_window() -> None:
 
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.BeginHorizontal();
-"""
-    ensure_contains(text, topbar_anchor, "ShapeStamperWindow.cs")
-    text = text.replace(topbar_anchor, topbar_replacement, 1)
-
-    text = text.replace("DrawProfileGuideInputs();", "DrawBordersPaddingInputs();")
-
-    old_method_pattern = re.compile(
-        r"""        private void DrawProfileGuideInputs\(\)\n        \{\n.*?\n        \}\n\n        private void DrawSelectedShapeElementInspector\(\)""",
-        re.DOTALL,
+""",
+        """            DrawAdaptiveShapeBindingRow();
+""",
+        "ShapeStamperWindow.cs",
     )
-    new_method_block = """        private void DrawBordersPaddingInputs()
+
+    # remove old direct inputs call
+    text = text.replace("            DrawBordersPaddingInputs();\n", "            DrawAdaptiveShapeSummary();\n")
+
+    # replace old methods block
+    text = sub_or_fail(
+        r"""        private void DrawBordersPaddingInputs\(\)\n        \{\n.*?\n        \}\n\n        private void DrawSelectedShapeElementInspector\(\)""",
+        """        private void DrawAdaptiveShapeBindingRow()
+        {
+            EditorGUILayout.BeginHorizontal();
+
+            AdaptiveShape selectedAdaptiveShape = TryGetSelectedAdaptiveShape();
+
+            EditorGUILayout.LabelField(
+                adaptiveShape != null
+                    ? $"Adaptive Shape: {adaptiveShape.name}"
+                    : "Adaptive Shape: none",
+                EditorStyles.miniBoldLabel);
+
+            if (GUILayout.Button("Use Selected", GUILayout.Width(100f)))
+            {
+                if (selectedAdaptiveShape != null)
+                    BindToAdaptiveShape(selectedAdaptiveShape);
+            }
+
+            if (GUILayout.Button("Create Adaptive Shape", GUILayout.Width(160f)))
+            {
+                CreateAdaptiveShapeGameObject();
+            }
+
+            EditorGUI.BeginDisabledGroup(adaptiveShape == null);
+            if (GUILayout.Button("Ping", GUILayout.Width(60f)))
+            {
+                EditorGUIUtility.PingObject(adaptiveShape);
+                Selection.activeObject = adaptiveShape != null ? adaptiveShape.gameObject : null;
+            }
+            EditorGUI.EndDisabledGroup();
+
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private void DrawAdaptiveShapeSummary()
         {
             EditorGUILayout.Space(6f);
             EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField("Borders / Padding", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Adaptive Shape", EditorStyles.boldLabel);
 
-            DLN.SmartBounds smartBounds = EnsureTargetSmartBounds();
-            if (smartBounds == null)
+            if (adaptiveShape == null)
             {
                 EditorGUILayout.HelpBox(
-                    "Assign a target GameObject. A SmartBounds component will be added automatically and used as the source of truth.",
+                    "Use Selected to bind the window to the currently selected AdaptiveShape, or Create Adaptive Shape to make a new one.",
                     MessageType.Info);
                 EditorGUILayout.EndVertical();
                 return;
             }
 
-            DLN.BordersPadding data = smartBounds.bordersPadding;
+            SmartBounds smartBounds = adaptiveShape.SmartBounds;
+            BordersPadding bp = adaptiveShape.GetEffectiveBordersPadding();
 
-            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.LabelField(
+                smartBounds != null
+                    ? $"SmartBounds Source: {smartBounds.name}"
+                    : "SmartBounds Source: none",
+                EditorStyles.miniLabel);
 
-            DrawAxisBordersPaddingRow("X", ref data.x);
-            DrawAxisBordersPaddingRow("Y", ref data.y);
-            DrawAxisBordersPaddingRow("Z", ref data.z);
+            EditorGUILayout.LabelField(
+                $"Using SmartBounds Borders/Padding: {adaptiveShape.PreferSmartBoundsBordersPadding}",
+                EditorStyles.miniLabel);
 
-            if (EditorGUI.EndChangeCheck())
-            {
-                Undo.RecordObject(smartBounds, "Edit SmartBounds Borders/Padding");
+            EditorGUILayout.LabelField(
+                $"X  -B {bp.x.negativeBorder:0.###}   -P {bp.x.negativePadding:0.###}   +P {bp.x.positivePadding:0.###}   +B {bp.x.positiveBorder:0.###}",
+                EditorStyles.miniLabel);
 
-                data.ClampToValid();
-                smartBounds.bordersPadding = data;
-                EditorUtility.SetDirty(smartBounds);
+            EditorGUILayout.LabelField(
+                $"Y  -B {bp.y.negativeBorder:0.###}   -P {bp.y.negativePadding:0.###}   +P {bp.y.positivePadding:0.###}   +B {bp.y.positiveBorder:0.###}",
+                EditorStyles.miniLabel);
 
-                SyncDocumentsFromSmartBounds(smartBounds);
+            EditorGUILayout.LabelField(
+                $"Z  -B {bp.z.negativeBorder:0.###}   -P {bp.z.negativePadding:0.###}   +P {bp.z.positivePadding:0.###}   +B {bp.z.positiveBorder:0.###}",
+                EditorStyles.miniLabel);
 
-                shapeDocument.MarkDirty();
-                profileDocument.MarkDirty();
-                _forcePreviewRefresh = true;
-                Repaint();
-            }
+            EditorGUILayout.HelpBox(
+                "Edit borders/padding on SmartBounds for now. The Shape Stamper window reads them and updates its guides/documents.",
+                MessageType.None);
 
             EditorGUILayout.EndVertical();
         }
 
-        private static void DrawAxisBordersPaddingRow(string axisLabel, ref DLN.AxisBordersPadding axis)
+        private AdaptiveShape TryGetSelectedAdaptiveShape()
         {
-            EditorGUILayout.LabelField(axisLabel, EditorStyles.miniBoldLabel);
-
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("-B", GUILayout.Width(22f));
-            axis.negativeBorder = EditorGUILayout.FloatField(axis.negativeBorder, GUILayout.Width(58f));
-
-            EditorGUILayout.LabelField("-P", GUILayout.Width(22f));
-            axis.negativePadding = EditorGUILayout.FloatField(axis.negativePadding, GUILayout.Width(58f));
-
-            EditorGUILayout.LabelField("MinC", GUILayout.Width(34f));
-            axis.minContentsSize = EditorGUILayout.FloatField(axis.minContentsSize, GUILayout.Width(58f));
-
-            EditorGUILayout.LabelField("+P", GUILayout.Width(22f));
-            axis.positivePadding = EditorGUILayout.FloatField(axis.positivePadding, GUILayout.Width(58f));
-
-            EditorGUILayout.LabelField("+B", GUILayout.Width(22f));
-            axis.positiveBorder = EditorGUILayout.FloatField(axis.positiveBorder, GUILayout.Width(58f));
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
-        }
-
-        private DLN.SmartBounds EnsureTargetSmartBounds()
-        {
-            if (targetObject == null)
-            {
-                _targetSmartBounds = null;
+            GameObject selectedGo = Selection.activeGameObject;
+            if (selectedGo == null)
                 return null;
-            }
 
-            if (_targetSmartBounds != null && _targetSmartBounds.gameObject == targetObject)
-                return _targetSmartBounds;
-
-            if (!targetObject.TryGetComponent(out DLN.SmartBounds smartBounds))
-            {
-                Undo.AddComponent<DLN.SmartBounds>(targetObject);
-                smartBounds = targetObject.GetComponent<DLN.SmartBounds>();
-            }
-
-            _targetSmartBounds = smartBounds;
-            return _targetSmartBounds;
+            selectedGo.TryGetComponent(out AdaptiveShape selectedAdaptiveShape);
+            return selectedAdaptiveShape;
         }
 
-        private void SyncDocumentsFromSmartBounds(DLN.SmartBounds smartBounds)
+        private void CreateAdaptiveShapeGameObject()
         {
-            if (smartBounds == null)
+            GameObject go = new GameObject("Adaptive Shape");
+            Undo.RegisterCreatedObjectUndo(go, "Create Adaptive Shape");
+
+            SmartBounds smartBounds = Undo.AddComponent<SmartBounds>(go);
+            AdaptiveShape newAdaptiveShape = Undo.AddComponent<AdaptiveShape>(go);
+
+            newAdaptiveShape.EnsureReferences();
+            newAdaptiveShape.PullFromSmartBounds();
+#if UNITY_EDITOR
+            newAdaptiveShape.EnsureEditorState();
+#endif
+
+            Selection.activeGameObject = go;
+            BindToAdaptiveShape(newAdaptiveShape);
+
+            EditorGUIUtility.PingObject(go);
+        }
+
+        private void BindToAdaptiveShape(AdaptiveShape newAdaptiveShape)
+        {
+            adaptiveShape = newAdaptiveShape;
+            _activeSmartBounds = null;
+
+            if (adaptiveShape == null)
+            {
+                shapeDocument ??= new ShapeCanvasDocument();
+                profileDocument ??= new ProfileCanvasDocument();
+
+                shapeDocument.EnsureValidShape();
+                profileDocument.EnsureValidProfile();
+
+                RecreateCanvasBindings();
+                return;
+            }
+
+            adaptiveShape.EnsureReferences();
+#if UNITY_EDITOR
+            adaptiveShape.EnsureEditorState();
+            shapeDocument = adaptiveShape.ShapeDocument;
+            profileDocument = adaptiveShape.ProfileDocument;
+#endif
+            _activeSmartBounds = adaptiveShape.SmartBounds;
+
+            SyncDocumentsFromAdaptiveShape();
+            RecreateCanvasBindings();
+
+            shapeSelection.Clear();
+            shapeInteraction.Clear();
+            profileSelection.Clear();
+            profileInteraction.Clear();
+
+            shapeView.ResetView();
+            profileView.ResetView();
+
+            _forcePreviewRefresh = true;
+        }
+
+        private void SyncDocumentsFromAdaptiveShape()
+        {
+            if (adaptiveShape == null)
                 return;
 
-            DLN.BordersPadding bp = smartBounds.bordersPadding;
+            BordersPadding bp = adaptiveShape.GetEffectiveBordersPadding();
             bp.ClampToValid();
 
-            shapeDocument.LeftBorder = bp.x.negativeBorder;
-            shapeDocument.LeftPadding = bp.x.negativePadding;
-            shapeDocument.RightPadding = bp.x.positivePadding;
-            shapeDocument.RightBorder = bp.x.positiveBorder;
+            bool shapeChanged =
+                !Mathf.Approximately(shapeDocument.LeftBorder, bp.x.negativeBorder) ||
+                !Mathf.Approximately(shapeDocument.LeftPadding, bp.x.negativePadding) ||
+                !Mathf.Approximately(shapeDocument.RightPadding, bp.x.positivePadding) ||
+                !Mathf.Approximately(shapeDocument.RightBorder, bp.x.positiveBorder) ||
+                !Mathf.Approximately(shapeDocument.TopBorder, bp.y.negativeBorder) ||
+                !Mathf.Approximately(shapeDocument.TopPadding, bp.y.negativePadding) ||
+                !Mathf.Approximately(shapeDocument.BottomPadding, bp.y.positivePadding) ||
+                !Mathf.Approximately(shapeDocument.BottomBorder, bp.y.positiveBorder);
 
-            shapeDocument.TopBorder = bp.y.negativeBorder;
-            shapeDocument.TopPadding = bp.y.negativePadding;
-            shapeDocument.BottomPadding = bp.y.positivePadding;
-            shapeDocument.BottomBorder = bp.y.positiveBorder;
+            if (shapeChanged)
+            {
+                shapeDocument.LeftBorder = bp.x.negativeBorder;
+                shapeDocument.LeftPadding = bp.x.negativePadding;
+                shapeDocument.RightPadding = bp.x.positivePadding;
+                shapeDocument.RightBorder = bp.x.positiveBorder;
 
-            profileDocument.SetGuideValues(
-                bp.x.negativePadding,
-                bp.x.positivePadding,
-                bp.y.negativePadding,
-                bp.y.positivePadding,
-                bp.x.negativeBorder,
-                bp.x.positiveBorder,
-                bp.y.negativeBorder,
-                bp.y.positiveBorder);
+                shapeDocument.TopBorder = bp.y.negativeBorder;
+                shapeDocument.TopPadding = bp.y.negativePadding;
+                shapeDocument.BottomPadding = bp.y.positivePadding;
+                shapeDocument.BottomBorder = bp.y.positiveBorder;
 
-            profileDocument.FrontPaddingDepth = Mathf.Max(bp.z.negativePadding, bp.z.positivePadding);
-            profileDocument.FrontBorderDepth = Mathf.Max(bp.z.negativeBorder, bp.z.positiveBorder);
+                shapeDocument.MarkDirty();
+                _forcePreviewRefresh = true;
+            }
+
+            bool profileChanged =
+                !Mathf.Approximately(profileDocument.LeftPadding, bp.x.negativePadding) ||
+                !Mathf.Approximately(profileDocument.RightPadding, bp.x.positivePadding) ||
+                !Mathf.Approximately(profileDocument.TopPadding, bp.y.negativePadding) ||
+                !Mathf.Approximately(profileDocument.BottomPadding, bp.y.positivePadding) ||
+                !Mathf.Approximately(profileDocument.LeftBorder, bp.x.negativeBorder) ||
+                !Mathf.Approximately(profileDocument.RightBorder, bp.x.positiveBorder) ||
+                !Mathf.Approximately(profileDocument.TopBorder, bp.y.negativeBorder) ||
+                !Mathf.Approximately(profileDocument.BottomBorder, bp.y.positiveBorder) ||
+                !Mathf.Approximately(profileDocument.FrontPaddingDepth, Mathf.Max(bp.z.negativePadding, bp.z.positivePadding)) ||
+                !Mathf.Approximately(profileDocument.FrontBorderDepth, Mathf.Max(bp.z.negativeBorder, bp.z.positiveBorder));
+
+            if (profileChanged)
+            {
+                profileDocument.SetGuideValues(
+                    bp.x.negativePadding,
+                    bp.x.positivePadding,
+                    bp.y.negativePadding,
+                    bp.y.positivePadding,
+                    bp.x.negativeBorder,
+                    bp.x.positiveBorder,
+                    bp.y.negativeBorder,
+                    bp.y.positiveBorder);
+
+                profileDocument.FrontPaddingDepth = Mathf.Max(bp.z.negativePadding, bp.z.positivePadding);
+                profileDocument.FrontBorderDepth = Mathf.Max(bp.z.negativeBorder, bp.z.positiveBorder);
+                profileDocument.MarkDirty();
+                _forcePreviewRefresh = true;
+            }
         }
 
         private void DrawSelectedShapeElementInspector()
-"""
-    if not old_method_pattern.search(text):
-        raise RuntimeError("Could not locate DrawProfileGuideInputs() block in ShapeStamperWindow.cs")
-    text = old_method_pattern.sub(new_method_block, text, count=1)
+""",
+        text,
+        "ShapeStamperWindow.cs",
+    )
 
     write(WINDOW, text)
     print("Patched ShapeStamperWindow.cs")
 
-
-def rewrite_canvas_guide_drawing() -> None:
-    new_text = """#if UNITY_EDITOR
-using UnityEditor;
-using UnityEngine;
-
-namespace DLN.EditorTools.ShapeStamper
-{
-    public static class CanvasGuideDrawing
-    {
-        private static readonly Color ContentColor = new Color(1f, 1f, 1f, 0.22f);
-        private static readonly Color PaddingColor = new Color(0.35f, 0.85f, 1f, 0.30f);
-        private static readonly Color BorderColor = new Color(1f, 0.65f, 0.20f, 0.30f);
-
-        public static void DrawShapeGuides(EditorCanvas canvas, Rect canvasRect, ShapeCanvasDocument document)
-        {
-            if (canvas == null || document == null)
-                return;
-
-            float width = document.WorldSizeMeters.x;
-            float height = document.WorldSizeMeters.y;
-
-            float leftContent = 0f;
-            float leftPadding = Mathf.Clamp(document.LeftPadding, 0f, width);
-            float leftBorder = -(document.LeftPadding + document.LeftBorder);
-
-            float rightContent = width;
-            float rightPadding = Mathf.Clamp(width - document.RightPadding, 0f, width);
-            float rightBorder = width + document.RightPadding + document.RightBorder;
-
-            float topContent = 0f;
-            float topPadding = Mathf.Clamp(document.TopPadding, 0f, height);
-            float topBorder = -(document.TopPadding + document.TopBorder);
-
-            float bottomContent = height;
-            float bottomPadding = Mathf.Clamp(height - document.BottomPadding, 0f, height);
-            float bottomBorder = height + document.BottomPadding + document.BottomBorder;
-
-            DrawVerticalWorldLine(canvas, canvasRect, leftBorder, 0f, height, BorderColor);
-            DrawVerticalWorldLine(canvas, canvasRect, leftContent, 0f, height, ContentColor);
-            DrawVerticalWorldLine(canvas, canvasRect, leftPadding, 0f, height, PaddingColor);
-
-            DrawVerticalWorldLine(canvas, canvasRect, rightBorder, 0f, height, BorderColor);
-            DrawVerticalWorldLine(canvas, canvasRect, rightContent, 0f, height, ContentColor);
-            DrawVerticalWorldLine(canvas, canvasRect, rightPadding, 0f, height, PaddingColor);
-
-            DrawHorizontalWorldLine(canvas, canvasRect, 0f, width, topBorder, BorderColor);
-            DrawHorizontalWorldLine(canvas, canvasRect, 0f, width, topContent, ContentColor);
-            DrawHorizontalWorldLine(canvas, canvasRect, 0f, width, topPadding, PaddingColor);
-
-            DrawHorizontalWorldLine(canvas, canvasRect, 0f, width, bottomBorder, BorderColor);
-            DrawHorizontalWorldLine(canvas, canvasRect, 0f, width, bottomContent, ContentColor);
-            DrawHorizontalWorldLine(canvas, canvasRect, 0f, width, bottomPadding, PaddingColor);
-
-            DrawVerticalWorldLineLabel(canvas, canvasRect, leftBorder, 0f, "-X Border", BorderColor, placeRight: false);
-            DrawVerticalWorldLineLabel(canvas, canvasRect, leftContent, 0f, "-X Content", ContentColor, placeRight: true);
-            DrawVerticalWorldLineLabel(canvas, canvasRect, leftPadding, 0f, "-X Padding", PaddingColor, placeRight: true);
-
-            DrawVerticalWorldLineLabel(canvas, canvasRect, rightBorder, 0f, "+X Border", BorderColor, placeRight: true);
-            DrawVerticalWorldLineLabel(canvas, canvasRect, rightContent, 0f, "+X Content", ContentColor, placeRight: false);
-            DrawVerticalWorldLineLabel(canvas, canvasRect, rightPadding, 0f, "+X Padding", PaddingColor, placeRight: false);
-
-            DrawHorizontalWorldLineLabel(canvas, canvasRect, 0f, topBorder, "-Y Border", BorderColor, placeBelow: false);
-            DrawHorizontalWorldLineLabel(canvas, canvasRect, 0f, topContent, "-Y Content", ContentColor, placeBelow: true);
-            DrawHorizontalWorldLineLabel(canvas, canvasRect, 0f, topPadding, "-Y Padding", PaddingColor, placeBelow: true);
-
-            DrawHorizontalWorldLineLabel(canvas, canvasRect, 0f, bottomBorder, "+Y Border", BorderColor, placeBelow: true);
-            DrawHorizontalWorldLineLabel(canvas, canvasRect, 0f, bottomContent, "+Y Content", ContentColor, placeBelow: false);
-            DrawHorizontalWorldLineLabel(canvas, canvasRect, 0f, bottomPadding, "+Y Padding", PaddingColor, placeBelow: false);
-        }
-
-        public static void DrawProfileGuides(EditorCanvas canvas, Rect canvasRect, ProfileCanvasDocument document)
-        {
-            if (canvas == null || document == null)
-                return;
-
-            float width = document.WorldSizeMeters.x;
-            float height = document.WorldSizeMeters.y;
-
-            float topContentY = 0f;
-            float topPaddingY = Mathf.Clamp(document.TopPadding, 0f, height);
-            float topBorderY = Mathf.Clamp(document.TopPadding + document.TopBorder, 0f, height);
-
-            float bottomContentY = height;
-            float bottomPaddingY = Mathf.Clamp(height - document.BottomPadding, 0f, height);
-            float bottomBorderY = Mathf.Clamp(height - (document.BottomPadding + document.BottomBorder), 0f, height);
-
-            DrawHorizontalWorldLine(canvas, canvasRect, 0f, width, topContentY, ContentColor);
-            DrawHorizontalWorldLine(canvas, canvasRect, 0f, width, topPaddingY, PaddingColor);
-            DrawHorizontalWorldLine(canvas, canvasRect, 0f, width, topBorderY, BorderColor);
-
-            DrawHorizontalWorldLine(canvas, canvasRect, 0f, width, bottomContentY, ContentColor);
-            DrawHorizontalWorldLine(canvas, canvasRect, 0f, width, bottomPaddingY, PaddingColor);
-            DrawHorizontalWorldLine(canvas, canvasRect, 0f, width, bottomBorderY, BorderColor);
-
-            DrawHorizontalWorldLineLabel(canvas, canvasRect, 0f, topContentY, "-Y Content", ContentColor, placeBelow: true);
-            DrawHorizontalWorldLineLabel(canvas, canvasRect, 0f, topPaddingY, "-Y Padding", PaddingColor, placeBelow: true);
-            DrawHorizontalWorldLineLabel(canvas, canvasRect, 0f, topBorderY, "-Y Border", BorderColor, placeBelow: false);
-
-            DrawHorizontalWorldLineLabel(canvas, canvasRect, 0f, bottomContentY, "+Y Content", ContentColor, placeBelow: false);
-            DrawHorizontalWorldLineLabel(canvas, canvasRect, 0f, bottomPaddingY, "+Y Padding", PaddingColor, placeBelow: false);
-            DrawHorizontalWorldLineLabel(canvas, canvasRect, 0f, bottomBorderY, "+Y Border", BorderColor, placeBelow: true);
-
-            float maxPaddingSpan = Mathf.Max(
-                document.LeftPadding,
-                document.RightPadding,
-                document.TopPadding,
-                document.BottomPadding,
-                document.FrontPaddingDepth);
-
-            float maxBorderOnly = Mathf.Max(
-                document.LeftBorder,
-                document.RightBorder,
-                document.TopBorder,
-                document.BottomBorder,
-                document.FrontBorderDepth);
-
-            float maxBorderSpan = maxPaddingSpan + maxBorderOnly;
-
-            maxPaddingSpan = Mathf.Clamp(maxPaddingSpan, 0f, width * 0.5f);
-            maxBorderSpan = Mathf.Clamp(maxBorderSpan, 0f, width * 0.5f);
-
-            float negZContentX = 0f;
-            float negZPaddingX = maxPaddingSpan;
-            float negZBorderX = maxBorderSpan;
-
-            float posZContentX = width;
-            float posZPaddingX = width - maxPaddingSpan;
-            float posZBorderX = width - maxBorderSpan;
-
-            DrawVerticalWorldLine(canvas, canvasRect, negZContentX, 0f, height, ContentColor);
-            DrawVerticalWorldLine(canvas, canvasRect, negZPaddingX, 0f, height, PaddingColor);
-            DrawVerticalWorldLine(canvas, canvasRect, negZBorderX, 0f, height, BorderColor);
-
-            DrawVerticalWorldLine(canvas, canvasRect, posZContentX, 0f, height, ContentColor);
-            DrawVerticalWorldLine(canvas, canvasRect, posZPaddingX, 0f, height, PaddingColor);
-            DrawVerticalWorldLine(canvas, canvasRect, posZBorderX, 0f, height, BorderColor);
-
-            DrawVerticalWorldLineLabel(canvas, canvasRect, negZContentX, 0f, "-Z Content", ContentColor, placeRight: true);
-            DrawVerticalWorldLineLabel(canvas, canvasRect, negZPaddingX, 0f, "-Z Padding", PaddingColor, placeRight: true);
-            DrawVerticalWorldLineLabel(canvas, canvasRect, negZBorderX, 0f, "-Z Border", BorderColor, placeRight: true);
-
-            DrawVerticalWorldLineLabel(canvas, canvasRect, posZContentX, 0f, "+Z Content", ContentColor, placeRight: false);
-            DrawVerticalWorldLineLabel(canvas, canvasRect, posZPaddingX, 0f, "+Z Padding", PaddingColor, placeRight: false);
-            DrawVerticalWorldLineLabel(canvas, canvasRect, posZBorderX, 0f, "+Z Border", BorderColor, placeRight: false);
-        }
-
-        private static void DrawHorizontalWorldLine(
-            EditorCanvas canvas,
-            Rect canvasRect,
-            float xMin,
-            float xMax,
-            float y,
-            Color color)
-        {
-            Vector2 a = CanvasMath.CanvasToScreen(new Vector2(xMin, y), canvasRect, canvas.View, canvas.Document);
-            Vector2 b = CanvasMath.CanvasToScreen(new Vector2(xMax, y), canvasRect, canvas.View, canvas.Document);
-            DrawLine(a, b, color);
-        }
-
-        private static void DrawVerticalWorldLine(
-            EditorCanvas canvas,
-            Rect canvasRect,
-            float x,
-            float yMin,
-            float yMax,
-            Color color)
-        {
-            Vector2 a = CanvasMath.CanvasToScreen(new Vector2(x, yMin), canvasRect, canvas.View, canvas.Document);
-            Vector2 b = CanvasMath.CanvasToScreen(new Vector2(x, yMax), canvasRect, canvas.View, canvas.Document);
-            DrawLine(a, b, color);
-        }
-
-        private static void DrawVerticalWorldLineLabel(
-            EditorCanvas canvas,
-            Rect canvasRect,
-            float x,
-            float y,
-            string text,
-            Color color,
-            bool placeRight)
-        {
-            Vector2 top = CanvasMath.CanvasToScreen(new Vector2(x, y), canvasRect, canvas.View, canvas.Document);
-            DrawVerticalLineLabel(top, text, color, placeRight);
-        }
-
-        private static void DrawHorizontalWorldLineLabel(
-            EditorCanvas canvas,
-            Rect canvasRect,
-            float x,
-            float y,
-            string text,
-            Color color,
-            bool placeBelow)
-        {
-            Vector2 start = CanvasMath.CanvasToScreen(new Vector2(x, y), canvasRect, canvas.View, canvas.Document);
-            DrawHorizontalLineLabel(start, text, color, placeBelow);
-        }
-
-        private static void DrawLine(Vector2 a, Vector2 b, Color color)
-        {
-            Handles.BeginGUI();
-            Color old = Handles.color;
-            Handles.color = color;
-            Handles.DrawAAPolyLine(1.5f, a, b);
-            Handles.color = old;
-            Handles.EndGUI();
-        }
-
-        private static void DrawVerticalLineLabel(Vector2 lineTop, string text, Color color, bool placeRight, float yOffset = 6f)
-        {
-            GUIStyle style = new GUIStyle(EditorStyles.miniBoldLabel);
-            style.normal.textColor = color;
-            style.alignment = placeRight ? TextAnchor.UpperLeft : TextAnchor.UpperRight;
-
-            Vector2 size = style.CalcSize(new GUIContent(text));
-            float x = placeRight ? lineTop.x + 4f : lineTop.x - 4f;
-            Rect rect = new Rect(x, lineTop.y + yOffset, size.x + 4f, size.y + 2f);
-
-            if (!placeRight)
-                rect.x -= rect.width;
-
-            GUI.Label(rect, text, style);
-        }
-
-        private static void DrawHorizontalLineLabel(Vector2 lineStart, string text, Color color, bool placeBelow, float xOffset = 6f)
-        {
-            GUIStyle style = new GUIStyle(EditorStyles.miniBoldLabel);
-            style.normal.textColor = color;
-            style.alignment = TextAnchor.MiddleLeft;
-
-            Vector2 size = style.CalcSize(new GUIContent(text));
-            float y = placeBelow ? lineStart.y + 2f : lineStart.y - size.y - 2f;
-            Rect rect = new Rect(lineStart.x + xOffset, y, size.x + 4f, size.y + 2f);
-            GUI.Label(rect, text, style);
-        }
-    }
-}
-#endif
-"""
-    write(GUIDES, new_text)
-    print("Rewrote CanvasGuideDrawing.cs")
-
-
 def main() -> int:
     try:
-        patch_shape_canvas_document()
-        patch_shape_stamper_window()
-        rewrite_canvas_guide_drawing()
+        write_adaptive_shape()
+        patch_window()
     except Exception as exc:
         print(f"Patch failed: {exc}", file=sys.stderr)
         return 1
@@ -602,11 +508,9 @@ def main() -> int:
     print("Next steps:")
     print("1. Let Unity recompile.")
     print("2. Open Shape Stamper.")
-    print("3. Assign a target GameObject.")
-    print("4. Verify SmartBounds gets auto-added.")
-    print("5. Change X/Y/Z borders/padding in the new Borders / Padding section and confirm both overlays move.")
+    print("3. Select an object with AdaptiveShape and press 'Use Selected', or press 'Create Adaptive Shape'.")
+    print("4. Edit SmartBounds borders/padding in the Inspector and confirm the window follows without fighting the Inspector.")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

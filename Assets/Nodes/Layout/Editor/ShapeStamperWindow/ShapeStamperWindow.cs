@@ -29,7 +29,7 @@ namespace DLN.EditorTools.ShapeStamper
 
         [SerializeField] private bool showMaterialSettings = true;
         [SerializeField] private bool autoRegeneratePreview = true;
-        [SerializeField] private GameObject targetObject;
+        [SerializeField] private AdaptiveShape adaptiveShape;
         [SerializeField] private List<Material> segmentMaterials = new();
         [SerializeField] private List<Color> segmentColors = new();
         [SerializeField] private Material startCapMaterial;
@@ -44,7 +44,7 @@ namespace DLN.EditorTools.ShapeStamper
         private ICanvasToolPolicy _profilePolicy;
 
         private bool _isDraggingDivider;
-        private DLN.SmartBounds _targetSmartBounds;
+        private SmartBounds _activeSmartBounds;
         private int _lastShapeRevision = -1;
         private int _lastProfileRevision = -1;
         private int _lastMaterialHash;
@@ -78,12 +78,15 @@ namespace DLN.EditorTools.ShapeStamper
             shapeDocument.EnsureValidShape();
             profileDocument.EnsureValidProfile();
 
-            DLN.SmartBounds smartBounds = EnsureTargetSmartBounds();
-            if (smartBounds != null)
-                SyncDocumentsFromSmartBounds(smartBounds);
+            BindToAdaptiveShape(adaptiveShape);
 
-            _shapePolicy ??= new ShapeCanvasPolicy(shapeDocument);
-            _profilePolicy ??= new ProfileCanvasPolicy(profileDocument);
+            _forcePreviewRefresh = true;
+        }
+
+        private void RecreateCanvasBindings()
+        {
+            _shapePolicy = new ShapeCanvasPolicy(shapeDocument);
+            _profilePolicy = new ProfileCanvasPolicy(profileDocument);
 
             _shapeCanvas = new EditorCanvas(shapeDocument, _shapePolicy, shapeSelection, shapeInteraction, shapeView);
             _profileCanvas = new EditorCanvas(profileDocument, _profilePolicy, profileSelection, profileInteraction, profileView);
@@ -101,9 +104,7 @@ namespace DLN.EditorTools.ShapeStamper
             shapeDocument.EnsureValidShape();
             profileDocument.EnsureValidProfile();
 
-            DLN.SmartBounds smartBounds = EnsureTargetSmartBounds();
-            if (smartBounds != null)
-                SyncDocumentsFromSmartBounds(smartBounds);
+            SyncDocumentsFromAdaptiveShape();
 
             DrawTopBar();
 
@@ -138,30 +139,7 @@ namespace DLN.EditorTools.ShapeStamper
             EditorGUILayout.BeginVertical(GUILayout.Height(TopBarHeight));
             EditorGUILayout.Space(6f);
 
-            EditorGUILayout.BeginHorizontal();
-            GameObject newTargetObject = (GameObject)EditorGUILayout.ObjectField(
-                "Target",
-                targetObject,
-                typeof(GameObject),
-                true,
-                GUILayout.Width(360f));
-
-            if (newTargetObject != targetObject)
-            {
-                targetObject = newTargetObject;
-                _targetSmartBounds = null;
-                _forcePreviewRefresh = true;
-            }
-
-            DLN.SmartBounds smartBounds = EnsureTargetSmartBounds();
-
-            if (smartBounds != null)
-                EditorGUILayout.LabelField($"SmartBounds: {smartBounds.name}", EditorStyles.miniLabel);
-            else
-                EditorGUILayout.LabelField("Assign a target to drive real borders/padding.", EditorStyles.miniLabel);
-
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
+            DrawAdaptiveShapeBindingRow();
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Shape World", GUILayout.Width(82f));
@@ -271,7 +249,7 @@ namespace DLN.EditorTools.ShapeStamper
                 _forcePreviewRefresh = true;
             }
 
-            DrawBordersPaddingInputs();
+            DrawAdaptiveShapeSummary();
             DrawSelectedShapeElementInspector();
             DrawSelectedProfilePointInspector();
 
@@ -320,126 +298,224 @@ namespace DLN.EditorTools.ShapeStamper
             EditorGUILayout.EndVertical();
         }
 
-        private void DrawBordersPaddingInputs()
+        private void DrawAdaptiveShapeBindingRow()
+        {
+            EditorGUILayout.BeginHorizontal();
+
+            AdaptiveShape selectedAdaptiveShape = TryGetSelectedAdaptiveShape();
+
+            EditorGUILayout.LabelField(
+                adaptiveShape != null
+                    ? $"Adaptive Shape: {adaptiveShape.name}"
+                    : "Adaptive Shape: none",
+                EditorStyles.miniBoldLabel);
+
+            if (GUILayout.Button("Use Selected", GUILayout.Width(100f)))
+            {
+                if (selectedAdaptiveShape != null)
+                    BindToAdaptiveShape(selectedAdaptiveShape);
+            }
+
+            if (GUILayout.Button("Create Adaptive Shape", GUILayout.Width(160f)))
+            {
+                CreateAdaptiveShapeGameObject();
+            }
+
+            EditorGUI.BeginDisabledGroup(adaptiveShape == null);
+            if (GUILayout.Button("Ping", GUILayout.Width(60f)))
+            {
+                EditorGUIUtility.PingObject(adaptiveShape);
+                Selection.activeObject = adaptiveShape != null ? adaptiveShape.gameObject : null;
+            }
+            EditorGUI.EndDisabledGroup();
+
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private void DrawAdaptiveShapeSummary()
         {
             EditorGUILayout.Space(6f);
             EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField("Borders / Padding", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Adaptive Shape", EditorStyles.boldLabel);
 
-            DLN.SmartBounds smartBounds = EnsureTargetSmartBounds();
-            if (smartBounds == null)
+            if (adaptiveShape == null)
             {
                 EditorGUILayout.HelpBox(
-                    "Assign a target GameObject. A SmartBounds component will be added automatically and used as the source of truth.",
+                    "Use Selected to bind the window to the currently selected AdaptiveShape, or Create Adaptive Shape to make a new one.",
                     MessageType.Info);
                 EditorGUILayout.EndVertical();
                 return;
             }
 
-            DLN.BordersPadding data = smartBounds.bordersPadding;
+            SmartBounds smartBounds = adaptiveShape.SmartBounds;
+            BordersPadding bp = adaptiveShape.GetEffectiveBordersPadding();
 
-            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.LabelField(
+                smartBounds != null
+                    ? $"SmartBounds Source: {smartBounds.name}"
+                    : "SmartBounds Source: none",
+                EditorStyles.miniLabel);
 
-            DrawAxisBordersPaddingRow("X", ref data.x);
-            DrawAxisBordersPaddingRow("Y", ref data.y);
-            DrawAxisBordersPaddingRow("Z", ref data.z);
+            EditorGUILayout.LabelField(
+                $"Using SmartBounds Borders/Padding: {adaptiveShape.PreferSmartBoundsBordersPadding}",
+                EditorStyles.miniLabel);
 
-            if (EditorGUI.EndChangeCheck())
-            {
-                Undo.RecordObject(smartBounds, "Edit SmartBounds Borders/Padding");
+            EditorGUILayout.LabelField(
+                $"X  -B {bp.x.negativeBorder:0.###}   -P {bp.x.negativePadding:0.###}   +P {bp.x.positivePadding:0.###}   +B {bp.x.positiveBorder:0.###}",
+                EditorStyles.miniLabel);
 
-                data.ClampToValid();
-                smartBounds.bordersPadding = data;
-                EditorUtility.SetDirty(smartBounds);
+            EditorGUILayout.LabelField(
+                $"Y  -B {bp.y.negativeBorder:0.###}   -P {bp.y.negativePadding:0.###}   +P {bp.y.positivePadding:0.###}   +B {bp.y.positiveBorder:0.###}",
+                EditorStyles.miniLabel);
 
-                SyncDocumentsFromSmartBounds(smartBounds);
+            EditorGUILayout.LabelField(
+                $"Z  -B {bp.z.negativeBorder:0.###}   -P {bp.z.negativePadding:0.###}   +P {bp.z.positivePadding:0.###}   +B {bp.z.positiveBorder:0.###}",
+                EditorStyles.miniLabel);
 
-                shapeDocument.MarkDirty();
-                profileDocument.MarkDirty();
-                _forcePreviewRefresh = true;
-                Repaint();
-            }
+            EditorGUILayout.HelpBox(
+                "Edit borders/padding on SmartBounds for now. The Shape Stamper window reads them and updates its guides/documents.",
+                MessageType.None);
 
             EditorGUILayout.EndVertical();
         }
 
-        private static void DrawAxisBordersPaddingRow(string axisLabel, ref DLN.AxisBordersPadding axis)
+        private AdaptiveShape TryGetSelectedAdaptiveShape()
         {
-            EditorGUILayout.LabelField(axisLabel, EditorStyles.miniBoldLabel);
-
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("-B", GUILayout.Width(22f));
-            axis.negativeBorder = EditorGUILayout.FloatField(axis.negativeBorder, GUILayout.Width(58f));
-
-            EditorGUILayout.LabelField("-P", GUILayout.Width(22f));
-            axis.negativePadding = EditorGUILayout.FloatField(axis.negativePadding, GUILayout.Width(58f));
-
-            EditorGUILayout.LabelField("MinC", GUILayout.Width(34f));
-            axis.minContentsSize = EditorGUILayout.FloatField(axis.minContentsSize, GUILayout.Width(58f));
-
-            EditorGUILayout.LabelField("+P", GUILayout.Width(22f));
-            axis.positivePadding = EditorGUILayout.FloatField(axis.positivePadding, GUILayout.Width(58f));
-
-            EditorGUILayout.LabelField("+B", GUILayout.Width(22f));
-            axis.positiveBorder = EditorGUILayout.FloatField(axis.positiveBorder, GUILayout.Width(58f));
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
-        }
-
-        private DLN.SmartBounds EnsureTargetSmartBounds()
-        {
-            if (targetObject == null)
-            {
-                _targetSmartBounds = null;
+            GameObject selectedGo = Selection.activeGameObject;
+            if (selectedGo == null)
                 return null;
-            }
 
-            if (_targetSmartBounds != null && _targetSmartBounds.gameObject == targetObject)
-                return _targetSmartBounds;
-
-            if (!targetObject.TryGetComponent(out DLN.SmartBounds smartBounds))
-            {
-                Undo.AddComponent<DLN.SmartBounds>(targetObject);
-                smartBounds = targetObject.GetComponent<DLN.SmartBounds>();
-            }
-
-            _targetSmartBounds = smartBounds;
-            return _targetSmartBounds;
+            selectedGo.TryGetComponent(out AdaptiveShape selectedAdaptiveShape);
+            return selectedAdaptiveShape;
         }
 
-        private void SyncDocumentsFromSmartBounds(DLN.SmartBounds smartBounds)
+        private void CreateAdaptiveShapeGameObject()
         {
-            if (smartBounds == null)
+            GameObject go = new GameObject("Adaptive Shape");
+            Undo.RegisterCreatedObjectUndo(go, "Create Adaptive Shape");
+
+            SmartBounds smartBounds = Undo.AddComponent<SmartBounds>(go);
+            AdaptiveShape newAdaptiveShape = Undo.AddComponent<AdaptiveShape>(go);
+
+            newAdaptiveShape.EnsureReferences();
+            newAdaptiveShape.PullFromSmartBounds();
+#if UNITY_EDITOR
+            newAdaptiveShape.EnsureEditorState();
+#endif
+
+            Selection.activeGameObject = go;
+            BindToAdaptiveShape(newAdaptiveShape);
+
+            EditorGUIUtility.PingObject(go);
+        }
+
+        private void BindToAdaptiveShape(AdaptiveShape newAdaptiveShape)
+        {
+            adaptiveShape = newAdaptiveShape;
+            _activeSmartBounds = null;
+
+            if (adaptiveShape == null)
+            {
+                shapeDocument ??= new ShapeCanvasDocument();
+                profileDocument ??= new ProfileCanvasDocument();
+
+                shapeDocument.EnsureValidShape();
+                profileDocument.EnsureValidProfile();
+
+                RecreateCanvasBindings();
+                return;
+            }
+
+            adaptiveShape.EnsureReferences();
+#if UNITY_EDITOR
+            adaptiveShape.EnsureEditorState();
+            shapeDocument = adaptiveShape.ShapeDocument;
+            profileDocument = adaptiveShape.ProfileDocument;
+#endif
+            _activeSmartBounds = adaptiveShape.SmartBounds;
+
+            SyncDocumentsFromAdaptiveShape();
+            RecreateCanvasBindings();
+
+            shapeSelection.Clear();
+            shapeInteraction.Clear();
+            profileSelection.Clear();
+            profileInteraction.Clear();
+
+            shapeView.ResetView();
+            profileView.ResetView();
+
+            _forcePreviewRefresh = true;
+        }
+
+        private void SyncDocumentsFromAdaptiveShape()
+        {
+            if (adaptiveShape == null)
                 return;
 
-            DLN.BordersPadding bp = smartBounds.bordersPadding;
+            BordersPadding bp = adaptiveShape.GetEffectiveBordersPadding();
             bp.ClampToValid();
 
-            shapeDocument.LeftBorder = bp.x.negativeBorder;
-            shapeDocument.LeftPadding = bp.x.negativePadding;
-            shapeDocument.RightPadding = bp.x.positivePadding;
-            shapeDocument.RightBorder = bp.x.positiveBorder;
+            bool shapeChanged =
+                !Mathf.Approximately(shapeDocument.LeftBorder, bp.x.negativeBorder) ||
+                !Mathf.Approximately(shapeDocument.LeftPadding, bp.x.negativePadding) ||
+                !Mathf.Approximately(shapeDocument.RightPadding, bp.x.positivePadding) ||
+                !Mathf.Approximately(shapeDocument.RightBorder, bp.x.positiveBorder) ||
+                !Mathf.Approximately(shapeDocument.TopBorder, bp.y.negativeBorder) ||
+                !Mathf.Approximately(shapeDocument.TopPadding, bp.y.negativePadding) ||
+                !Mathf.Approximately(shapeDocument.BottomPadding, bp.y.positivePadding) ||
+                !Mathf.Approximately(shapeDocument.BottomBorder, bp.y.positiveBorder);
 
-            shapeDocument.TopBorder = bp.y.negativeBorder;
-            shapeDocument.TopPadding = bp.y.negativePadding;
-            shapeDocument.BottomPadding = bp.y.positivePadding;
-            shapeDocument.BottomBorder = bp.y.positiveBorder;
+            if (shapeChanged)
+            {
+                shapeDocument.LeftBorder = bp.x.negativeBorder;
+                shapeDocument.LeftPadding = bp.x.negativePadding;
+                shapeDocument.RightPadding = bp.x.positivePadding;
+                shapeDocument.RightBorder = bp.x.positiveBorder;
 
-            profileDocument.SetGuideValues(
-                bp.x.negativePadding,
-                bp.x.positivePadding,
-                bp.y.negativePadding,
-                bp.y.positivePadding,
-                bp.x.negativeBorder,
-                bp.x.positiveBorder,
-                bp.y.negativeBorder,
-                bp.y.positiveBorder);
+                shapeDocument.TopBorder = bp.y.negativeBorder;
+                shapeDocument.TopPadding = bp.y.negativePadding;
+                shapeDocument.BottomPadding = bp.y.positivePadding;
+                shapeDocument.BottomBorder = bp.y.positiveBorder;
 
-            profileDocument.FrontPaddingDepth = Mathf.Max(bp.z.negativePadding, bp.z.positivePadding);
-            profileDocument.FrontBorderDepth = Mathf.Max(bp.z.negativeBorder, bp.z.positiveBorder);
+                shapeDocument.MarkDirty();
+                _forcePreviewRefresh = true;
+            }
+
+            bool profileChanged =
+                !Mathf.Approximately(profileDocument.LeftPadding, bp.x.negativePadding) ||
+                !Mathf.Approximately(profileDocument.RightPadding, bp.x.positivePadding) ||
+                !Mathf.Approximately(profileDocument.TopPadding, bp.y.negativePadding) ||
+                !Mathf.Approximately(profileDocument.BottomPadding, bp.y.positivePadding) ||
+                !Mathf.Approximately(profileDocument.LeftBorder, bp.x.negativeBorder) ||
+                !Mathf.Approximately(profileDocument.RightBorder, bp.x.positiveBorder) ||
+                !Mathf.Approximately(profileDocument.TopBorder, bp.y.negativeBorder) ||
+                !Mathf.Approximately(profileDocument.BottomBorder, bp.y.positiveBorder) ||
+                !Mathf.Approximately(profileDocument.FrontPaddingDepth, Mathf.Max(bp.z.negativePadding, bp.z.positivePadding)) ||
+                !Mathf.Approximately(profileDocument.FrontBorderDepth, Mathf.Max(bp.z.negativeBorder, bp.z.positiveBorder));
+
+            if (profileChanged)
+            {
+                profileDocument.SetGuideValues(
+                    bp.x.negativePadding,
+                    bp.x.positivePadding,
+                    bp.y.negativePadding,
+                    bp.y.positivePadding,
+                    bp.x.negativeBorder,
+                    bp.x.positiveBorder,
+                    bp.y.negativeBorder,
+                    bp.y.positiveBorder);
+
+                profileDocument.FrontPaddingDepth = Mathf.Max(bp.z.negativePadding, bp.z.positivePadding);
+                profileDocument.FrontBorderDepth = Mathf.Max(bp.z.negativeBorder, bp.z.positiveBorder);
+                profileDocument.MarkDirty();
+                _forcePreviewRefresh = true;
+            }
         }
 
         private void DrawSelectedShapeElementInspector()
+
 
         {
             if (shapeSelection == null || shapeSelection.Count != 1)
