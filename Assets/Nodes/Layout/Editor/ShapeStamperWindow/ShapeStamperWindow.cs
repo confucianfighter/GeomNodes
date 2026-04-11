@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using DLN;
 
 namespace DLN.EditorTools.ShapeStamper
 {
@@ -28,6 +29,7 @@ namespace DLN.EditorTools.ShapeStamper
 
         [SerializeField] private bool showMaterialSettings = true;
         [SerializeField] private bool autoRegeneratePreview = true;
+        [SerializeField] private GameObject targetObject;
         [SerializeField] private List<Material> segmentMaterials = new();
         [SerializeField] private List<Color> segmentColors = new();
         [SerializeField] private Material startCapMaterial;
@@ -42,6 +44,7 @@ namespace DLN.EditorTools.ShapeStamper
         private ICanvasToolPolicy _profilePolicy;
 
         private bool _isDraggingDivider;
+        private DLN.SmartBounds _targetSmartBounds;
         private int _lastShapeRevision = -1;
         private int _lastProfileRevision = -1;
         private int _lastMaterialHash;
@@ -75,6 +78,10 @@ namespace DLN.EditorTools.ShapeStamper
             shapeDocument.EnsureValidShape();
             profileDocument.EnsureValidProfile();
 
+            DLN.SmartBounds smartBounds = EnsureTargetSmartBounds();
+            if (smartBounds != null)
+                SyncDocumentsFromSmartBounds(smartBounds);
+
             _shapePolicy ??= new ShapeCanvasPolicy(shapeDocument);
             _profilePolicy ??= new ProfileCanvasPolicy(profileDocument);
 
@@ -93,6 +100,10 @@ namespace DLN.EditorTools.ShapeStamper
 
             shapeDocument.EnsureValidShape();
             profileDocument.EnsureValidProfile();
+
+            DLN.SmartBounds smartBounds = EnsureTargetSmartBounds();
+            if (smartBounds != null)
+                SyncDocumentsFromSmartBounds(smartBounds);
 
             DrawTopBar();
 
@@ -126,6 +137,31 @@ namespace DLN.EditorTools.ShapeStamper
         {
             EditorGUILayout.BeginVertical(GUILayout.Height(TopBarHeight));
             EditorGUILayout.Space(6f);
+
+            EditorGUILayout.BeginHorizontal();
+            GameObject newTargetObject = (GameObject)EditorGUILayout.ObjectField(
+                "Target",
+                targetObject,
+                typeof(GameObject),
+                true,
+                GUILayout.Width(360f));
+
+            if (newTargetObject != targetObject)
+            {
+                targetObject = newTargetObject;
+                _targetSmartBounds = null;
+                _forcePreviewRefresh = true;
+            }
+
+            DLN.SmartBounds smartBounds = EnsureTargetSmartBounds();
+
+            if (smartBounds != null)
+                EditorGUILayout.LabelField($"SmartBounds: {smartBounds.name}", EditorStyles.miniLabel);
+            else
+                EditorGUILayout.LabelField("Assign a target to drive real borders/padding.", EditorStyles.miniLabel);
+
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Shape World", GUILayout.Width(82f));
@@ -235,7 +271,7 @@ namespace DLN.EditorTools.ShapeStamper
                 _forcePreviewRefresh = true;
             }
 
-            DrawProfileGuideInputs();
+            DrawBordersPaddingInputs();
             DrawSelectedShapeElementInspector();
             DrawSelectedProfilePointInspector();
 
@@ -284,89 +320,127 @@ namespace DLN.EditorTools.ShapeStamper
             EditorGUILayout.EndVertical();
         }
 
-        private void DrawProfileGuideInputs()
+        private void DrawBordersPaddingInputs()
         {
             EditorGUILayout.Space(6f);
             EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField("Profile Guides", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Borders / Padding", EditorStyles.boldLabel);
 
-            float newLeftPadding = profileDocument.LeftPadding;
-            float newRightPadding = profileDocument.RightPadding;
-            float newTopPadding = profileDocument.TopPadding;
-            float newBottomPadding = profileDocument.BottomPadding;
-
-            float newLeftBorder = profileDocument.LeftBorder;
-            float newRightBorder = profileDocument.RightBorder;
-            float newTopBorder = profileDocument.TopBorder;
-            float newBottomBorder = profileDocument.BottomBorder;
-
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Padding", GUILayout.Width(60f));
-            EditorGUILayout.LabelField("L", GUILayout.Width(12f));
-            newLeftPadding = EditorGUILayout.FloatField(newLeftPadding, GUILayout.Width(60f));
-            EditorGUILayout.LabelField("R", GUILayout.Width(12f));
-            newRightPadding = EditorGUILayout.FloatField(newRightPadding, GUILayout.Width(60f));
-            EditorGUILayout.LabelField("T", GUILayout.Width(12f));
-            newTopPadding = EditorGUILayout.FloatField(newTopPadding, GUILayout.Width(60f));
-            EditorGUILayout.LabelField("B", GUILayout.Width(12f));
-            newBottomPadding = EditorGUILayout.FloatField(newBottomPadding, GUILayout.Width(60f));
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Border", GUILayout.Width(60f));
-            EditorGUILayout.LabelField("L", GUILayout.Width(12f));
-            newLeftBorder = EditorGUILayout.FloatField(newLeftBorder, GUILayout.Width(60f));
-            EditorGUILayout.LabelField("R", GUILayout.Width(12f));
-            newRightBorder = EditorGUILayout.FloatField(newRightBorder, GUILayout.Width(60f));
-            EditorGUILayout.LabelField("T", GUILayout.Width(12f));
-            newTopBorder = EditorGUILayout.FloatField(newTopBorder, GUILayout.Width(60f));
-            EditorGUILayout.LabelField("B", GUILayout.Width(12f));
-            newBottomBorder = EditorGUILayout.FloatField(newBottomBorder, GUILayout.Width(60f));
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.LabelField(
-                $"Padding Guide X: {profileDocument.PaddingGuideX:0.###}   Border Guide X: {profileDocument.BorderGuideX:0.###}",
-                EditorStyles.miniLabel);
-
-            float newFrontPaddingDepth = EditorGUILayout.FloatField("Front Padding Depth", profileDocument.FrontPaddingDepth);
-            float newFrontBorderDepth = EditorGUILayout.FloatField("Front Border Depth", profileDocument.FrontBorderDepth);
-
-            bool changed =
-                !Mathf.Approximately(newLeftPadding, profileDocument.LeftPadding) ||
-                !Mathf.Approximately(newRightPadding, profileDocument.RightPadding) ||
-                !Mathf.Approximately(newTopPadding, profileDocument.TopPadding) ||
-                !Mathf.Approximately(newBottomPadding, profileDocument.BottomPadding) ||
-                !Mathf.Approximately(newLeftBorder, profileDocument.LeftBorder) ||
-                !Mathf.Approximately(newRightBorder, profileDocument.RightBorder) ||
-                !Mathf.Approximately(newTopBorder, profileDocument.TopBorder) ||
-                !Mathf.Approximately(newBottomBorder, profileDocument.BottomBorder) ||
-                !Mathf.Approximately(newFrontPaddingDepth, profileDocument.FrontPaddingDepth) ||
-                !Mathf.Approximately(newFrontBorderDepth, profileDocument.FrontBorderDepth);
-
-            if (changed)
+            DLN.SmartBounds smartBounds = EnsureTargetSmartBounds();
+            if (smartBounds == null)
             {
-                profileDocument.SetGuideValues(
-                    newLeftPadding,
-                    newRightPadding,
-                    newTopPadding,
-                    newBottomPadding,
-                    newLeftBorder,
-                    newRightBorder,
-                    newTopBorder,
-                    newBottomBorder);
+                EditorGUILayout.HelpBox(
+                    "Assign a target GameObject. A SmartBounds component will be added automatically and used as the source of truth.",
+                    MessageType.Info);
+                EditorGUILayout.EndVertical();
+                return;
+            }
 
-                profileDocument.FrontPaddingDepth = newFrontPaddingDepth;
-                profileDocument.FrontBorderDepth = newFrontBorderDepth;
+            DLN.BordersPadding data = smartBounds.bordersPadding;
+
+            EditorGUI.BeginChangeCheck();
+
+            DrawAxisBordersPaddingRow("X", ref data.x);
+            DrawAxisBordersPaddingRow("Y", ref data.y);
+            DrawAxisBordersPaddingRow("Z", ref data.z);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(smartBounds, "Edit SmartBounds Borders/Padding");
+
+                data.ClampToValid();
+                smartBounds.bordersPadding = data;
+                EditorUtility.SetDirty(smartBounds);
+
+                SyncDocumentsFromSmartBounds(smartBounds);
+
+                shapeDocument.MarkDirty();
                 profileDocument.MarkDirty();
                 _forcePreviewRefresh = true;
+                Repaint();
             }
 
             EditorGUILayout.EndVertical();
         }
 
+        private static void DrawAxisBordersPaddingRow(string axisLabel, ref DLN.AxisBordersPadding axis)
+        {
+            EditorGUILayout.LabelField(axisLabel, EditorStyles.miniBoldLabel);
+
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("-B", GUILayout.Width(22f));
+            axis.negativeBorder = EditorGUILayout.FloatField(axis.negativeBorder, GUILayout.Width(58f));
+
+            EditorGUILayout.LabelField("-P", GUILayout.Width(22f));
+            axis.negativePadding = EditorGUILayout.FloatField(axis.negativePadding, GUILayout.Width(58f));
+
+            EditorGUILayout.LabelField("MinC", GUILayout.Width(34f));
+            axis.minContentsSize = EditorGUILayout.FloatField(axis.minContentsSize, GUILayout.Width(58f));
+
+            EditorGUILayout.LabelField("+P", GUILayout.Width(22f));
+            axis.positivePadding = EditorGUILayout.FloatField(axis.positivePadding, GUILayout.Width(58f));
+
+            EditorGUILayout.LabelField("+B", GUILayout.Width(22f));
+            axis.positiveBorder = EditorGUILayout.FloatField(axis.positiveBorder, GUILayout.Width(58f));
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private DLN.SmartBounds EnsureTargetSmartBounds()
+        {
+            if (targetObject == null)
+            {
+                _targetSmartBounds = null;
+                return null;
+            }
+
+            if (_targetSmartBounds != null && _targetSmartBounds.gameObject == targetObject)
+                return _targetSmartBounds;
+
+            if (!targetObject.TryGetComponent(out DLN.SmartBounds smartBounds))
+            {
+                Undo.AddComponent<DLN.SmartBounds>(targetObject);
+                smartBounds = targetObject.GetComponent<DLN.SmartBounds>();
+            }
+
+            _targetSmartBounds = smartBounds;
+            return _targetSmartBounds;
+        }
+
+        private void SyncDocumentsFromSmartBounds(DLN.SmartBounds smartBounds)
+        {
+            if (smartBounds == null)
+                return;
+
+            DLN.BordersPadding bp = smartBounds.bordersPadding;
+            bp.ClampToValid();
+
+            shapeDocument.LeftBorder = bp.x.negativeBorder;
+            shapeDocument.LeftPadding = bp.x.negativePadding;
+            shapeDocument.RightPadding = bp.x.positivePadding;
+            shapeDocument.RightBorder = bp.x.positiveBorder;
+
+            shapeDocument.TopBorder = bp.y.negativeBorder;
+            shapeDocument.TopPadding = bp.y.negativePadding;
+            shapeDocument.BottomPadding = bp.y.positivePadding;
+            shapeDocument.BottomBorder = bp.y.positiveBorder;
+
+            profileDocument.SetGuideValues(
+                bp.x.negativePadding,
+                bp.x.positivePadding,
+                bp.y.negativePadding,
+                bp.y.positivePadding,
+                bp.x.negativeBorder,
+                bp.x.positiveBorder,
+                bp.y.negativeBorder,
+                bp.y.positiveBorder);
+
+            profileDocument.FrontPaddingDepth = Mathf.Max(bp.z.negativePadding, bp.z.positivePadding);
+            profileDocument.FrontBorderDepth = Mathf.Max(bp.z.negativeBorder, bp.z.positiveBorder);
+        }
+
         private void DrawSelectedShapeElementInspector()
+
         {
             if (shapeSelection == null || shapeSelection.Count != 1)
                 return;

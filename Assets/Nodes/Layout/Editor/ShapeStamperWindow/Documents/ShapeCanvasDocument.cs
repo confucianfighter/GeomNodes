@@ -16,6 +16,16 @@ namespace DLN.EditorTools.ShapeStamper
         [SerializeField] private List<CanvasPoint> innerPoints = new();
         [SerializeField] private List<CanvasEdge> innerEdges = new();
 
+        [SerializeField] private float leftPadding;
+        [SerializeField] private float rightPadding;
+        [SerializeField] private float topPadding;
+        [SerializeField] private float bottomPadding;
+
+        [SerializeField] private float leftBorder;
+        [SerializeField] private float rightBorder;
+        [SerializeField] private float topBorder;
+        [SerializeField] private float bottomBorder;
+
         [SerializeField, HideInInspector] private int revision;
 
         public enum ShapeLoopEditMode
@@ -42,6 +52,16 @@ namespace DLN.EditorTools.ShapeStamper
                     editMode = ShapeLoopEditMode.Outer;
             }
         }
+
+        public float LeftPadding { get => leftPadding; set => leftPadding = Mathf.Max(0f, value); }
+        public float RightPadding { get => rightPadding; set => rightPadding = Mathf.Max(0f, value); }
+        public float TopPadding { get => topPadding; set => topPadding = Mathf.Max(0f, value); }
+        public float BottomPadding { get => bottomPadding; set => bottomPadding = Mathf.Max(0f, value); }
+
+        public float LeftBorder { get => leftBorder; set => leftBorder = Mathf.Max(0f, value); }
+        public float RightBorder { get => rightBorder; set => rightBorder = Mathf.Max(0f, value); }
+        public float TopBorder { get => topBorder; set => topBorder = Mathf.Max(0f, value); }
+        public float BottomBorder { get => bottomBorder; set => bottomBorder = Mathf.Max(0f, value); }
 
         public Vector2 WorldSizeMeters
         {
