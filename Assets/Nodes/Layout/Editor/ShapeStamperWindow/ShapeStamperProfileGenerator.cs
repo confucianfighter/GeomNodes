@@ -49,6 +49,48 @@ namespace DLN.EditorTools.ShapeStamper
                 $"{result.ProfileSamples.Count} profile sample(s).");
         }
 
+        public static AdaptiveShapeBuildResult BuildAdaptiveShape(
+            ShapeCanvasDocument shapeDocument,
+            ProfileCanvasDocument profileDocument)
+        {
+            ShapeStampRingBuildResult ringResult = BuildRings(shapeDocument, profileDocument);
+            if (ringResult == null)
+            {
+                Debug.LogWarning("ShapeStamperProfileGenerator: Failed to build adaptive shape result.");
+                return null;
+            }
+
+            AdaptiveShapeBuildResult buildResult = new AdaptiveShapeBuildResult
+            {
+                RingBuildResult = ringResult
+            };
+
+            buildResult.SegmentMeshes = BuildSegmentMeshes(ringResult);
+
+            if (ringResult.OuterLoops2D != null &&
+                ringResult.OuterLoops2D.Count > 0 &&
+                ringResult.ProfileSamples != null &&
+                ringResult.ProfileSamples.Count > 0)
+            {
+                buildResult.StartCapMesh = BuildCapMesh(
+                    ringResult.OuterLoops2D[0],
+                    ringResult.InnerLoops2D.Count > 0 ? ringResult.InnerLoops2D[0] : null,
+                    ringResult.ProfileSamples[0].Z,
+                    reverseWinding: true,
+                    meshName: "AdaptiveShape_StartCap");
+
+                int last = ringResult.ProfileSamples.Count - 1;
+                buildResult.EndCapMesh = BuildCapMesh(
+                    ringResult.OuterLoops2D[last],
+                    ringResult.InnerLoops2D.Count > 0 ? ringResult.InnerLoops2D[last] : null,
+                    ringResult.ProfileSamples[last].Z,
+                    reverseWinding: false,
+                    meshName: "AdaptiveShape_EndCap");
+            }
+
+            return buildResult;
+        }
+
         public static ShapeStampRingBuildResult BuildRings(
             ShapeCanvasDocument shapeDocument,
             ProfileCanvasDocument profileDocument)
@@ -517,6 +559,91 @@ namespace DLN.EditorTools.ShapeStamper
                 return Mathf.Max(0f, max);
 
             return Mathf.Max(0f, SafeFinite(GetAuthoredMaxX(profilePoints) * drive.Scale, 0f));
+        }
+
+        private static List<Mesh> BuildSegmentMeshes(ShapeStampRingBuildResult result)
+        {
+            List<Mesh> segmentMeshes = new List<Mesh>();
+
+            if (result == null || result.OuterRings == null || result.OuterRings.Count < 2)
+                return segmentMeshes;
+
+            int segmentCount = result.OuterRings.Count - 1;
+            bool hasInnerRings =
+                result.InnerRings != null &&
+                result.InnerRings.Count == result.OuterRings.Count;
+
+            for (int i = 0; i < segmentCount; i++)
+            {
+                List<Vector3> outerA = result.OuterRings[i];
+                List<Vector3> outerB = result.OuterRings[i + 1];
+
+                List<Vector3> innerA = hasInnerRings ? result.InnerRings[i] : null;
+                List<Vector3> innerB = hasInnerRings ? result.InnerRings[i + 1] : null;
+
+                Mesh segmentMesh = BuildSingleBridgeMesh(
+                    outerA,
+                    outerB,
+                    innerA,
+                    innerB,
+                    i);
+
+                if (segmentMesh != null)
+                    segmentMeshes.Add(segmentMesh);
+            }
+
+            return segmentMeshes;
+        }
+
+        private static Mesh BuildSingleBridgeMesh(
+            List<Vector3> outerA,
+            List<Vector3> outerB,
+            List<Vector3> innerA,
+            List<Vector3> innerB,
+            int segmentIndex)
+        {
+            if (outerA == null || outerB == null)
+                return null;
+
+            if (outerA.Count < 3 || outerB.Count < 3)
+                return null;
+
+            SegmentedMeshBuilder builder = new SegmentedMeshBuilder();
+            int submeshIndex = builder.AddSubmesh();
+
+            AddRingBridge(builder, outerA, outerB, submeshIndex);
+
+            if (innerA != null && innerB != null &&
+                innerA.Count >= 3 && innerB.Count >= 3)
+            {
+                AddRingBridge(builder, innerB, innerA, submeshIndex);
+            }
+
+            return builder.ToMesh($"AdaptiveShape_Segment_{segmentIndex:000}");
+        }
+
+        private static Mesh BuildCapMesh(
+            List<Vector2> outerLoop,
+            List<Vector2> innerLoop,
+            float z,
+            bool reverseWinding,
+            string meshName)
+        {
+            if (outerLoop == null || outerLoop.Count < 3)
+                return null;
+
+            SegmentedMeshBuilder builder = new SegmentedMeshBuilder();
+            int submeshIndex = builder.AddSubmesh();
+
+            AddCap(
+                builder,
+                outerLoop,
+                innerLoop,
+                z,
+                submeshIndex,
+                reverseWinding);
+
+            return builder.ToMesh(meshName);
         }
 
         private static void CreateOrUpdateRingPreview(ShapeStampRingBuildResult result)
