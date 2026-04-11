@@ -19,27 +19,14 @@ namespace DLN.EditorTools.ShapeStamper
             if (_document == null)
                 return;
 
-            Rect labelRect = new Rect(canvasRect.x + 8f, canvasRect.y + 8f, 220f, 20f);
+            CanvasGuideDrawing.DrawProfileGuides(canvas, canvasRect, _document);
+
+            Rect labelRect = new Rect(canvasRect.x + 8f, canvasRect.y + 8f, 260f, 20f);
             GUI.Label(
                 labelRect,
                 $"Profile  {_document.WorldSizeMeters.x:0.###}m x {_document.WorldSizeMeters.y:0.###}m",
                 EditorStyles.miniLabel
             );
-
-            Handles.BeginGUI();
-
-            Color old = Handles.color;
-            Handles.color = new Color(1f, 1f, 1f, 0.12f);
-
-            Vector2 origin = CanvasMath.CanvasToScreen(Vector2.zero, canvasRect, canvas.View, _document);
-            Vector2 xAxis = CanvasMath.CanvasToScreen(new Vector2(_document.WorldSizeMeters.x, 0f), canvasRect, canvas.View, _document);
-            Vector2 yAxis = CanvasMath.CanvasToScreen(new Vector2(0f, _document.WorldSizeMeters.y), canvasRect, canvas.View, _document);
-
-            Handles.DrawLine(origin, xAxis);
-            Handles.DrawLine(origin, yAxis);
-
-            Handles.color = old;
-            Handles.EndGUI();
         }
 
         public void OnMouseDown(EditorCanvas canvas, Event evt) { }
