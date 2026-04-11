@@ -22,6 +22,9 @@ namespace DLN.EditorTools.ShapeStamper
         [SerializeField] private float topBorder;
         [SerializeField] private float bottomBorder;
 
+        [SerializeField] private float frontPaddingDepth;
+        [SerializeField] private float frontBorderDepth;
+
         [SerializeField, HideInInspector] private int revision;
 
         public Vector2 WorldSizeMeters
@@ -42,6 +45,9 @@ namespace DLN.EditorTools.ShapeStamper
         public float RightBorder { get => rightBorder; set => rightBorder = Mathf.Max(0f, value); }
         public float TopBorder { get => topBorder; set => topBorder = Mathf.Max(0f, value); }
         public float BottomBorder { get => bottomBorder; set => bottomBorder = Mathf.Max(0f, value); }
+
+        public float FrontPaddingDepth { get => frontPaddingDepth; set => frontPaddingDepth = Mathf.Max(0f, value); }
+        public float FrontBorderDepth { get => frontBorderDepth; set => frontBorderDepth = Mathf.Max(0f, value); }
 
         public float AveragePadding => (leftPadding + rightPadding + topPadding + bottomPadding) * 0.25f;
         public float AverageBorder => (leftBorder + rightBorder + topBorder + bottomBorder) * 0.25f;

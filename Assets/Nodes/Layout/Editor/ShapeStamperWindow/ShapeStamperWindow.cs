@@ -330,6 +330,9 @@ namespace DLN.EditorTools.ShapeStamper
                 $"Padding Guide X: {profileDocument.PaddingGuideX:0.###}   Border Guide X: {profileDocument.BorderGuideX:0.###}",
                 EditorStyles.miniLabel);
 
+            float newFrontPaddingDepth = EditorGUILayout.FloatField("Front Padding Depth", profileDocument.FrontPaddingDepth);
+            float newFrontBorderDepth = EditorGUILayout.FloatField("Front Border Depth", profileDocument.FrontBorderDepth);
+
             bool changed =
                 !Mathf.Approximately(newLeftPadding, profileDocument.LeftPadding) ||
                 !Mathf.Approximately(newRightPadding, profileDocument.RightPadding) ||
@@ -338,7 +341,9 @@ namespace DLN.EditorTools.ShapeStamper
                 !Mathf.Approximately(newLeftBorder, profileDocument.LeftBorder) ||
                 !Mathf.Approximately(newRightBorder, profileDocument.RightBorder) ||
                 !Mathf.Approximately(newTopBorder, profileDocument.TopBorder) ||
-                !Mathf.Approximately(newBottomBorder, profileDocument.BottomBorder);
+                !Mathf.Approximately(newBottomBorder, profileDocument.BottomBorder) ||
+                !Mathf.Approximately(newFrontPaddingDepth, profileDocument.FrontPaddingDepth) ||
+                !Mathf.Approximately(newFrontBorderDepth, profileDocument.FrontBorderDepth);
 
             if (changed)
             {
@@ -351,6 +356,10 @@ namespace DLN.EditorTools.ShapeStamper
                     newRightBorder,
                     newTopBorder,
                     newBottomBorder);
+
+                profileDocument.FrontPaddingDepth = newFrontPaddingDepth;
+                profileDocument.FrontBorderDepth = newFrontBorderDepth;
+                profileDocument.MarkDirty();
                 _forcePreviewRefresh = true;
             }
 
@@ -482,11 +491,12 @@ namespace DLN.EditorTools.ShapeStamper
             EditorGUI.BeginChangeCheck();
 
             ProfileAnchorX newXAnchor = (ProfileAnchorX)EditorGUILayout.EnumPopup("Profile X Anchor", point.ProfileXAnchor);
+            ProfileDepthAnchor newZAnchor = (ProfileDepthAnchor)EditorGUILayout.EnumPopup("Profile Z Anchor", point.ProfileZAnchor);
             CanvasAnchorY newYAnchor = (CanvasAnchorY)EditorGUILayout.EnumPopup("Profile Y Anchor", point.YAnchor);
             Vector2 newPosition = EditorGUILayout.Vector2Field("Position", point.Position);
 
             bool canEditOffsetX = point.ProfileXAnchor != ProfileAnchorX.Floating;
-            bool canEditOffsetY = point.YAnchor != CanvasAnchorY.Floating;
+            bool canEditOffsetY = point.YAnchor != CanvasAnchorY.Floating || point.ProfileZAnchor != ProfileDepthAnchor.Floating;
 
             EditorGUI.BeginDisabledGroup(!canEditOffsetX);
             float newOffsetX = EditorGUILayout.FloatField("Offset X", point.OffsetX);
@@ -508,6 +518,8 @@ namespace DLN.EditorTools.ShapeStamper
                         paddingGuideX,
                         borderGuideX);
                 }
+
+                point.ProfileZAnchor = newZAnchor;
 
                 point.Position = new Vector2(
                     Mathf.Clamp(newPosition.x, 0f, profileDocument.WorldSizeMeters.x),

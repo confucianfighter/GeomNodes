@@ -120,7 +120,7 @@ namespace DLN.EditorTools.ShapeStamper
                 {
                     Index = i,
                     Offset = p.Position.x,
-                    Z = p.Position.y,
+                    Z = ResolveProfilePointZ(i, profileDocument.Points, profileDocument),
                     Point = p
                 };
                 result.ProfileSamples.Add(sample);
@@ -270,6 +270,84 @@ namespace DLN.EditorTools.ShapeStamper
                 BlendedBorder = SafeFinite(blendedBorder, 0f),
                 Scale = SafeFinite(scale, 1f)
             };
+        }
+
+        private static float ResolveProfilePointZ(int pointIndex, IList<CanvasPoint> profilePoints, ProfileCanvasDocument profileDocument)
+        {
+            if (profilePoints == null || pointIndex < 0 || pointIndex >= profilePoints.Count)
+                return 0f;
+
+            CanvasPoint point = profilePoints[pointIndex];
+            if (point.ProfileZAnchor != ProfileDepthAnchor.Floating)
+                return Mathf.Max(0f, ResolveDirectAnchorZ(point, profileDocument));
+
+            int previousAnchorIndex = FindPreviousDepthAnchorIndex(profilePoints, pointIndex);
+            int nextAnchorIndex = FindNextDepthAnchorIndex(profilePoints, pointIndex);
+
+            if (previousAnchorIndex >= 0 && nextAnchorIndex >= 0)
+            {
+                float authoredA = profilePoints[previousAnchorIndex].Position.y;
+                float authoredB = profilePoints[nextAnchorIndex].Position.y;
+                float resolvedA = ResolveDirectAnchorZ(profilePoints[previousAnchorIndex], profileDocument);
+                float resolvedB = ResolveDirectAnchorZ(profilePoints[nextAnchorIndex], profileDocument);
+
+                float span = authoredB - authoredA;
+                if (Mathf.Abs(span) <= SafeEpsilon)
+                    return Mathf.Max(0f, resolvedA);
+
+                float t = Mathf.Clamp01((point.Position.y - authoredA) / span);
+                return Mathf.Max(0f, Mathf.Lerp(resolvedA, resolvedB, t));
+            }
+
+            return Mathf.Max(0f, SafeFinite(point.Position.y, 0f));
+        }
+
+        private static float ResolveDirectAnchorZ(CanvasPoint point, ProfileCanvasDocument profileDocument)
+        {
+            float raw;
+            switch (point.ProfileZAnchor)
+            {
+                case ProfileDepthAnchor.Content:
+                    raw = point.OffsetY;
+                    break;
+
+                case ProfileDepthAnchor.Padding:
+                    raw = profileDocument.FrontPaddingDepth + point.OffsetY;
+                    break;
+
+                case ProfileDepthAnchor.Border:
+                    raw = profileDocument.FrontPaddingDepth + profileDocument.FrontBorderDepth + point.OffsetY;
+                    break;
+
+                case ProfileDepthAnchor.Floating:
+                default:
+                    raw = point.Position.y;
+                    break;
+            }
+
+            return Mathf.Max(0f, SafeFinite(raw, 0f));
+        }
+
+        private static int FindPreviousDepthAnchorIndex(IList<CanvasPoint> profilePoints, int fromIndex)
+        {
+            for (int i = fromIndex - 1; i >= 0; i--)
+            {
+                if (profilePoints[i].ProfileZAnchor != ProfileDepthAnchor.Floating)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private static int FindNextDepthAnchorIndex(IList<CanvasPoint> profilePoints, int fromIndex)
+        {
+            for (int i = fromIndex + 1; i < profilePoints.Count; i++)
+            {
+                if (profilePoints[i].ProfileZAnchor != ProfileDepthAnchor.Floating)
+                    return i;
+            }
+
+            return -1;
         }
 
         private static float ResolveProfilePointX(int pointIndex, IList<CanvasPoint> profilePoints, EdgeProfileDrive drive)

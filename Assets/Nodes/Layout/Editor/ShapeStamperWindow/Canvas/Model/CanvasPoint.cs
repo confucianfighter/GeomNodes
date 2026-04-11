@@ -12,6 +12,7 @@ namespace DLN
         public CanvasAnchorX XAnchor;
         public CanvasAnchorY YAnchor;
         public ProfileAnchorX ProfileXAnchor;
+        public ProfileDepthAnchor ProfileZAnchor;
 
         public float OffsetX;
         public float OffsetY;
@@ -24,6 +25,7 @@ namespace DLN
             XAnchor = CanvasAnchorX.Floating;
             YAnchor = CanvasAnchorY.Floating;
             ProfileXAnchor = ProfileAnchorX.Floating;
+            ProfileZAnchor = ProfileDepthAnchor.Floating;
 
             OffsetX = 0f;
             OffsetY = 0f;
