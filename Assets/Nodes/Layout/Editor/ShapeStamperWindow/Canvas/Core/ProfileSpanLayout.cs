@@ -108,7 +108,6 @@ namespace DLN
             return new ProfileSpanLayoutData(
                 xPaddingToContent: new ProfileSpan(xPadding, xContent),
                 xContentToBorder: new ProfileSpan(xContent, xBorder),
-
                 zPositiveBorderToContent: new ProfileSpan(zTop, zPosBorderToContentEnd),
                 zPositiveContentToPadding: new ProfileSpan(zPosBorderToContentEnd, zPosContentToPaddingEnd),
                 zMainDepth: new ProfileSpan(zMainStart, zMainEnd),
