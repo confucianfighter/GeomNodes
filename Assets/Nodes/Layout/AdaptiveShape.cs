@@ -1,172 +1,143 @@
-// using UnityEngine;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
 
-// #if UNITY_EDITOR
-// using DLN.EditorTools.ShapeStamper;
-// #endif
+namespace DLN
+{
+    public enum AdaptiveShapeSlotKind
+    {
+        Material = 0,
+        Effects = 1,
+        Semantic = 2
+    }
 
-// namespace DLN
-// {
-//     [DisallowMultipleComponent]
-//     public class AdaptiveShape : MonoBehaviour
-//     {
-//         [SerializeField] private SmartBounds smartBounds;
-//         [SerializeField] private bool preferSmartBoundsBordersPadding = true;
-//         [SerializeField] private BordersPadding fallbackBordersPadding = BordersPadding.Default;
+    [Serializable]
+    public struct AdaptiveShapeMaterialSlot
+    {
+        public string name;
+        public AdaptiveShapeSlotKind kind;
+        public Material material;
+    }
 
-//         [SerializeField] private Transform mainShapeRoot;
-//         [SerializeField] private Transform ringSegmentsRoot;
-//         [SerializeField] private Transform startCapRoot;
-//         [SerializeField] private Transform endCapRoot;
-//         [SerializeField] private Transform debugRoot;
+    [Serializable]
+    public struct AdaptiveShapeProfileEdge
+    {
+        public string name;
+        [Min(0)] public int materialSlotIndex;
+    }
 
-// #if UNITY_EDITOR
-//         [SerializeField] private ShapeCanvasDocument shapeDocument = new();
-//         [SerializeField] private ProfileCanvasDocument profileDocument = new();
-// #endif
+    [Serializable]
+    public struct AdaptiveShapeProfile
+    {
+        public List<AdaptiveShapeProfileEdge> edges;
+    }
 
-//         public SmartBounds SmartBounds => smartBounds;
-//         public Transform MainShapeRoot => mainShapeRoot;
-//         public Transform RingSegmentsRoot => ringSegmentsRoot;
-//         public Transform StartCapRoot => startCapRoot;
-//         public Transform EndCapRoot => endCapRoot;
-//         public Transform DebugRoot => debugRoot;
+    [Serializable]
+    public struct AdaptiveShapeSizeSettings
+    {
+        [Tooltip("Temporary bridge mode: treat BordersPadding minContentsSize as the adaptive shape inner size.")]
+        public bool useBordersPaddingMinAsInnerSize;
 
-//         public bool PreferSmartBoundsBordersPadding
-//         {
-//             get => preferSmartBoundsBordersPadding;
-//             set => preferSmartBoundsBordersPadding = value;
-//         }
+        [Tooltip("Fallback inner size used when not reading from BordersPadding min values.")]
+        public Vector2 explicitInnerSize;
+    }
 
-//         public BordersPadding FallbackBordersPadding
-//         {
-//             get => fallbackBordersPadding;
-//             set
-//             {
-//                 fallbackBordersPadding = value;
-//                 fallbackBordersPadding.ClampToValid();
-//             }
-//         }
+    [DisallowMultipleComponent]
+    public sealed class AdaptiveShape : MonoBehaviour
+    {
+        [SerializeField] private SmartBounds smartBounds;
+        [SerializeField] private bool preferSmartBoundsBordersPadding = true;
+        [SerializeField] private BordersPadding fallbackBordersPadding = BordersPadding.Default;
 
-// #if UNITY_EDITOR
-//         public ShapeCanvasDocument ShapeDocument
-//         {
-//             get
-//             {
-//                 EnsureEditorState();
-//                 return shapeDocument;
-//             }
-//         }
+        [SerializeField] private AdaptiveShapeSizeSettings sizeSettings;
 
-//         public ProfileCanvasDocument ProfileDocument
-//         {
-//             get
-//             {
-//                 EnsureEditorState();
-//                 return profileDocument;
-//             }
-//         }
-// #endif
+        [SerializeField] private List<AdaptiveShapeMaterialSlot> materialSlots = new();
+        [SerializeField] private AdaptiveShapeProfile profile = new AdaptiveShapeProfile
+        {
+            edges = new List<AdaptiveShapeProfileEdge>()
+        };
 
-//         private void Reset()
-//         {
-//             EnsureReferences();
-//             fallbackBordersPadding.ClampToValid();
-// #if UNITY_EDITOR
-//             EnsureEditorState();
-// #endif
-//         }
+        public SmartBounds SmartBounds => smartBounds;
+        public IReadOnlyList<AdaptiveShapeMaterialSlot> MaterialSlots => materialSlots;
+        public AdaptiveShapeProfile Profile => profile;
 
-//         private void OnValidate()
-//         {
-//             EnsureReferences();
-//             fallbackBordersPadding.ClampToValid();
-// #if UNITY_EDITOR
-//             EnsureEditorState();
-// #endif
-//         }
+        public BordersPadding GetEffectiveBordersPadding()
+        {
+            EnsureReferences();
 
-//         public void EnsureReferences()
-//         {
-//             if (smartBounds == null)
-//                 TryGetComponent(out smartBounds);
-//         }
+            BordersPadding result = preferSmartBoundsBordersPadding && smartBounds != null
+                ? smartBounds.bordersPadding
+                : fallbackBordersPadding;
 
-//         public void EnsureGeneratedHierarchy()
-//         {
-//             mainShapeRoot = EnsureChild(transform, mainShapeRoot, "MainShape");
-//             ringSegmentsRoot = EnsureChild(mainShapeRoot, ringSegmentsRoot, "RingSegments");
-//             startCapRoot = EnsureChild(mainShapeRoot, startCapRoot, "StartCap");
-//             endCapRoot = EnsureChild(mainShapeRoot, endCapRoot, "EndCap");
-//             debugRoot = EnsureChild(transform, debugRoot, "Debug");
-//         }
+            result.ClampToValid();
+            return result;
+        }
 
-//         private static Transform EnsureChild(Transform parent, Transform current, string childName)
-//         {
-//             if (parent == null)
-//                 return current;
+        public Vector2 GetCurrentInnerSize()
+        {
+            if (sizeSettings.useBordersPaddingMinAsInnerSize)
+            {
+                BordersPadding bp = GetEffectiveBordersPadding();
+                return new Vector2(bp.x.minContentsSize, bp.y.minContentsSize);
+            }
 
-//             if (current != null && current.parent == parent)
-//             {
-//                 current.name = childName;
-//                 return current;
-//             }
+            return new Vector2(
+                Mathf.Max(0f, sizeSettings.explicitInnerSize.x),
+                Mathf.Max(0f, sizeSettings.explicitInnerSize.y));
+        }
 
-//             Transform existing = parent.Find(childName);
-//             if (existing != null)
-//                 return existing;
+        public bool TryGetSlot(int index, out AdaptiveShapeMaterialSlot slot)
+        {
+            if (index >= 0 && index < materialSlots.Count)
+            {
+                slot = materialSlots[index];
+                return true;
+            }
 
-//             GameObject go = new GameObject(childName);
-//             go.transform.SetParent(parent, false);
-//             return go.transform;
-//         }
+            slot = default;
+            return false;
+        }
 
-//         public BordersPadding GetEffectiveBordersPadding()
-//         {
-//             EnsureReferences();
+        public void EnsureReferences()
+        {
+            if (smartBounds == null)
+                TryGetComponent(out smartBounds);
+        }
 
-//             BordersPadding result;
-//             if (preferSmartBoundsBordersPadding && smartBounds != null)
-//                 result = smartBounds.bordersPadding;
-//             else
-//                 result = fallbackBordersPadding;
+        private void Reset()
+        {
+            EnsureReferences();
+            ValidateData();
+        }
 
-//             result.ClampToValid();
-//             return result;
-//         }
+        private void OnValidate()
+        {
+            EnsureReferences();
+            ValidateData();
+        }
 
-//         public void PullFromSmartBounds()
-//         {
-//             EnsureReferences();
-//             if (smartBounds == null)
-//                 return;
+        private void ValidateData()
+        {
+            fallbackBordersPadding.ClampToValid();
+            sizeSettings.explicitInnerSize.x = Mathf.Max(0f, sizeSettings.explicitInnerSize.x);
+            sizeSettings.explicitInnerSize.y = Mathf.Max(0f, sizeSettings.explicitInnerSize.y);
 
-//             fallbackBordersPadding = smartBounds.bordersPadding;
-//             fallbackBordersPadding.ClampToValid();
-//         }
+            if (materialSlots == null)
+                materialSlots = new List<AdaptiveShapeMaterialSlot>();
 
-//         public void PushFallbackToSmartBounds()
-//         {
-//             EnsureReferences();
-//             if (smartBounds == null)
-//                 return;
+            if (profile.edges == null)
+                profile.edges = new List<AdaptiveShapeProfileEdge>();
 
-//             BordersPadding value = fallbackBordersPadding;
-//             value.ClampToValid();
-//             smartBounds.bordersPadding = value;
-//         }
+            for (int i = 0; i < profile.edges.Count; i++)
+            {
+                AdaptiveShapeProfileEdge edge = profile.edges[i];
+                edge.materialSlotIndex = Mathf.Max(0, edge.materialSlotIndex);
 
-// #if UNITY_EDITOR
-//         public void EnsureEditorState()
-//         {
-//             if (shapeDocument == null)
-//                 shapeDocument = new ShapeCanvasDocument();
+                if (materialSlots.Count > 0)
+                    edge.materialSlotIndex = Mathf.Clamp(edge.materialSlotIndex, 0, materialSlots.Count - 1);
 
-//             if (profileDocument == null)
-//                 profileDocument = new ProfileCanvasDocument();
-
-//             shapeDocument.EnsureValidShape();
-//             profileDocument.EnsureValidProfile();
-//         }
-// #endif
-//     }
-// }
+                profile.edges[i] = edge;
+            }
+        }
+    }
+}
