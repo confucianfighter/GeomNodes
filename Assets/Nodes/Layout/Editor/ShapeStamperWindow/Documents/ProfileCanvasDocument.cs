@@ -8,7 +8,13 @@ namespace DLN.EditorTools.ShapeStamper
     public class ProfileCanvasDocument : ICanvasDocument, ICanvasBoundsProvider
     {
         [SerializeField] private Vector2 worldSizeMeters = new Vector2(1f, 1f);
-        [SerializeField] private List<ProfilePoint> points = new();
+
+        // Display proxy points for the shared canvas/editor stack.
+        [SerializeField] private List<CanvasPoint> points = new();
+
+        // Real authored profile model.
+        [SerializeField] private List<ProfilePoint> profilePoints = new();
+
         [SerializeField] private List<CanvasEdge> edges = new();
         [SerializeField] private List<CanvasOffsetConstraint> offsets = new();
 
@@ -54,7 +60,8 @@ namespace DLN.EditorTools.ShapeStamper
         public float PaddingGuideX => Mathf.Clamp(AveragePadding, 0f, WorldSizeMeters.x);
         public float BorderGuideX => Mathf.Clamp(AveragePadding + AverageBorder, 0f, WorldSizeMeters.x);
 
-        public IList<ProfilePoint> Points => points;
+        public IList<CanvasPoint> Points => points;
+        public IList<ProfilePoint> ProfilePoints => profilePoints;
         public IList<CanvasEdge> Edges => edges;
         public IList<CanvasOffsetConstraint> Offsets => offsets;
 
@@ -70,22 +77,25 @@ namespace DLN.EditorTools.ShapeStamper
         {
             WorldSizeMeters = worldSizeMeters;
 
-            if (points.Count == 0)
+            if (profilePoints.Count == 0)
                 ResetDefaultProfile();
 
-            ClampAllPointsToWorld();
+            ClampAllProfilePointsToWorld();
 
-            if (edges.Count == 0 && points.Count >= 2)
+            if (edges.Count == 0 && profilePoints.Count >= 2)
                 RebuildOpenEdges();
+
+            SyncDisplayPointsFromProfilePoints();
         }
 
         public void ResetDefaultProfile()
         {
             points.Clear();
+            profilePoints.Clear();
             edges.Clear();
             offsets.Clear();
 
-            points.Add(new ProfilePoint
+            profilePoints.Add(new ProfilePoint
             {
                 Id = 0,
                 Position = new Vector2(0.00f, 0.10f),
@@ -95,7 +105,8 @@ namespace DLN.EditorTools.ShapeStamper
                 XT = 0f,
                 ZT = 1f
             });
-            points.Add(new ProfilePoint
+
+            profilePoints.Add(new ProfilePoint
             {
                 Id = 1,
                 Position = new Vector2(0.08f, 0.25f),
@@ -105,7 +116,8 @@ namespace DLN.EditorTools.ShapeStamper
                 XT = 1f,
                 ZT = 1f
             });
-            points.Add(new ProfilePoint
+
+            profilePoints.Add(new ProfilePoint
             {
                 Id = 2,
                 Position = new Vector2(0.16f, 0.55f),
@@ -117,7 +129,7 @@ namespace DLN.EditorTools.ShapeStamper
             });
 
             RebuildOpenEdges();
-            RefreshAnchoredPointsForGuideChange(0f, 0f);
+            SyncDisplayPointsFromProfilePoints();
             MarkDirty();
         }
 
@@ -128,20 +140,13 @@ namespace DLN.EditorTools.ShapeStamper
 
         public void ResizeWorld(Vector2 newSize)
         {
-            Rect oldBounds = GetCanvasFrameRect();
-            float oldPaddingGuideX = PaddingGuideX;
-            float oldBorderGuideX = BorderGuideX;
-
             WorldSizeMeters = new Vector2(
                 Mathf.Max(0.0001f, newSize.x),
                 Mathf.Max(0.0001f, newSize.y)
             );
 
-            Rect newBounds = GetCanvasFrameRect();
-            float newPaddingGuideX = PaddingGuideX;
-            float newBorderGuideX = BorderGuideX;
-
-            ResizePointList(points, oldBounds, newBounds, oldPaddingGuideX, oldBorderGuideX, newPaddingGuideX, newBorderGuideX);
+            ClampAllProfilePointsToWorld();
+            SyncDisplayPointsFromProfilePoints();
             MarkDirty();
         }
 
@@ -155,9 +160,6 @@ namespace DLN.EditorTools.ShapeStamper
             float newTopBorder,
             float newBottomBorder)
         {
-            float oldPaddingGuideX = PaddingGuideX;
-            float oldBorderGuideX = BorderGuideX;
-
             LeftPadding = newLeftPadding;
             RightPadding = newRightPadding;
             TopPadding = newTopPadding;
@@ -168,84 +170,112 @@ namespace DLN.EditorTools.ShapeStamper
             TopBorder = newTopBorder;
             BottomBorder = newBottomBorder;
 
-            RefreshAnchoredPointsForGuideChange(oldPaddingGuideX, oldBorderGuideX);
+            SyncDisplayPointsFromProfilePoints();
             MarkDirty();
         }
 
-        public void RefreshAnchoredPointsForGuideChange(float oldPaddingGuideX, float oldBorderGuideX)
+        public void SyncDisplayPointsFromProfilePoints()
+        {
+            points.Clear();
+
+            Rect bounds = GetCanvasFrameRect();
+            float paddingGuideX = PaddingGuideX;
+            float borderGuideX = BorderGuideX;
+
+            for (int i = 0; i < profilePoints.Count; i++)
+            {
+                ProfilePoint pp = profilePoints[i];
+                Vector2 resolved = ProfileCanvasPointResolver.ResolvePoint(
+                    pp,
+                    bounds,
+                    bounds,
+                    paddingGuideX,
+                    borderGuideX,
+                    paddingGuideX,
+                    borderGuideX);
+
+                CanvasPoint display = new CanvasPoint
+                {
+                    Id = pp.Id,
+                    Position = resolved,
+                    XAnchor = CanvasAnchorX.Floating,
+                    YAnchor = pp.YAnchor,
+                    OffsetX = 0f,
+                    OffsetY = pp.OffsetY
+                };
+
+                points.Add(display);
+            }
+        }
+
+        public void SetProfilePointDisplayPosition(int pointId, Vector2 displayPosition)
         {
             Rect bounds = GetCanvasFrameRect();
-            float newPaddingGuideX = PaddingGuideX;
-            float newBorderGuideX = BorderGuideX;
 
-            for (int i = 0; i < points.Count; i++)
+            for (int i = 0; i < profilePoints.Count; i++)
             {
-                ProfilePoint p = points[i];
-                ProfileCanvasPointResolver.ResizePointPreservingBehavior(
-                    ref p,
-                    bounds,
-                    bounds,
-                    oldPaddingGuideX,
-                    oldBorderGuideX,
-                    newPaddingGuideX,
-                    newBorderGuideX);
-                points[i] = p;
-            }
-        }
+                if (profilePoints[i].Id != pointId)
+                    continue;
 
-        private static void ResizePointList(
-            List<ProfilePoint> list,
-            Rect oldBounds,
-            Rect newBounds,
-            float oldPaddingGuideX,
-            float oldBorderGuideX,
-            float newPaddingGuideX,
-            float newBorderGuideX)
-        {
-            if (list == null)
+                ProfilePoint pp = profilePoints[i];
+                pp.Position = new Vector2(
+                    Mathf.Clamp(displayPosition.x, 0f, WorldSizeMeters.x),
+                    Mathf.Clamp(displayPosition.y, 0f, WorldSizeMeters.y));
+
+                ProfileCanvasPointResolver.SetSpansFromPosition(
+                    ref pp,
+                    bounds,
+                    PaddingGuideX,
+                    BorderGuideX);
+
+                profilePoints[i] = pp;
+                SyncDisplayPointsFromProfilePoints();
                 return;
-
-            for (int i = 0; i < list.Count; i++)
-            {
-                CanvasPoint p = list[i];
-                ProfileCanvasPointResolver.ResizePointPreservingBehavior(
-                    ref p,
-                    oldBounds,
-                    newBounds,
-                    oldPaddingGuideX,
-                    oldBorderGuideX,
-                    newPaddingGuideX,
-                    newBorderGuideX);
-                list[i] = p;
             }
         }
 
-        private void ClampAllPointsToWorld()
+        public int GetNextPointId()
         {
-            for (int i = 0; i < points.Count; i++)
-            {
-                ProfilePoint p = points[i];
-                p.Position = new Vector2(
-                    Mathf.Clamp(p.Position.x, 0f, WorldSizeMeters.x),
-                    Mathf.Clamp(p.Position.y, 0f, WorldSizeMeters.y)
-                );
-                points[i] = p;
-            }
+            int maxId = -1;
+            for (int i = 0; i < profilePoints.Count; i++)
+                maxId = Mathf.Max(maxId, profilePoints[i].Id);
+            return maxId + 1;
         }
 
-        private void RebuildOpenEdges()
+        public int GetNextEdgeId()
+        {
+            int maxId = -1;
+            for (int i = 0; i < edges.Count; i++)
+                maxId = Mathf.Max(maxId, edges[i].Id);
+            return maxId + 1;
+        }
+
+        public void RebuildOpenEdges()
         {
             edges.Clear();
 
-            for (int i = 0; i < points.Count - 1; i++)
+            for (int i = 0; i < profilePoints.Count - 1; i++)
             {
                 edges.Add(new CanvasEdge
                 {
                     Id = i,
-                    A = points[i].Id,
-                    B = points[i + 1].Id,
+                    A = profilePoints[i].Id,
+                    B = profilePoints[i + 1].Id,
                     ProfileXScale = 1f
                 });
+            }
+        }
+
+        private void ClampAllProfilePointsToWorld()
+        {
+            for (int i = 0; i < profilePoints.Count; i++)
+            {
+                ProfilePoint p = profilePoints[i];
+                p.Position = new Vector2(
+                    Mathf.Clamp(p.Position.x, 0f, WorldSizeMeters.x),
+                    Mathf.Clamp(p.Position.y, 0f, WorldSizeMeters.y)
+                );
+                profilePoints[i] = p;
             }
         }
     }

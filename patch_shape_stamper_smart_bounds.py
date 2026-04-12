@@ -1,17 +1,23 @@
 from pathlib import Path
+import re
 import sys
 
 ROOT = Path.cwd()
 
 CANVAS_POINT = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Model/CanvasPoint.cs"
-PROFILE_DOC = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Documents/ProfileCanvasDocument.cs"
-PROFILE_RESOLVER = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Core/ProfileCanvasPointResolver.cs"
-WINDOW = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/ShapeStamperWindow.cs"
-
 PROFILE_POINT = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Model/ProfilePoint.cs"
 PROFILE_X_SPAN = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Model/ProfileXSpan.cs"
 PROFILE_Z_SPAN = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Model/ProfileZSpan.cs"
 PROFILE_SPAN_LAYOUT = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Core/ProfileSpanLayout.cs"
+
+PROFILE_DOC = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Documents/ProfileCanvasDocument.cs"
+PROFILE_RESOLVER = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Core/ProfileCanvasPointResolver.cs"
+PROFILE_POLICY = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Policy/ProfileCanvasPolicy.cs"
+GENERATOR = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/ShapeStamperProfileGenerator.cs"
+WINDOW = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/ShapeStamperWindow.cs"
+
+OLD_PROFILE_ANCHOR_X = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Model/ProfileAnchorX.cs"
+OLD_PROFILE_DEPTH_ANCHOR = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Model/ProfileDepthAnchor.cs"
 
 
 def read(path: Path) -> str:
@@ -30,9 +36,40 @@ def replace_or_fail(text: str, old: str, new: str, where: str) -> str:
     return text.replace(old, new, 1)
 
 
-def ensure_support_files():
-    if not PROFILE_X_SPAN.exists():
-        write(PROFILE_X_SPAN, """namespace DLN
+def ensure_model_files():
+    write(CANVAS_POINT, """using System;
+using UnityEngine;
+
+namespace DLN.EditorTools.ShapeStamper
+{
+    [Serializable]
+    public struct CanvasPoint
+    {
+        public int Id;
+        public Vector2 Position;
+
+        public CanvasAnchorX XAnchor;
+        public CanvasAnchorY YAnchor;
+
+        public float OffsetX;
+        public float OffsetY;
+
+        public CanvasPoint(int id, Vector2 position)
+        {
+            Id = id;
+            Position = position;
+
+            XAnchor = CanvasAnchorX.Floating;
+            YAnchor = CanvasAnchorY.Floating;
+
+            OffsetX = 0f;
+            OffsetY = 0f;
+        }
+    }
+}
+""")
+
+    write(PROFILE_X_SPAN, """namespace DLN.EditorTools.ShapeStamper
 {
     public enum ProfileXSpan
     {
@@ -42,8 +79,7 @@ def ensure_support_files():
 }
 """)
 
-    if not PROFILE_Z_SPAN.exists():
-        write(PROFILE_Z_SPAN, """namespace DLN
+    write(PROFILE_Z_SPAN, """namespace DLN.EditorTools.ShapeStamper
 {
     public enum ProfileZSpan
     {
@@ -56,11 +92,10 @@ def ensure_support_files():
 }
 """)
 
-    if not PROFILE_POINT.exists():
-        write(PROFILE_POINT, """using System;
+    write(PROFILE_POINT, """using System;
 using UnityEngine;
 
-namespace DLN
+namespace DLN.EditorTools.ShapeStamper
 {
     [Serializable]
     public struct ProfilePoint
@@ -93,10 +128,9 @@ namespace DLN
 }
 """)
 
-    if not PROFILE_SPAN_LAYOUT.exists():
-        write(PROFILE_SPAN_LAYOUT, """using UnityEngine;
+    write(PROFILE_SPAN_LAYOUT, """using UnityEngine;
 
-namespace DLN
+namespace DLN.EditorTools.ShapeStamper
 {
     public readonly struct ProfileSpan
     {
@@ -213,82 +247,108 @@ namespace DLN
     }
 }
 """)
+    print("Wrote/normalized CanvasPoint and profile span model files")
 
 
-def rewrite_canvas_point():
-    write(CANVAS_POINT, """using System;
+def rewrite_profile_document():
+    write(PROFILE_DOC, """using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-namespace DLN
+namespace DLN.EditorTools.ShapeStamper
 {
     [Serializable]
-    public struct CanvasPoint
+    public class ProfileCanvasDocument : ICanvasDocument, ICanvasBoundsProvider
     {
-        public int Id;
-        public Vector2 Position;
+        [SerializeField] private Vector2 worldSizeMeters = new Vector2(1f, 1f);
 
-        public CanvasAnchorX XAnchor;
-        public CanvasAnchorY YAnchor;
+        // Display proxy points for the shared canvas/editor stack.
+        [SerializeField] private List<CanvasPoint> points = new();
 
-        public float OffsetX;
-        public float OffsetY;
+        // Real authored profile model.
+        [SerializeField] private List<ProfilePoint> profilePoints = new();
 
-        public CanvasPoint(int id, Vector2 position)
+        [SerializeField] private List<CanvasEdge> edges = new();
+        [SerializeField] private List<CanvasOffsetConstraint> offsets = new();
+
+        [SerializeField] private float leftPadding;
+        [SerializeField] private float rightPadding;
+        [SerializeField] private float topPadding;
+        [SerializeField] private float bottomPadding;
+
+        [SerializeField] private float leftBorder;
+        [SerializeField] private float rightBorder;
+        [SerializeField] private float topBorder;
+        [SerializeField] private float bottomBorder;
+
+        [SerializeField] private float frontPaddingDepth;
+        [SerializeField] private float frontBorderDepth;
+
+        [SerializeField, HideInInspector] private int revision;
+
+        public Vector2 WorldSizeMeters
         {
-            Id = id;
-            Position = position;
-
-            XAnchor = CanvasAnchorX.Floating;
-            YAnchor = CanvasAnchorY.Floating;
-
-            OffsetX = 0f;
-            OffsetY = 0f;
+            get => worldSizeMeters;
+            set => worldSizeMeters = new Vector2(
+                Mathf.Max(0.0001f, value.x),
+                Mathf.Max(0.0001f, value.y)
+            );
         }
-    }
-}
-""")
-    print("Rewrote CanvasPoint.cs")
 
+        public float LeftPadding { get => leftPadding; set => leftPadding = Mathf.Max(0f, value); }
+        public float RightPadding { get => rightPadding; set => rightPadding = Mathf.Max(0f, value); }
+        public float TopPadding { get => topPadding; set => topPadding = Mathf.Max(0f, value); }
+        public float BottomPadding { get => bottomPadding; set => bottomPadding = Mathf.Max(0f, value); }
 
-def patch_profile_document():
-    text = read(PROFILE_DOC)
+        public float LeftBorder { get => leftBorder; set => leftBorder = Mathf.Max(0f, value); }
+        public float RightBorder { get => rightBorder; set => rightBorder = Mathf.Max(0f, value); }
+        public float TopBorder { get => topBorder; set => topBorder = Mathf.Max(0f, value); }
+        public float BottomBorder { get => bottomBorder; set => bottomBorder = Mathf.Max(0f, value); }
 
-    text = text.replace(
-        "[SerializeField] private List<CanvasPoint> points = new();",
-        "[SerializeField] private List<ProfilePoint> points = new();"
-    )
+        public float FrontPaddingDepth { get => frontPaddingDepth; set => frontPaddingDepth = Mathf.Max(0f, value); }
+        public float FrontBorderDepth { get => frontBorderDepth; set => frontBorderDepth = Mathf.Max(0f, value); }
 
-    text = text.replace(
-        "public IList<CanvasPoint> Points => points;",
-        "public IReadOnlyList<ProfilePoint> Points => points;\\n        public IList<ProfilePoint> MutablePoints => points;"
-    )
+        public float AveragePadding => (leftPadding + rightPadding + topPadding + bottomPadding) * 0.25f;
+        public float AverageBorder => (leftBorder + rightBorder + topBorder + bottomBorder) * 0.25f;
+        public float PaddingGuideX => Mathf.Clamp(AveragePadding, 0f, WorldSizeMeters.x);
+        public float BorderGuideX => Mathf.Clamp(AveragePadding + AverageBorder, 0f, WorldSizeMeters.x);
 
-    old_default = """            points.Add(new CanvasPoint
-            {
-                Id = 0,
-                Position = new Vector2(0.00f, 0.10f),
-                ProfileXAnchor = ProfileAnchorX.Padding,
-                ProfileZAnchor = ProfileDepthAnchor.Padding,
-                YAnchor = CanvasAnchorY.Top
-            });
-            points.Add(new CanvasPoint
-            {
-                Id = 1,
-                Position = new Vector2(0.08f, 0.25f),
-                ProfileXAnchor = ProfileAnchorX.Content,
-                ProfileZAnchor = ProfileDepthAnchor.Content,
-                YAnchor = CanvasAnchorY.Floating
-            });
-            points.Add(new CanvasPoint
-            {
-                Id = 2,
-                Position = new Vector2(0.16f, 0.55f),
-                ProfileXAnchor = ProfileAnchorX.Border,
-                ProfileZAnchor = ProfileDepthAnchor.Border,
-                YAnchor = CanvasAnchorY.Bottom
-            });
-"""
-    new_default = """            points.Add(new ProfilePoint
+        public IList<CanvasPoint> Points => points;
+        public IList<ProfilePoint> ProfilePoints => profilePoints;
+        public IList<CanvasEdge> Edges => edges;
+        public IList<CanvasOffsetConstraint> Offsets => offsets;
+
+        public bool IsClosed => false;
+        public int Revision => revision;
+
+        public void MarkDirty()
+        {
+            revision++;
+        }
+
+        public void EnsureValidProfile()
+        {
+            WorldSizeMeters = worldSizeMeters;
+
+            if (profilePoints.Count == 0)
+                ResetDefaultProfile();
+
+            ClampAllProfilePointsToWorld();
+
+            if (edges.Count == 0 && profilePoints.Count >= 2)
+                RebuildOpenEdges();
+
+            SyncDisplayPointsFromProfilePoints();
+        }
+
+        public void ResetDefaultProfile()
+        {
+            points.Clear();
+            profilePoints.Clear();
+            edges.Clear();
+            offsets.Clear();
+
+            profilePoints.Add(new ProfilePoint
             {
                 Id = 0,
                 Position = new Vector2(0.00f, 0.10f),
@@ -298,7 +358,8 @@ def patch_profile_document():
                 XT = 0f,
                 ZT = 1f
             });
-            points.Add(new ProfilePoint
+
+            profilePoints.Add(new ProfilePoint
             {
                 Id = 1,
                 Position = new Vector2(0.08f, 0.25f),
@@ -308,7 +369,8 @@ def patch_profile_document():
                 XT = 1f,
                 ZT = 1f
             });
-            points.Add(new ProfilePoint
+
+            profilePoints.Add(new ProfilePoint
             {
                 Id = 2,
                 Position = new Vector2(0.16f, 0.55f),
@@ -318,20 +380,167 @@ def patch_profile_document():
                 XT = 1f,
                 ZT = 0f
             });
-"""
-    text = replace_or_fail(text, old_default, new_default, PROFILE_DOC.name)
 
-    text = text.replace("CanvasPoint p = points[i];", "ProfilePoint p = points[i];")
-    text = text.replace("List<CanvasPoint> list,", "List<ProfilePoint> list,")
+            RebuildOpenEdges();
+            SyncDisplayPointsFromProfilePoints();
+            MarkDirty();
+        }
 
-    write(PROFILE_DOC, text)
-    print("Patched ProfileCanvasDocument.cs")
+        public Rect GetCanvasFrameRect()
+        {
+            return new Rect(0f, 0f, WorldSizeMeters.x, WorldSizeMeters.y);
+        }
+
+        public void ResizeWorld(Vector2 newSize)
+        {
+            WorldSizeMeters = new Vector2(
+                Mathf.Max(0.0001f, newSize.x),
+                Mathf.Max(0.0001f, newSize.y)
+            );
+
+            ClampAllProfilePointsToWorld();
+            SyncDisplayPointsFromProfilePoints();
+            MarkDirty();
+        }
+
+        public void SetGuideValues(
+            float newLeftPadding,
+            float newRightPadding,
+            float newTopPadding,
+            float newBottomPadding,
+            float newLeftBorder,
+            float newRightBorder,
+            float newTopBorder,
+            float newBottomBorder)
+        {
+            LeftPadding = newLeftPadding;
+            RightPadding = newRightPadding;
+            TopPadding = newTopPadding;
+            BottomPadding = newBottomPadding;
+
+            LeftBorder = newLeftBorder;
+            RightBorder = newRightBorder;
+            TopBorder = newTopBorder;
+            BottomBorder = newBottomBorder;
+
+            SyncDisplayPointsFromProfilePoints();
+            MarkDirty();
+        }
+
+        public void SyncDisplayPointsFromProfilePoints()
+        {
+            points.Clear();
+
+            Rect bounds = GetCanvasFrameRect();
+            float paddingGuideX = PaddingGuideX;
+            float borderGuideX = BorderGuideX;
+
+            for (int i = 0; i < profilePoints.Count; i++)
+            {
+                ProfilePoint pp = profilePoints[i];
+                Vector2 resolved = ProfileCanvasPointResolver.ResolvePoint(
+                    pp,
+                    bounds,
+                    bounds,
+                    paddingGuideX,
+                    borderGuideX,
+                    paddingGuideX,
+                    borderGuideX);
+
+                CanvasPoint display = new CanvasPoint
+                {
+                    Id = pp.Id,
+                    Position = resolved,
+                    XAnchor = CanvasAnchorX.Floating,
+                    YAnchor = pp.YAnchor,
+                    OffsetX = 0f,
+                    OffsetY = pp.OffsetY
+                };
+
+                points.Add(display);
+            }
+        }
+
+        public void SetProfilePointDisplayPosition(int pointId, Vector2 displayPosition)
+        {
+            Rect bounds = GetCanvasFrameRect();
+
+            for (int i = 0; i < profilePoints.Count; i++)
+            {
+                if (profilePoints[i].Id != pointId)
+                    continue;
+
+                ProfilePoint pp = profilePoints[i];
+                pp.Position = new Vector2(
+                    Mathf.Clamp(displayPosition.x, 0f, WorldSizeMeters.x),
+                    Mathf.Clamp(displayPosition.y, 0f, WorldSizeMeters.y));
+
+                ProfileCanvasPointResolver.SetSpansFromPosition(
+                    ref pp,
+                    bounds,
+                    PaddingGuideX,
+                    BorderGuideX);
+
+                profilePoints[i] = pp;
+                SyncDisplayPointsFromProfilePoints();
+                return;
+            }
+        }
+
+        public int GetNextPointId()
+        {
+            int maxId = -1;
+            for (int i = 0; i < profilePoints.Count; i++)
+                maxId = Mathf.Max(maxId, profilePoints[i].Id);
+            return maxId + 1;
+        }
+
+        public int GetNextEdgeId()
+        {
+            int maxId = -1;
+            for (int i = 0; i < edges.Count; i++)
+                maxId = Mathf.Max(maxId, edges[i].Id);
+            return maxId + 1;
+        }
+
+        public void RebuildOpenEdges()
+        {
+            edges.Clear();
+
+            for (int i = 0; i < profilePoints.Count - 1; i++)
+            {
+                edges.Add(new CanvasEdge
+                {
+                    Id = i,
+                    A = profilePoints[i].Id,
+                    B = profilePoints[i + 1].Id,
+                    ProfileXScale = 1f
+                });
+            }
+        }
+
+        private void ClampAllProfilePointsToWorld()
+        {
+            for (int i = 0; i < profilePoints.Count; i++)
+            {
+                ProfilePoint p = profilePoints[i];
+                p.Position = new Vector2(
+                    Mathf.Clamp(p.Position.x, 0f, WorldSizeMeters.x),
+                    Mathf.Clamp(p.Position.y, 0f, WorldSizeMeters.y)
+                );
+                profilePoints[i] = p;
+            }
+        }
+    }
+}
+""")
+    print("Rewrote ProfileCanvasDocument.cs")
 
 
 def rewrite_profile_resolver():
     write(PROFILE_RESOLVER, """using UnityEngine;
 
-namespace DLN
+namespace DLN.EditorTools.ShapeStamper
 {
     public static class ProfileCanvasPointResolver
     {
@@ -351,25 +560,6 @@ namespace DLN
             float y = ResolveY(point, newBounds, newLayout);
 
             return new Vector2(x, y);
-        }
-
-        public static void ResizePointPreservingBehavior(
-            ref ProfilePoint point,
-            Rect oldBounds,
-            Rect newBounds,
-            float oldPaddingGuideX,
-            float oldBorderGuideX,
-            float newPaddingGuideX,
-            float newBorderGuideX)
-        {
-            point.Position = ResolvePoint(
-                point,
-                oldBounds,
-                newBounds,
-                oldPaddingGuideX,
-                oldBorderGuideX,
-                newPaddingGuideX,
-                newBorderGuideX);
         }
 
         public static void SetSpansFromPosition(
@@ -456,86 +646,372 @@ namespace DLN
     print("Rewrote ProfileCanvasPointResolver.cs")
 
 
+def rewrite_profile_policy():
+    write(PROFILE_POLICY, """#if UNITY_EDITOR
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
+
+namespace DLN.EditorTools.ShapeStamper
+{
+    public sealed class ProfileCanvasPolicy : ICanvasToolPolicy
+    {
+        private readonly ProfileCanvasDocument _document;
+
+        public ProfileCanvasPolicy(ProfileCanvasDocument document)
+        {
+            _document = document;
+        }
+
+        public void DrawOverlay(EditorCanvas canvas, Rect canvasRect)
+        {
+            if (_document == null)
+                return;
+
+            CanvasGuideDrawing.DrawProfileGuides(canvas, canvasRect, _document);
+
+            Rect labelRect = new Rect(canvasRect.x + 8f, canvasRect.y + 8f, 260f, 20f);
+            GUI.Label(
+                labelRect,
+                $"Profile  {_document.WorldSizeMeters.x:0.###}m x {_document.WorldSizeMeters.y:0.###}m",
+                EditorStyles.miniLabel
+            );
+        }
+
+        public void OnMouseDown(EditorCanvas canvas, Event evt) { }
+        public void OnDrag(EditorCanvas canvas, Event evt) { }
+        public void OnClick(EditorCanvas canvas, Event evt) { }
+
+        public void OnKeyDown(EditorCanvas canvas, Event evt)
+        {
+            if (_document == null)
+                return;
+
+            if (evt.keyCode == KeyCode.Delete || evt.keyCode == KeyCode.Backspace)
+            {
+                DeleteSelection(canvas);
+                evt.Use();
+            }
+        }
+
+        public void AddPointAtCanvasPosition(EditorCanvas canvas, Vector2 canvasPos)
+        {
+            if (_document == null)
+                return;
+
+            int newPointId = _document.GetNextPointId();
+
+            Vector2 newPos;
+            if (_document.Points.Count == 0)
+            {
+                newPos = ClampToProfileBounds(canvasPos);
+            }
+            else if (_document.Points.Count == 1)
+            {
+                CanvasPoint last = _document.Points[_document.Points.Count - 1];
+                newPos = ClampToProfileBounds(last.Position + new Vector2(0.15f, 0f));
+            }
+            else
+            {
+                CanvasPoint prev = _document.Points[_document.Points.Count - 2];
+                CanvasPoint last = _document.Points[_document.Points.Count - 1];
+
+                Vector2 dir = last.Position - prev.Position;
+                if (dir.sqrMagnitude < 0.000001f)
+                    dir = Vector2.right;
+                else
+                    dir.Normalize();
+
+                float defaultLength = Mathf.Max(_document.WorldSizeMeters.x, _document.WorldSizeMeters.y) * 0.15f;
+                newPos = ClampToProfileBounds(last.Position + dir * defaultLength);
+            }
+
+            ProfilePoint pp = new ProfilePoint
+            {
+                Id = newPointId,
+                Position = newPos,
+                YAnchor = CanvasAnchorY.Floating,
+                XSpan = ProfileXSpan.PaddingToContent,
+                ZSpan = ProfileZSpan.MainDepth,
+                XT = 0f,
+                ZT = 0.5f
+            };
+
+            ProfileCanvasPointResolver.SetSpansFromPosition(
+                ref pp,
+                _document.GetCanvasFrameRect(),
+                _document.PaddingGuideX,
+                _document.BorderGuideX);
+
+            _document.ProfilePoints.Add(pp);
+            _document.RebuildOpenEdges();
+            _document.SyncDisplayPointsFromProfilePoints();
+            _document.MarkDirty();
+
+            canvas.Selection.Clear();
+            canvas.Selection.Add(CanvasElementRef.ForPoint(newPointId));
+        }
+
+        public void SplitEdgeAtScreenPosition(EditorCanvas canvas, CanvasElementRef edgeRef, Vector2 screenPos)
+        {
+            if (_document == null || !edgeRef.IsEdge)
+                return;
+
+            if (!TryGetEdgeById(_document, edgeRef.Id, out CanvasEdge edge))
+                return;
+
+            if (!CanvasMath.TryGetEdgeCanvasPositions(edge, _document, out Vector2 a, out Vector2 b))
+                return;
+
+            Vector2 mouseCanvas = canvas.ScreenToCanvas(screenPos);
+            Vector2 splitPoint = ClampToProfileBounds(CanvasMath.ClosestPointOnSegment(mouseCanvas, a, b));
+
+            int newPointId = _document.GetNextPointId();
+            int edgeIndex = GetEdgeIndexById(_document, edge.Id);
+            if (edgeIndex < 0)
+                return;
+
+            ProfilePoint pp = new ProfilePoint
+            {
+                Id = newPointId,
+                Position = splitPoint,
+                YAnchor = CanvasAnchorY.Floating,
+                XSpan = ProfileXSpan.PaddingToContent,
+                ZSpan = ProfileZSpan.MainDepth,
+                XT = 0f,
+                ZT = 0.5f
+            };
+
+            ProfileCanvasPointResolver.SetSpansFromPosition(
+                ref pp,
+                _document.GetCanvasFrameRect(),
+                _document.PaddingGuideX,
+                _document.BorderGuideX);
+
+            int insertIndex = edgeIndex + 1;
+            _document.ProfilePoints.Insert(insertIndex, pp);
+
+            _document.RebuildOpenEdges();
+            RemapOffsetsAfterSplit(edge.Id, edgeIndex);
+            _document.SyncDisplayPointsFromProfilePoints();
+            _document.MarkDirty();
+
+            canvas.Selection.Clear();
+            canvas.Selection.Add(CanvasElementRef.ForPoint(newPointId));
+        }
+
+        public void DeleteSelection(EditorCanvas canvas)
+        {
+            if (_document == null)
+                return;
+
+            List<int> pointIdsToDelete = new();
+            HashSet<int> edgeIdsToDelete = new();
+            HashSet<int> offsetIdsToDelete = new();
+
+            foreach (CanvasElementRef element in canvas.Selection.Elements)
+            {
+                switch (element.Type)
+                {
+                    case CanvasElementType.Point: pointIdsToDelete.Add(element.Id); break;
+                    case CanvasElementType.Edge: edgeIdsToDelete.Add(element.Id); break;
+                    case CanvasElementType.Offset: offsetIdsToDelete.Add(element.Id); break;
+                }
+            }
+
+            if (pointIdsToDelete.Count > 0)
+                DeletePointsAndConnectedData(pointIdsToDelete);
+
+            if (edgeIdsToDelete.Count > 0)
+            {
+                RemoveEdgesById(edgeIdsToDelete);
+                RemoveOffsetsByEdgeIds(edgeIdsToDelete);
+            }
+
+            if (offsetIdsToDelete.Count > 0)
+                RemoveOffsetsById(offsetIdsToDelete);
+
+            _document.RebuildOpenEdges();
+            _document.SyncDisplayPointsFromProfilePoints();
+            _document.MarkDirty();
+            canvas.Selection.Clear();
+            canvas.Interaction.Clear();
+        }
+
+        public void ConstrainDraggedPoint(EditorCanvas canvas, int pointId, ref Vector2 position)
+        {
+            position = ClampToProfileBounds(position);
+        }
+
+        private Vector2 ClampToProfileBounds(Vector2 p)
+        {
+            return new Vector2(
+                Mathf.Clamp(p.x, 0f, _document.WorldSizeMeters.x),
+                Mathf.Clamp(p.y, 0f, _document.WorldSizeMeters.y)
+            );
+        }
+
+        private static bool TryGetEdgeById(ICanvasDocument document, int edgeId, out CanvasEdge edge)
+        {
+            foreach (CanvasEdge e in document.Edges)
+            {
+                if (e.Id == edgeId)
+                {
+                    edge = e;
+                    return true;
+                }
+            }
+
+            edge = default;
+            return false;
+        }
+
+        private static int GetEdgeIndexById(ICanvasDocument document, int edgeId)
+        {
+            for (int i = 0; i < document.Edges.Count; i++)
+            {
+                if (document.Edges[i].Id == edgeId)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private void DeletePointsAndConnectedData(List<int> pointIds)
+        {
+            HashSet<int> pointSet = new(pointIds);
+            HashSet<int> deletedEdgeIds = new();
+
+            for (int i = _document.Edges.Count - 1; i >= 0; i--)
+            {
+                CanvasEdge edge = _document.Edges[i];
+                if (pointSet.Contains(edge.A) || pointSet.Contains(edge.B))
+                {
+                    deletedEdgeIds.Add(edge.Id);
+                    _document.Edges.RemoveAt(i);
+                }
+            }
+
+            for (int i = _document.Offsets.Count - 1; i >= 0; i--)
+            {
+                if (deletedEdgeIds.Contains(_document.Offsets[i].EdgeId))
+                    _document.Offsets.RemoveAt(i);
+            }
+
+            for (int i = _document.ProfilePoints.Count - 1; i >= 0; i--)
+            {
+                if (pointSet.Contains(_document.ProfilePoints[i].Id))
+                    _document.ProfilePoints.RemoveAt(i);
+            }
+        }
+
+        private void RemoveEdgesById(HashSet<int> edgeIds)
+        {
+            for (int i = _document.Edges.Count - 1; i >= 0; i--)
+            {
+                if (edgeIds.Contains(_document.Edges[i].Id))
+                    _document.Edges.RemoveAt(i);
+            }
+        }
+
+        private void RemoveOffsetsByEdgeIds(HashSet<int> edgeIds)
+        {
+            for (int i = _document.Offsets.Count - 1; i >= 0; i--)
+            {
+                if (edgeIds.Contains(_document.Offsets[i].EdgeId))
+                    _document.Offsets.RemoveAt(i);
+            }
+        }
+
+        private void RemoveOffsetsById(HashSet<int> offsetIds)
+        {
+            for (int i = _document.Offsets.Count - 1; i >= 0; i--)
+            {
+                if (offsetIds.Contains(_document.Offsets[i].Id))
+                    _document.Offsets.RemoveAt(i);
+            }
+        }
+
+        private void RemapOffsetsAfterSplit(int oldEdgeId, int replacementEdgeIndex)
+        {
+            if (replacementEdgeIndex < 0 || replacementEdgeIndex >= _document.Edges.Count)
+                return;
+
+            int replacementEdgeId = _document.Edges[replacementEdgeIndex].Id;
+
+            for (int i = 0; i < _document.Offsets.Count; i++)
+            {
+                CanvasOffsetConstraint offset = _document.Offsets[i];
+                if (offset.EdgeId != oldEdgeId)
+                    continue;
+
+                offset.EdgeId = replacementEdgeId;
+                _document.Offsets[i] = offset;
+            }
+        }
+    }
+}
+#endif
+""")
+    print("Rewrote ProfileCanvasPolicy.cs")
+
+
+def patch_generator():
+    text = read(GENERATOR)
+    text = text.replace("profileDocument.Points == null || profileDocument.Points.Count < 2", "profileDocument.ProfilePoints == null || profileDocument.ProfilePoints.Count < 2")
+    text = text.replace("for (int i = 0; i < profileDocument.Points.Count; i++)", "for (int i = 0; i < profileDocument.ProfilePoints.Count; i++)")
+    text = text.replace("ProfilePoint p = profileDocument.Points[i];", "ProfilePoint p = profileDocument.ProfilePoints[i];")
+    text = text.replace("profileDocument.Points,", "profileDocument.ProfilePoints,")
+    write(GENERATOR, text)
+    print("Patched ShapeStamperProfileGenerator.cs")
+
+
 def patch_window():
     text = read(WINDOW)
 
     text = text.replace(
-        "        private void DrawSelectedShapeElementInspector()\\n\\n\\n        {\\n",
-        "        private void DrawSelectedShapeElementInspector()\\n        {\\n"
+        "        private void DrawSelectedShapeElementInspector()\n\n\n        {\n",
+        "        private void DrawSelectedShapeElementInspector()\n        {\n"
     )
 
-    text = text.replace("IList<CanvasPoint> points = profileDocument.Points;", "IList<ProfilePoint> points = profileDocument.MutablePoints;")
-    text = text.replace("CanvasPoint point = points[index];", "ProfilePoint point = points[index];")
+    old_method_start = "        private void DrawSelectedProfilePointInspector()\n        {\n"
+    start = text.find(old_method_start)
+    if start == -1:
+        raise RuntimeError("Could not find DrawSelectedProfilePointInspector() in ShapeStamperWindow.cs")
 
-    old_label = """            EditorGUILayout.LabelField($\"Profile Point {point.Id}\", EditorStyles.boldLabel);
+    next_method = text.find("\n        private static CanvasElementRef GetSingleSelection(", start)
+    if next_method == -1:
+        raise RuntimeError("Could not find end of DrawSelectedProfilePointInspector() in ShapeStamperWindow.cs")
 
-            EditorGUI.BeginChangeCheck();
-"""
-    new_label = """            EditorGUILayout.LabelField($\"Profile Point {point.Id}\", EditorStyles.boldLabel);
+    new_method = """        private void DrawSelectedProfilePointInspector()
+        {
+            if (profileSelection == null || profileSelection.Count != 1)
+                return;
+
+            CanvasElementRef selected = GetSingleSelection(profileSelection);
+            if (!selected.IsPoint)
+                return;
+
+            IList<ProfilePoint> points = profileDocument.ProfilePoints;
+            int index = FindProfilePointIndex(points, selected.Id);
+            if (index < 0)
+                return;
+
+            ProfilePoint point = points[index];
+            Rect bounds = profileDocument.GetCanvasFrameRect();
+            float paddingGuideX = profileDocument.PaddingGuideX;
+            float borderGuideX = profileDocument.BorderGuideX;
+
+            EditorGUILayout.Space(6f);
+            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField($"Profile Point {point.Id}", EditorStyles.boldLabel);
             EditorGUILayout.LabelField(
-                $\"X:{point.XSpan}   Z:{point.ZSpan}   XT:{point.XT:0.###}   ZT:{point.ZT:0.###}\",
+                $"X:{point.XSpan}   Z:{point.ZSpan}   XT:{point.XT:0.###}   ZT:{point.ZT:0.###}",
                 EditorStyles.miniLabel);
 
             EditorGUI.BeginChangeCheck();
-"""
-    text = replace_or_fail(text, old_label, new_label, WINDOW.name)
 
-    old_block = """            ProfileAnchorX newXAnchor = (ProfileAnchorX)EditorGUILayout.EnumPopup("Profile X Anchor", point.ProfileXAnchor);
-            ProfileDepthAnchor newZAnchor = (ProfileDepthAnchor)EditorGUILayout.EnumPopup("Profile Z Anchor", point.ProfileZAnchor);
-            CanvasAnchorY newYAnchor = (CanvasAnchorY)EditorGUILayout.EnumPopup("Profile Y Anchor", point.YAnchor);
-            Vector2 newPosition = EditorGUILayout.Vector2Field("Position", point.Position);
-
-            bool canEditOffsetX = point.ProfileXAnchor != ProfileAnchorX.Floating;
-            bool canEditOffsetY = point.YAnchor != CanvasAnchorY.Floating || point.ProfileZAnchor != ProfileDepthAnchor.Floating;
-
-            EditorGUI.BeginDisabledGroup(!canEditOffsetX);
-            float newOffsetX = EditorGUILayout.FloatField("Offset X", point.OffsetX);
-            EditorGUI.EndDisabledGroup();
-
-            EditorGUI.BeginDisabledGroup(!canEditOffsetY);
-            float newOffsetY = EditorGUILayout.FloatField("Offset Y", point.OffsetY);
-            EditorGUI.EndDisabledGroup();
-
-            if (EditorGUI.EndChangeCheck())
-            {
-                if (newXAnchor != point.ProfileXAnchor || newYAnchor != point.YAnchor)
-                {
-                    ProfileCanvasPointResolver.SetAnchorsPreservePosition(
-                        ref point,
-                        newXAnchor,
-                        newYAnchor,
-                        bounds,
-                        paddingGuideX,
-                        borderGuideX);
-                }
-
-                point.ProfileZAnchor = newZAnchor;
-
-                point.Position = new Vector2(
-                    Mathf.Clamp(newPosition.x, 0f, profileDocument.WorldSizeMeters.x),
-                    Mathf.Clamp(newPosition.y, 0f, profileDocument.WorldSizeMeters.y));
-
-                if (point.ProfileXAnchor != ProfileAnchorX.Floating)
-                    point.OffsetX = newOffsetX;
-                if (point.YAnchor != CanvasAnchorY.Floating || point.ProfileZAnchor != ProfileDepthAnchor.Floating)
-                    point.OffsetY = newOffsetY;
-
-                point.Position = ProfileCanvasPointResolver.ResolvePoint(
-                    point,
-                    bounds,
-                    bounds,
-                    paddingGuideX,
-                    borderGuideX,
-                    paddingGuideX,
-                    borderGuideX);
-
-                points[index] = point;
-                profileDocument.MarkDirty();
-                _forcePreviewRefresh = true;
-                Repaint();
-            }
-"""
-    new_block = """            ProfileXSpan newXSpan = (ProfileXSpan)EditorGUILayout.EnumPopup("Profile X Span", point.XSpan);
+            ProfileXSpan newXSpan = (ProfileXSpan)EditorGUILayout.EnumPopup("Profile X Span", point.XSpan);
             ProfileZSpan newZSpan = (ProfileZSpan)EditorGUILayout.EnumPopup("Profile Z Span", point.ZSpan);
             CanvasAnchorY newYAnchor = (CanvasAnchorY)EditorGUILayout.EnumPopup("Profile Y Anchor", point.YAnchor);
             Vector2 newPosition = EditorGUILayout.Vector2Field("Position", point.Position);
@@ -543,7 +1019,6 @@ def patch_window():
             float newZT = EditorGUILayout.Slider("Profile Z T", point.ZT, 0f, 1f);
 
             bool canEditOffsetY = point.YAnchor != CanvasAnchorY.Floating;
-
             EditorGUI.BeginDisabledGroup(!canEditOffsetY);
             float newOffsetY = EditorGUILayout.FloatField("Offset Y", point.OffsetY);
             EditorGUI.EndDisabledGroup();
@@ -568,32 +1043,102 @@ def patch_window():
                     paddingGuideX,
                     borderGuideX);
 
-                points[index] = point;
+                profileDocument.ProfilePoints[index] = point;
+                profileDocument.SyncDisplayPointsFromProfilePoints();
                 profileDocument.MarkDirty();
                 _forcePreviewRefresh = true;
                 Repaint();
             }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private static int FindProfilePointIndex(IList<ProfilePoint> points, int pointId)
+        {
+            for (int i = 0; i < points.Count; i++)
+            {
+                if (points[i].Id == pointId)
+                    return i;
+            }
+
+            return -1;
+        }
 """
-    text = replace_or_fail(text, old_block, new_block, WINDOW.name)
+    text = text[:start] + new_method + text[next_method:]
 
     write(WINDOW, text)
     print("Patched ShapeStamperWindow.cs")
 
 
+def patch_editor_canvas():
+    path = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Core/EditorCanvas.cs"
+    text = read(path)
+
+    old = """                if (Document is ShapeCanvasDocument)
+                {
+                    ShapeCanvasPointResolver.RecalculateOffsets(ref p, bounds);
+                }
+                else if (Document is ProfileCanvasDocument profileDocument)
+                {
+                    ProfileCanvasPointResolver.RecalculateOffsets(
+                        ref p,
+                        bounds,
+                        profileDocument.PaddingGuideX,
+                        profileDocument.BorderGuideX);
+                }
+
+                Document.Points[i] = p;
+                return;
+"""
+    new = """                if (Document is ShapeCanvasDocument)
+                {
+                    ShapeCanvasPointResolver.RecalculateOffsets(ref p, bounds);
+                    Document.Points[i] = p;
+                    return;
+                }
+                else if (Document is ProfileCanvasDocument profileDocument)
+                {
+                    profileDocument.SetProfilePointDisplayPosition(pointId, position);
+                    return;
+                }
+
+                Document.Points[i] = p;
+                return;
+"""
+    text = replace_or_fail(text, old, new, path.name)
+    write(path, text)
+    print("Patched EditorCanvas.cs")
+
+
+def remove_old_anchor_files():
+    for path in (OLD_PROFILE_ANCHOR_X, OLD_PROFILE_DEPTH_ANCHOR):
+        if path.exists():
+            path.unlink()
+    print("Removed old profile anchor files if present")
+
+
 def main():
     try:
-        ensure_support_files()
-        rewrite_canvas_point()
-        patch_profile_document()
+        ensure_model_files()
+        rewrite_profile_document()
         rewrite_profile_resolver()
+        rewrite_profile_policy()
+        patch_generator()
         patch_window()
+        patch_editor_canvas()
+        remove_old_anchor_files()
     except Exception as exc:
-        print(f"Repair failed: {exc}", file=sys.stderr)
+        print(f"Patch failed: {exc}", file=sys.stderr)
         return 1
 
     print()
     print("Done.")
-    print("Let Unity recompile, then check the next error cluster.")
+    print("Next:")
+    print("1. Let Unity recompile.")
+    print("2. Reset Profile.")
+    print("3. Confirm profile points edit spans/T values in the inspector.")
+    print("4. Confirm dragging profile points still works.")
+    print("5. If errors remain, they should now be a much smaller cleanup cluster.")
     return 0
 
 

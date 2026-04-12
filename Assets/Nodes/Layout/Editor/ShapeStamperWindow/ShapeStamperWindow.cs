@@ -629,8 +629,8 @@ namespace DLN.EditorTools.ShapeStamper
             if (!selected.IsPoint)
                 return;
 
-            IList<ProfilePoint> points = profileDocument.Points;
-            int index = FindPointIndex(points, selected.Id);
+            IList<ProfilePoint> points = profileDocument.ProfilePoints;
+            int index = FindProfilePointIndex(points, selected.Id);
             if (index < 0)
                 return;
 
@@ -656,7 +656,6 @@ namespace DLN.EditorTools.ShapeStamper
             float newZT = EditorGUILayout.Slider("Profile Z T", point.ZT, 0f, 1f);
 
             bool canEditOffsetY = point.YAnchor != CanvasAnchorY.Floating;
-
             EditorGUI.BeginDisabledGroup(!canEditOffsetY);
             float newOffsetY = EditorGUILayout.FloatField("Offset Y", point.OffsetY);
             EditorGUI.EndDisabledGroup();
@@ -681,13 +680,25 @@ namespace DLN.EditorTools.ShapeStamper
                     paddingGuideX,
                     borderGuideX);
 
-                points[index] = point;
+                profileDocument.ProfilePoints[index] = point;
+                profileDocument.SyncDisplayPointsFromProfilePoints();
                 profileDocument.MarkDirty();
                 _forcePreviewRefresh = true;
                 Repaint();
             }
 
             EditorGUILayout.EndVertical();
+        }
+
+        private static int FindProfilePointIndex(IList<ProfilePoint> points, int pointId)
+        {
+            for (int i = 0; i < points.Count; i++)
+            {
+                if (points[i].Id == pointId)
+                    return i;
+            }
+
+            return -1;
         }
 
         private static CanvasElementRef GetSingleSelection(CanvasSelection selection)

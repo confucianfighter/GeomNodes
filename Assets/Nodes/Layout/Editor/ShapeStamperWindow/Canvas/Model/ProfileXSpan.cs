@@ -1,4 +1,4 @@
-namespace DLN
+namespace DLN.EditorTools.ShapeStamper
 {
     public enum ProfileXSpan
     {

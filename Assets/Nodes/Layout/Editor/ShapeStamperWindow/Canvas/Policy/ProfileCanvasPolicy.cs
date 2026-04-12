@@ -50,10 +50,9 @@ namespace DLN.EditorTools.ShapeStamper
             if (_document == null)
                 return;
 
-            int newPointId = GetNextPointId(_document);
+            int newPointId = _document.GetNextPointId();
 
             Vector2 newPos;
-
             if (_document.Points.Count == 0)
             {
                 newPos = ClampToProfileBounds(canvasPos);
@@ -61,8 +60,7 @@ namespace DLN.EditorTools.ShapeStamper
             else if (_document.Points.Count == 1)
             {
                 CanvasPoint last = _document.Points[_document.Points.Count - 1];
-                newPos = last.Position + new Vector2(0.15f, 0f);
-                newPos = ClampToProfileBounds(newPos);
+                newPos = ClampToProfileBounds(last.Position + new Vector2(0.15f, 0f));
             }
             else
             {
@@ -75,44 +73,36 @@ namespace DLN.EditorTools.ShapeStamper
                 else
                     dir.Normalize();
 
-                float defaultLength = Mathf.Max(
-                    _document.WorldSizeMeters.x,
-                    _document.WorldSizeMeters.y) * 0.15f;
-
-                newPos = last.Position + dir * defaultLength;
-                newPos = ClampToProfileBounds(newPos);
+                float defaultLength = Mathf.Max(_document.WorldSizeMeters.x, _document.WorldSizeMeters.y) * 0.15f;
+                newPos = ClampToProfileBounds(last.Position + dir * defaultLength);
             }
 
-            _document.Points.Add(new CanvasPoint
+            ProfilePoint pp = new ProfilePoint
             {
                 Id = newPointId,
                 Position = newPos,
-                ProfileXAnchor = ProfileAnchorX.Floating,
-                YAnchor = CanvasAnchorY.Floating
-            });
+                YAnchor = CanvasAnchorY.Floating,
+                XSpan = ProfileXSpan.PaddingToContent,
+                ZSpan = ProfileZSpan.MainDepth,
+                XT = 0f,
+                ZT = 0.5f
+            };
 
-            RebuildOpenEdges();
+            ProfileCanvasPointResolver.SetSpansFromPosition(
+                ref pp,
+                _document.GetCanvasFrameRect(),
+                _document.PaddingGuideX,
+                _document.BorderGuideX);
 
+            _document.ProfilePoints.Add(pp);
+            _document.RebuildOpenEdges();
+            _document.SyncDisplayPointsFromProfilePoints();
             _document.MarkDirty();
 
             canvas.Selection.Clear();
             canvas.Selection.Add(CanvasElementRef.ForPoint(newPointId));
         }
-        private void RebuildOpenEdges()
-        {
-            _document.Edges.Clear();
 
-            for (int i = 0; i < _document.Points.Count - 1; i++)
-            {
-                _document.Edges.Add(new CanvasEdge
-                {
-                    Id = i,
-                    A = _document.Points[i].Id,
-                    B = _document.Points[i + 1].Id,
-                    ProfileXScale = 1f
-                });
-            }
-        }
         public void SplitEdgeAtScreenPosition(EditorCanvas canvas, CanvasElementRef edgeRef, Vector2 screenPos)
         {
             if (_document == null || !edgeRef.IsEdge)
@@ -125,43 +115,36 @@ namespace DLN.EditorTools.ShapeStamper
                 return;
 
             Vector2 mouseCanvas = canvas.ScreenToCanvas(screenPos);
-            Vector2 splitPoint = CanvasMath.ClosestPointOnSegment(mouseCanvas, a, b);
-            splitPoint = ClampToProfileBounds(splitPoint);
+            Vector2 splitPoint = ClampToProfileBounds(CanvasMath.ClosestPointOnSegment(mouseCanvas, a, b));
 
-            int newPointId = GetNextPointId(_document);
-            int newEdgeIdA = GetNextEdgeId(_document);
-            int newEdgeIdB = newEdgeIdA + 1;
-
+            int newPointId = _document.GetNextPointId();
             int edgeIndex = GetEdgeIndexById(_document, edge.Id);
             if (edgeIndex < 0)
                 return;
 
-            _document.Points.Add(new CanvasPoint
+            ProfilePoint pp = new ProfilePoint
             {
                 Id = newPointId,
                 Position = splitPoint,
-                ProfileXAnchor = ProfileAnchorX.Floating,
-                YAnchor = CanvasAnchorY.Floating
-            });
+                YAnchor = CanvasAnchorY.Floating,
+                XSpan = ProfileXSpan.PaddingToContent,
+                ZSpan = ProfileZSpan.MainDepth,
+                XT = 0f,
+                ZT = 0.5f
+            };
 
-            _document.Edges.RemoveAt(edgeIndex);
-            _document.Edges.Insert(edgeIndex, new CanvasEdge
-            {
-                Id = newEdgeIdB,
-                A = newPointId,
-                B = edge.B,
-                ProfileXScale = 1f
-            });
-            _document.Edges.Insert(edgeIndex, new CanvasEdge
-            {
-                Id = newEdgeIdA,
-                A = edge.A,
-                B = newPointId,
-                ProfileXScale = 1f
-            });
+            ProfileCanvasPointResolver.SetSpansFromPosition(
+                ref pp,
+                _document.GetCanvasFrameRect(),
+                _document.PaddingGuideX,
+                _document.BorderGuideX);
 
-            RemapOffsetsAfterSplit(edge.Id, newEdgeIdA);
+            int insertIndex = edgeIndex + 1;
+            _document.ProfilePoints.Insert(insertIndex, pp);
 
+            _document.RebuildOpenEdges();
+            RemapOffsetsAfterSplit(edge.Id, edgeIndex);
+            _document.SyncDisplayPointsFromProfilePoints();
             _document.MarkDirty();
 
             canvas.Selection.Clear();
@@ -188,17 +171,19 @@ namespace DLN.EditorTools.ShapeStamper
             }
 
             if (pointIdsToDelete.Count > 0)
-                DeletePointsAndConnectedData(_document, pointIdsToDelete);
+                DeletePointsAndConnectedData(pointIdsToDelete);
 
             if (edgeIdsToDelete.Count > 0)
             {
-                RemoveEdgesById(_document, edgeIdsToDelete);
-                RemoveOffsetsByEdgeIds(_document, edgeIdsToDelete);
+                RemoveEdgesById(edgeIdsToDelete);
+                RemoveOffsetsByEdgeIds(edgeIdsToDelete);
             }
 
             if (offsetIdsToDelete.Count > 0)
-                RemoveOffsetsById(_document, offsetIdsToDelete);
+                RemoveOffsetsById(offsetIdsToDelete);
 
+            _document.RebuildOpenEdges();
+            _document.SyncDisplayPointsFromProfilePoints();
             _document.MarkDirty();
             canvas.Selection.Clear();
             canvas.Interaction.Clear();
@@ -215,22 +200,6 @@ namespace DLN.EditorTools.ShapeStamper
                 Mathf.Clamp(p.x, 0f, _document.WorldSizeMeters.x),
                 Mathf.Clamp(p.y, 0f, _document.WorldSizeMeters.y)
             );
-        }
-
-        private static int GetNextPointId(ICanvasDocument document)
-        {
-            int maxId = -1;
-            foreach (CanvasPoint p in document.Points)
-                maxId = Mathf.Max(maxId, p.Id);
-            return maxId + 1;
-        }
-
-        private static int GetNextEdgeId(ICanvasDocument document)
-        {
-            int maxId = -1;
-            foreach (CanvasEdge e in document.Edges)
-                maxId = Mathf.Max(maxId, e.Id);
-            return maxId + 1;
         }
 
         private static bool TryGetEdgeById(ICanvasDocument document, int edgeId, out CanvasEdge edge)
@@ -259,63 +228,68 @@ namespace DLN.EditorTools.ShapeStamper
             return -1;
         }
 
-        private static void DeletePointsAndConnectedData(ICanvasDocument document, List<int> pointIds)
+        private void DeletePointsAndConnectedData(List<int> pointIds)
         {
             HashSet<int> pointSet = new(pointIds);
             HashSet<int> deletedEdgeIds = new();
 
-            for (int i = document.Edges.Count - 1; i >= 0; i--)
+            for (int i = _document.Edges.Count - 1; i >= 0; i--)
             {
-                CanvasEdge edge = document.Edges[i];
+                CanvasEdge edge = _document.Edges[i];
                 if (pointSet.Contains(edge.A) || pointSet.Contains(edge.B))
                 {
                     deletedEdgeIds.Add(edge.Id);
-                    document.Edges.RemoveAt(i);
+                    _document.Edges.RemoveAt(i);
                 }
             }
 
-            for (int i = document.Offsets.Count - 1; i >= 0; i--)
+            for (int i = _document.Offsets.Count - 1; i >= 0; i--)
             {
-                if (deletedEdgeIds.Contains(document.Offsets[i].EdgeId))
-                    document.Offsets.RemoveAt(i);
+                if (deletedEdgeIds.Contains(_document.Offsets[i].EdgeId))
+                    _document.Offsets.RemoveAt(i);
             }
 
-            for (int i = document.Points.Count - 1; i >= 0; i--)
+            for (int i = _document.ProfilePoints.Count - 1; i >= 0; i--)
             {
-                if (pointSet.Contains(document.Points[i].Id))
-                    document.Points.RemoveAt(i);
-            }
-        }
-
-        private static void RemoveEdgesById(ICanvasDocument document, HashSet<int> edgeIds)
-        {
-            for (int i = document.Edges.Count - 1; i >= 0; i--)
-            {
-                if (edgeIds.Contains(document.Edges[i].Id))
-                    document.Edges.RemoveAt(i);
+                if (pointSet.Contains(_document.ProfilePoints[i].Id))
+                    _document.ProfilePoints.RemoveAt(i);
             }
         }
 
-        private static void RemoveOffsetsByEdgeIds(ICanvasDocument document, HashSet<int> edgeIds)
+        private void RemoveEdgesById(HashSet<int> edgeIds)
         {
-            for (int i = document.Offsets.Count - 1; i >= 0; i--)
+            for (int i = _document.Edges.Count - 1; i >= 0; i--)
             {
-                if (edgeIds.Contains(document.Offsets[i].EdgeId))
-                    document.Offsets.RemoveAt(i);
+                if (edgeIds.Contains(_document.Edges[i].Id))
+                    _document.Edges.RemoveAt(i);
             }
         }
 
-        private static void RemoveOffsetsById(ICanvasDocument document, HashSet<int> offsetIds)
+        private void RemoveOffsetsByEdgeIds(HashSet<int> edgeIds)
         {
-            for (int i = document.Offsets.Count - 1; i >= 0; i--)
+            for (int i = _document.Offsets.Count - 1; i >= 0; i--)
             {
-                if (offsetIds.Contains(document.Offsets[i].Id))
-                    document.Offsets.RemoveAt(i);
+                if (edgeIds.Contains(_document.Offsets[i].EdgeId))
+                    _document.Offsets.RemoveAt(i);
             }
         }
 
-        private void RemapOffsetsAfterSplit(int oldEdgeId, int replacementEdgeId)
+        private void RemoveOffsetsById(HashSet<int> offsetIds)
         {
+            for (int i = _document.Offsets.Count - 1; i >= 0; i--)
+            {
+                if (offsetIds.Contains(_document.Offsets[i].Id))
+                    _document.Offsets.RemoveAt(i);
+            }
+        }
+
+        private void RemapOffsetsAfterSplit(int oldEdgeId, int replacementEdgeIndex)
+        {
+            if (replacementEdgeIndex < 0 || replacementEdgeIndex >= _document.Edges.Count)
+                return;
+
+            int replacementEdgeId = _document.Edges[replacementEdgeIndex].Id;
+
             for (int i = 0; i < _document.Offsets.Count; i++)
             {
                 CanvasOffsetConstraint offset = _document.Offsets[i];

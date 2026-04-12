@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DLN
+namespace DLN.EditorTools.ShapeStamper
 {
     public readonly struct ProfileSpan
     {

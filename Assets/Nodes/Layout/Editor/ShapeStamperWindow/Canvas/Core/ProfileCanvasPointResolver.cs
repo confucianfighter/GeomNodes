@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DLN
+namespace DLN.EditorTools.ShapeStamper
 {
     public static class ProfileCanvasPointResolver
     {
@@ -20,25 +20,6 @@ namespace DLN
             float y = ResolveY(point, newBounds, newLayout);
 
             return new Vector2(x, y);
-        }
-
-        public static void ResizePointPreservingBehavior(
-            ref ProfilePoint point,
-            Rect oldBounds,
-            Rect newBounds,
-            float oldPaddingGuideX,
-            float oldBorderGuideX,
-            float newPaddingGuideX,
-            float newBorderGuideX)
-        {
-            point.Position = ResolvePoint(
-                point,
-                oldBounds,
-                newBounds,
-                oldPaddingGuideX,
-                oldBorderGuideX,
-                newPaddingGuideX,
-                newBorderGuideX);
         }
 
         public static void SetSpansFromPosition(

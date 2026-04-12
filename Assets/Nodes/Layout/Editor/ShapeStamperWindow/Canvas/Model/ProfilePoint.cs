@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DLN
+namespace DLN.EditorTools.ShapeStamper
 {
     [Serializable]
     public struct ProfilePoint

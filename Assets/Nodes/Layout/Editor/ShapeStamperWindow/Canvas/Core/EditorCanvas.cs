@@ -668,14 +668,13 @@ namespace DLN.EditorTools.ShapeStamper
                 if (Document is ShapeCanvasDocument)
                 {
                     ShapeCanvasPointResolver.RecalculateOffsets(ref p, bounds);
+                    Document.Points[i] = p;
+                    return;
                 }
                 else if (Document is ProfileCanvasDocument profileDocument)
                 {
-                    ProfileCanvasPointResolver.RecalculateOffsets(
-                        ref p,
-                        bounds,
-                        profileDocument.PaddingGuideX,
-                        profileDocument.BorderGuideX);
+                    profileDocument.SetProfilePointDisplayPosition(pointId, position);
+                    return;
                 }
 
                 Document.Points[i] = p;

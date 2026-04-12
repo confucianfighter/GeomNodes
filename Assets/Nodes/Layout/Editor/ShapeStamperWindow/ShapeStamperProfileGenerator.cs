@@ -107,7 +107,7 @@ namespace DLN.EditorTools.ShapeStamper
                 return null;
             }
 
-            if (profileDocument.Points == null || profileDocument.Points.Count < 2)
+            if (profileDocument.ProfilePoints == null || profileDocument.ProfilePoints.Count < 2)
             {
                 Debug.LogWarning("ShapeStamperProfileGenerator: Profile needs at least 2 points.");
                 return null;
@@ -155,14 +155,14 @@ namespace DLN.EditorTools.ShapeStamper
                 InnerEdgeScales = innerEdgeScales != null ? new List<float>(innerEdgeScales) : new List<float>()
             };
 
-            for (int i = 0; i < profileDocument.Points.Count; i++)
+            for (int i = 0; i < profileDocument.ProfilePoints.Count; i++)
             {
-                ProfilePoint p = profileDocument.Points[i];
+                ProfilePoint p = profileDocument.ProfilePoints[i];
                 ProfileSample sample = new ProfileSample
                 {
                     Index = i,
                     Offset = p.Position.x,
-                    Z = ResolveProfilePointZ(i, profileDocument.Points, profileDocument),
+                    Z = ResolveProfilePointZ(i, profileDocument.ProfilePoints, profileDocument),
                     Point = p
                 };
                 result.ProfileSamples.Add(sample);
@@ -171,7 +171,7 @@ namespace DLN.EditorTools.ShapeStamper
                     result.BaseOuterLoop2D,
                     result.OuterEdgeScales,
                     profileDocument,
-                    profileDocument.Points,
+                    profileDocument.ProfilePoints,
                     i);
 
                 List<Vector2> outerLoopForSample = OffsetClosedLoop(result.BaseOuterLoop2D, outerDistances);
@@ -197,7 +197,7 @@ namespace DLN.EditorTools.ShapeStamper
                         result.BaseInnerLoop2D,
                         result.InnerEdgeScales,
                         profileDocument,
-                        profileDocument.Points,
+                        profileDocument.ProfilePoints,
                         i);
 
                     List<Vector2> innerLoopForSample = OffsetClosedLoop(result.BaseInnerLoop2D, innerDistances);
