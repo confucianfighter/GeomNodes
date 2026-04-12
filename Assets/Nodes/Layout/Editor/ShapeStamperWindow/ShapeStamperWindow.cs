@@ -50,7 +50,7 @@ namespace DLN.EditorTools.ShapeStamper
         private int _lastMaterialHash;
         private bool _forcePreviewRefresh = true;
 
-        [MenuItem("Tools/DLN/Shape Stamper")]
+        [MenuItem("Tools/C3DLS/Shape Stamper")]
         public static void Open()
         {
             ShapeStamperWindow window = GetWindow<ShapeStamperWindow>();
@@ -543,7 +543,7 @@ namespace DLN.EditorTools.ShapeStamper
             if (index < 0)
                 return;
 
-            ProfilePoint point = points[index];
+            CanvasPoint point = points[index];
             Rect bounds = shapeDocument.GetCanvasFrameRect();
 
             EditorGUILayout.Space(6f);
@@ -741,7 +741,7 @@ namespace DLN.EditorTools.ShapeStamper
 
             EditorGUI.indentLevel++;
 
-            int requiredSegments = Mathf.Max(0, profileDocument.Points.Count - 1);
+            int requiredSegments = Mathf.Max(0, profileDocument.ProfilePoints.Count - 1);
             EditorGUILayout.LabelField(
                 $"Profile segments currently needed: {requiredSegments}",
                 EditorStyles.miniLabel);
