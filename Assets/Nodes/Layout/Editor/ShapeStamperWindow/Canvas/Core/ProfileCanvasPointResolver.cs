@@ -86,14 +86,14 @@ namespace DLN.EditorTools.ShapeStamper
             float borderOnly = Mathf.Max(0f, borderGuideX - paddingGuideX);
 
             doc.SetGuideValues(
-                leftPadding: paddingGuideX,
-                rightPadding: paddingGuideX,
-                topPadding: paddingGuideX,
-                bottomPadding: paddingGuideX,
-                leftBorder: borderOnly,
-                rightBorder: borderOnly,
-                topBorder: borderOnly,
-                bottomBorder: borderOnly);
+                paddingGuideX,
+                paddingGuideX,
+                paddingGuideX,
+                paddingGuideX,
+                borderOnly,
+                borderOnly,
+                borderOnly,
+                borderOnly);
 
             doc.FrontPaddingDepth = paddingGuideX;
             doc.FrontBorderDepth = borderOnly;
