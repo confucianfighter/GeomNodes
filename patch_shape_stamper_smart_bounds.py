@@ -1,22 +1,17 @@
 from pathlib import Path
-import re
 import sys
 
 ROOT = Path.cwd()
+
+CANVAS_POINT = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Model/CanvasPoint.cs"
+PROFILE_DOC = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Documents/ProfileCanvasDocument.cs"
+PROFILE_RESOLVER = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Core/ProfileCanvasPointResolver.cs"
+WINDOW = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/ShapeStamperWindow.cs"
 
 PROFILE_POINT = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Model/ProfilePoint.cs"
 PROFILE_X_SPAN = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Model/ProfileXSpan.cs"
 PROFILE_Z_SPAN = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Model/ProfileZSpan.cs"
 PROFILE_SPAN_LAYOUT = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Core/ProfileSpanLayout.cs"
-
-CANVAS_POINT = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Model/CanvasPoint.cs"
-PROFILE_DOC = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Documents/ProfileCanvasDocument.cs"
-PROFILE_RESOLVER = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Core/ProfileCanvasPointResolver.cs"
-GENERATOR = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/ShapeStamperProfileGenerator.cs"
-WINDOW = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/ShapeStamperWindow.cs"
-
-OLD_PROFILE_ANCHOR_X = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Model/ProfileAnchorX.cs"
-OLD_PROFILE_DEPTH_ANCHOR = ROOT / "Assets/Nodes/Layout/Editor/ShapeStamperWindow/Canvas/Model/ProfileDepthAnchor.cs"
 
 
 def read(path: Path) -> str:
@@ -29,14 +24,15 @@ def write(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8", newline="\n")
 
 
-def replace_or_die(text: str, old: str, new: str, where: str) -> str:
+def replace_or_fail(text: str, old: str, new: str, where: str) -> str:
     if old not in text:
-        raise RuntimeError(f"Expected block not found in {where}:\n{old[:220]}...")
+        raise RuntimeError(f"Expected block not found in {where}:\\n{old[:220]}...")
     return text.replace(old, new, 1)
 
 
-def write_new_model_files():
-    write(PROFILE_X_SPAN, """namespace DLN
+def ensure_support_files():
+    if not PROFILE_X_SPAN.exists():
+        write(PROFILE_X_SPAN, """namespace DLN
 {
     public enum ProfileXSpan
     {
@@ -46,7 +42,8 @@ def write_new_model_files():
 }
 """)
 
-    write(PROFILE_Z_SPAN, """namespace DLN
+    if not PROFILE_Z_SPAN.exists():
+        write(PROFILE_Z_SPAN, """namespace DLN
 {
     public enum ProfileZSpan
     {
@@ -59,7 +56,8 @@ def write_new_model_files():
 }
 """)
 
-    write(PROFILE_POINT, """using System;
+    if not PROFILE_POINT.exists():
+        write(PROFILE_POINT, """using System;
 using UnityEngine;
 
 namespace DLN
@@ -95,7 +93,8 @@ namespace DLN
 }
 """)
 
-    write(PROFILE_SPAN_LAYOUT, """using UnityEngine;
+    if not PROFILE_SPAN_LAYOUT.exists():
+        write(PROFILE_SPAN_LAYOUT, """using UnityEngine;
 
 namespace DLN
 {
@@ -214,48 +213,10 @@ namespace DLN
     }
 }
 """)
-    print("Rewrote new span model files")
 
 
-def patch_canvas_point():
-    text = read(CANVAS_POINT)
-
-    old = """using System;
-using UnityEngine;
-
-namespace DLN
-{
-    [Serializable]
-    public struct CanvasPoint
-    {
-        public int Id;
-        public Vector2 Position;
-
-        public CanvasAnchorX XAnchor;
-        public CanvasAnchorY YAnchor;
-        public ProfileAnchorX ProfileXAnchor;
-        public ProfileDepthAnchor ProfileZAnchor;
-
-        public float OffsetX;
-        public float OffsetY;
-
-        public CanvasPoint(int id, Vector2 position)
-        {
-            Id = id;
-            Position = position;
-
-            XAnchor = CanvasAnchorX.Floating;
-            YAnchor = CanvasAnchorY.Floating;
-            ProfileXAnchor = ProfileAnchorX.Floating;
-            ProfileZAnchor = ProfileDepthAnchor.Floating;
-
-            OffsetX = 0f;
-            OffsetY = 0f;
-        }
-    }
-}
-"""
-    new = """using System;
+def rewrite_canvas_point():
+    write(CANVAS_POINT, """using System;
 using UnityEngine;
 
 namespace DLN
@@ -285,17 +246,22 @@ namespace DLN
         }
     }
 }
-"""
-    text = replace_or_die(text, old, new, CANVAS_POINT.name)
-    write(CANVAS_POINT, text)
-    print("Patched CanvasPoint.cs")
+""")
+    print("Rewrote CanvasPoint.cs")
 
 
 def patch_profile_document():
     text = read(PROFILE_DOC)
 
-    text = text.replace("[SerializeField] private List<CanvasPoint> points = new();", "[SerializeField] private List<ProfilePoint> points = new();")
-    text = text.replace("public IList<CanvasPoint> Points => points;", "public IList<ProfilePoint> Points => points;")
+    text = text.replace(
+        "[SerializeField] private List<CanvasPoint> points = new();",
+        "[SerializeField] private List<ProfilePoint> points = new();"
+    )
+
+    text = text.replace(
+        "public IList<CanvasPoint> Points => points;",
+        "public IReadOnlyList<ProfilePoint> Points => points;\\n        public IList<ProfilePoint> MutablePoints => points;"
+    )
 
     old_default = """            points.Add(new CanvasPoint
             {
@@ -353,13 +319,10 @@ def patch_profile_document():
                 ZT = 0f
             });
 """
-    text = replace_or_die(text, old_default, new_default, PROFILE_DOC.name)
+    text = replace_or_fail(text, old_default, new_default, PROFILE_DOC.name)
 
     text = text.replace("CanvasPoint p = points[i];", "ProfilePoint p = points[i];")
     text = text.replace("List<CanvasPoint> list,", "List<ProfilePoint> list,")
-
-    # interface mismatch fix
-    text = text.replace("public IList<ProfilePoint> Points => points;", "public IReadOnlyList<ProfilePoint> Points => points;\n        public IList<ProfilePoint> MutablePoints => points;")
 
     write(PROFILE_DOC, text)
     print("Patched ProfileCanvasDocument.cs")
@@ -493,93 +456,12 @@ namespace DLN
     print("Rewrote ProfileCanvasPointResolver.cs")
 
 
-def patch_generator():
-    text = read(GENERATOR)
-
-    text = text.replace("IList<CanvasPoint> profilePoints", "IList<ProfilePoint> profilePoints")
-    text = text.replace("CanvasPoint p = profileDocument.Points[i];", "ProfilePoint p = profileDocument.Points[i];")
-    text = text.replace("public CanvasPoint Point;", "public ProfilePoint Point;")
-    text = text.replace("CanvasPoint point = profilePoints[pointIndex];", "ProfilePoint point = profilePoints[pointIndex];")
-
-    # replace X resolver
-    x_start = text.index("        private static float ResolveProfilePointX(")
-    x_end = text.index("        private static int FindPreviousAnchorIndex(", x_start)
-    text = text[:x_start] + """        private static float ResolveProfilePointX(int pointIndex, IList<ProfilePoint> profilePoints, EdgeProfileDrive drive)
-        {
-            if (profilePoints == null || pointIndex < 0 || pointIndex >= profilePoints.Count)
-                return 0f;
-
-            ProfilePoint point = profilePoints[pointIndex];
-
-            float paddingWidth = Mathf.Max(0f, drive.BlendedPadding);
-            float borderWidth = Mathf.Max(0f, drive.BlendedBorder);
-
-            ProfileSpan paddingToContent = new ProfileSpan(0f, paddingWidth);
-            ProfileSpan contentToBorder = new ProfileSpan(paddingWidth, paddingWidth + borderWidth);
-
-            float raw;
-            switch (point.XSpan)
-            {
-                case ProfileXSpan.PaddingToContent:
-                    raw = paddingToContent.Evaluate(point.XT);
-                    break;
-
-                case ProfileXSpan.ContentToBorder:
-                default:
-                    raw = contentToBorder.Evaluate(point.XT);
-                    break;
-            }
-
-            return Mathf.Max(0f, SafeFinite(raw * drive.Scale, 0f));
-        }
-
-""" + text[x_end:]
-
-    # replace Z resolver
-    z_start = text.index("        private static float ResolveProfilePointZ(")
-    z_end = text.index("        private static int FindPreviousDepthAnchorIndex(", z_start)
-    text = text[:z_start] + """        private static float ResolveProfilePointZ(int pointIndex, IList<ProfilePoint> profilePoints, ProfileCanvasDocument profileDocument)
-        {
-            if (profilePoints == null || pointIndex < 0 || pointIndex >= profilePoints.Count)
-                return 0f;
-
-            ProfilePoint point = profilePoints[pointIndex];
-            ProfileSpanLayoutData layout = ProfileSpanLayout.Build(profileDocument);
-            return layout.GetZSpan(point.ZSpan).Evaluate(point.ZT);
-        }
-
-""" + text[z_end:]
-
-    # remove stale helper blocks
-    for marker in [
-        "        private static int FindPreviousDepthAnchorIndex(",
-        "        private static int FindNextDepthAnchorIndex(",
-        "        private static int FindPreviousAnchorIndex(",
-        "        private static int FindNextAnchorIndex(",
-        "        private static float GetAuthoredMinX(",
-        "        private static float GetAuthoredMaxX(",
-        "        private static float GetResolvedOverallMinX(",
-        "        private static float GetResolvedOverallMaxX(",
-        "        private static float ResolveDirectAnchorZ(",
-        "        private static float ResolveDirectAnchorX(",
-    ]:
-        while marker in text:
-            start = text.index(marker)
-            next_marker = text.find("\n        private static ", start + 1)
-            if next_marker == -1:
-                break
-            text = text[:start] + text[next_marker + 1:]
-
-    write(GENERATOR, text)
-    print("Patched ShapeStamperProfileGenerator.cs")
-
-
 def patch_window():
     text = read(WINDOW)
 
     text = text.replace(
-        "        private void DrawSelectedShapeElementInspector()\n\n\n        {\n",
-        "        private void DrawSelectedShapeElementInspector()\n        {\n"
+        "        private void DrawSelectedShapeElementInspector()\\n\\n\\n        {\\n",
+        "        private void DrawSelectedShapeElementInspector()\\n        {\\n"
     )
 
     text = text.replace("IList<CanvasPoint> points = profileDocument.Points;", "IList<ProfilePoint> points = profileDocument.MutablePoints;")
@@ -596,7 +478,7 @@ def patch_window():
 
             EditorGUI.BeginChangeCheck();
 """
-    text = replace_or_die(text, old_label, new_label, WINDOW.name)
+    text = replace_or_fail(text, old_label, new_label, WINDOW.name)
 
     old_block = """            ProfileAnchorX newXAnchor = (ProfileAnchorX)EditorGUILayout.EnumPopup("Profile X Anchor", point.ProfileXAnchor);
             ProfileDepthAnchor newZAnchor = (ProfileDepthAnchor)EditorGUILayout.EnumPopup("Profile Z Anchor", point.ProfileZAnchor);
@@ -692,38 +574,26 @@ def patch_window():
                 Repaint();
             }
 """
-    text = replace_or_die(text, old_block, new_block, WINDOW.name)
+    text = replace_or_fail(text, old_block, new_block, WINDOW.name)
 
     write(WINDOW, text)
     print("Patched ShapeStamperWindow.cs")
 
 
-def remove_old_anchor_files():
-    removed = []
-    for path in (OLD_PROFILE_ANCHOR_X, OLD_PROFILE_DEPTH_ANCHOR):
-        if path.exists():
-            path.unlink()
-            removed.append(path.name)
-    print(f"Removed old profile anchor files: {', '.join(removed) if removed else 'none found'}")
-
-
 def main():
     try:
-        write_new_model_files()
-        patch_canvas_point()
+        ensure_support_files()
+        rewrite_canvas_point()
         patch_profile_document()
         rewrite_profile_resolver()
-        patch_generator()
         patch_window()
-        remove_old_anchor_files()
     except Exception as exc:
         print(f"Repair failed: {exc}", file=sys.stderr)
         return 1
 
     print()
     print("Done.")
-    print("Now let Unity recompile and check the next error cluster.")
-    print("The first remaining cluster should be much smaller and point directly at stale references.")
+    print("Let Unity recompile, then check the next error cluster.")
     return 0
 
 
