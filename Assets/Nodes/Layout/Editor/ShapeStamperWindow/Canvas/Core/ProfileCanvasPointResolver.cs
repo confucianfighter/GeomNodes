@@ -13,17 +13,11 @@ namespace DLN.EditorTools.ShapeStamper
             float newPaddingGuideX,
             float newBorderGuideX)
         {
-            ProfileCanvasDocument newDoc = BuildDoc(newBounds, newPaddingGuideX, newBorderGuideX);
-            ProfileSpanLayoutData newLayout = ProfileSpanLayout.Build(newDoc);
-
-            float x = newLayout.GetXSpan(point.XSpan).Evaluate(point.XT);
-            float y = ResolveY(point, newBounds, newLayout);
-
-            return new Vector2(x, y);
+            return ResolvePoint(point, newBounds, newPaddingGuideX, newBorderGuideX);
         }
 
-        public static void SetSpansFromPosition(
-            ref ProfilePoint point,
+        public static Vector2 ResolvePoint(
+            ProfilePoint point,
             Rect bounds,
             float paddingGuideX,
             float borderGuideX)
@@ -31,51 +25,83 @@ namespace DLN.EditorTools.ShapeStamper
             ProfileCanvasDocument doc = BuildDoc(bounds, paddingGuideX, borderGuideX);
             ProfileSpanLayoutData layout = ProfileSpanLayout.Build(doc);
 
-            point.XSpan = DetectXSpan(point.Position.x, layout);
-            point.ZSpan = DetectZSpan(point.Position.y, layout);
+            FloatSpan xSpan = GetXSpan(point.xRegion, layout);
+            FloatSpan zSpan = GetZSpan(point.zRegion, layout);
 
-            point.XT = layout.GetXSpan(point.XSpan).InverseLerp(point.Position.x);
-            point.ZT = layout.GetZSpan(point.ZSpan).InverseLerp(point.Position.y);
+            float x = xSpan.Evaluate(Clamp01(point.regionLerp.x));
+            float y = zSpan.Evaluate(Clamp01(point.regionLerp.y));
+
+            return new Vector2(x, y);
         }
 
-        private static float ResolveY(ProfilePoint point, Rect bounds, ProfileSpanLayoutData layout)
+        public static void SetFromPosition(
+            ref ProfilePoint point,
+            Vector2 position,
+            Rect bounds,
+            float paddingGuideX,
+            float borderGuideX)
         {
-            if (point.YAnchor != CanvasAnchorY.Floating)
-            {
-                switch (point.YAnchor)
-                {
-                    case CanvasAnchorY.Top:
-                        return bounds.yMin + point.OffsetY;
-                    case CanvasAnchorY.Bottom:
-                        return bounds.yMax + point.OffsetY;
-                    case CanvasAnchorY.Center:
-                        return bounds.center.y + point.OffsetY;
-                }
-            }
+            ProfileCanvasDocument doc = BuildDoc(bounds, paddingGuideX, borderGuideX);
+            ProfileSpanLayoutData layout = ProfileSpanLayout.Build(doc);
 
-            return layout.GetZSpan(point.ZSpan).Evaluate(point.ZT);
+            point.xRegion = DetectXRegion(position.x, layout);
+            point.zRegion = DetectZRegion(position.y, layout);
+
+            FloatSpan xSpan = GetXSpan(point.xRegion, layout);
+            FloatSpan zSpan = GetZSpan(point.zRegion, layout);
+
+            point.regionLerp = new Vector2(
+                Clamp01(xSpan.InverseLerp(position.x)),
+                Clamp01(zSpan.InverseLerp(position.y))
+            );
         }
 
-        private static ProfileXSpan DetectXSpan(float x, ProfileSpanLayoutData layout)
+        private static ProfileXRegion DetectXRegion(float x, ProfileSpanLayoutData layout)
         {
             if (x <= layout.XPaddingToContent.Max)
-                return ProfileXSpan.PaddingToContent;
+                return ProfileXRegion.Inner;
 
-            return ProfileXSpan.ContentToBorder;
+            return ProfileXRegion.Outer;
         }
 
-        private static ProfileZSpan DetectZSpan(float z, ProfileSpanLayoutData layout)
+        private static ProfileZRegion DetectZRegion(float z, ProfileSpanLayoutData layout)
         {
             if (z <= layout.ZPositiveBorderToContent.Max)
-                return ProfileZSpan.PositiveBorderToContent;
-            if (z <= layout.ZPositiveContentToPadding.Max)
-                return ProfileZSpan.PositiveContentToPadding;
-            if (z <= layout.ZMainDepth.Max)
-                return ProfileZSpan.MainDepth;
-            if (z <= layout.ZNegativePaddingToContent.Max)
-                return ProfileZSpan.NegativePaddingToContent;
+                return ProfileZRegion.PositiveOuter;
 
-            return ProfileZSpan.NegativeContentToBorder;
+            if (z <= layout.ZPositiveContentToPadding.Max)
+                return ProfileZRegion.PositiveInner;
+
+            if (z <= layout.ZMainDepth.Max)
+                return ProfileZRegion.Center;
+
+            if (z <= layout.ZNegativePaddingToContent.Max)
+                return ProfileZRegion.NegativeInner;
+
+            return ProfileZRegion.NegativeOuter;
+        }
+
+        private static FloatSpan GetXSpan(ProfileXRegion region, ProfileSpanLayoutData layout)
+        {
+            return region switch
+            {
+                ProfileXRegion.Inner => layout.XPaddingToContent,
+                ProfileXRegion.Outer => layout.XContentToBorder,
+                _ => layout.XPaddingToContent,
+            };
+        }
+
+        private static FloatSpan GetZSpan(ProfileZRegion region, ProfileSpanLayoutData layout)
+        {
+            return region switch
+            {
+                ProfileZRegion.PositiveOuter => layout.ZPositiveBorderToContent,
+                ProfileZRegion.PositiveInner => layout.ZPositiveContentToPadding,
+                ProfileZRegion.Center => layout.ZMainDepth,
+                ProfileZRegion.NegativeInner => layout.ZNegativePaddingToContent,
+                ProfileZRegion.NegativeOuter => layout.ZNegativeContentToBorder,
+                _ => layout.ZMainDepth,
+            };
         }
 
         private static ProfileCanvasDocument BuildDoc(Rect bounds, float paddingGuideX, float borderGuideX)
@@ -99,6 +125,42 @@ namespace DLN.EditorTools.ShapeStamper
             doc.FrontBorderDepth = borderOnly;
 
             return doc;
+        }
+
+        private static float Clamp01(float value)
+        {
+            return Mathf.Clamp01(value);
+        }
+    }
+
+    public readonly struct FloatSpan
+    {
+        public readonly float Min;
+        public readonly float Max;
+
+        public FloatSpan(float min, float max)
+        {
+            Min = min;
+            Max = max;
+        }
+
+        public float Evaluate(float t)
+        {
+            return Mathf.Lerp(Min, Max, Mathf.Clamp01(t));
+        }
+
+        public float InverseLerp(float value)
+        {
+            float size = Max - Min;
+            if (Mathf.Abs(size) < 0.0001f)
+                return 0.5f;
+
+            return (value - Min) / size;
+        }
+
+        public static implicit operator FloatSpan(ProfileSpan span)
+        {
+            return new FloatSpan(span.Min, span.Max);
         }
     }
 }

@@ -1,30 +1,37 @@
 using System;
 using UnityEngine;
 
-namespace DLN.EditorTools.ShapeStamper
+namespace DLN
 {
+    /// <summary>
+    /// Phase 1 region-based shape point.
+    /// Stores a 3x3 region selection plus interpolation within that region.
+    /// regionLerp is expected to stay in 0..1 on each axis, but is not clamped here.
+    /// </summary>
     [Serializable]
     public struct CanvasPoint
     {
-        public int Id;
-        public Vector2 Position;
+        public ShapeRegionX xRegion;
+        public ShapeRegionY yRegion;
+        public Vector2 regionLerp;
 
-        public CanvasAnchorX XAnchor;
-        public CanvasAnchorY YAnchor;
-
-        public float OffsetX;
-        public float OffsetY;
-
-        public CanvasPoint(int id, Vector2 position)
+        public CanvasPoint(ShapeRegionX xRegion, ShapeRegionY yRegion, Vector2 regionLerp)
         {
-            Id = id;
-            Position = position;
+            this.xRegion = xRegion;
+            this.yRegion = yRegion;
+            this.regionLerp = regionLerp;
+        }
 
-            XAnchor = CanvasAnchorX.Floating;
-            YAnchor = CanvasAnchorY.Floating;
+        public static CanvasPoint Center =>
+            new CanvasPoint(
+                ShapeRegionX.Middle,
+                ShapeRegionY.Middle,
+                new Vector2(0.5f, 0.5f)
+            );
 
-            OffsetX = 0f;
-            OffsetY = 0f;
+        public override readonly string ToString()
+        {
+            return $"CanvasPoint({xRegion}, {yRegion}, {regionLerp})";
         }
     }
 }
