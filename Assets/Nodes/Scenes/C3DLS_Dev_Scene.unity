@@ -119,6 +119,203 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &33473463
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 33473464}
+  - component: {fileID: 33473468}
+  - component: {fileID: 33473467}
+  - component: {fileID: 33473466}
+  - component: {fileID: 33473465}
+  m_Layer: 0
+  m_Name: EndCap
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &33473464
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 33473463}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 924864953}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &33473465
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 33473463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 33473468}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -0.0012566447, y: -0.008341432, z: 0.82184577}
+  CachedSize: {x: 0.66289365, y: 0.6936883, z: 0.000100016594}
+  isEmpty: 0
+--- !u!114 &33473466
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 33473463}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 33473463}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!23 &33473467
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 33473463}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 1202618990}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &33473468
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 33473463}
+  m_Mesh: {fileID: 985088762}
 --- !u!43 &44297603
 Mesh:
   m_ObjectHideFlags: 0
@@ -327,6 +524,60 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
+--- !u!21 &48204641
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AdaptiveShape_ProfileRing_000_Mat
+  m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendOp: 0
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _QueueOffset: 0
+    - _SampleGI: 0
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
+    - _XRMotionVectorsPass: 1
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+    - _Color: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!43 &59540990
 Mesh:
   m_ObjectHideFlags: 0
@@ -535,149 +786,6 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
---- !u!1 &88261455
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 88261456}
-  - component: {fileID: 88261457}
-  m_Layer: 0
-  m_Name: OuterRing_2
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &88261456
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 88261455}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.293, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2088782088}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!120 &88261457
-LineRenderer:
-  serializedVersion: 3
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 88261455}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 0
-  m_LightProbeUsage: 0
-  m_ReflectionProbeUsage: 0
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 847716987}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_Positions:
-  - {x: -0.07382412, y: -0.46210194, z: 1}
-  - {x: 0.35000002, y: 0.32500002, z: 1}
-  - {x: -0.49764824, y: 0.32500002, z: 1}
-  m_Parameters:
-    serializedVersion: 3
-    widthMultiplier: 0.010500001
-    widthCurve:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.33333334
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    colorGradient:
-      serializedVersion: 2
-      key0: {r: 0.101960786, g: 0.5019608, b: 1, a: 1}
-      key1: {r: 0.101960786, g: 0.5019608, b: 1, a: 1}
-      key2: {r: 0, g: 0, b: 0, a: 0}
-      key3: {r: 0, g: 0, b: 0, a: 0}
-      key4: {r: 0, g: 0, b: 0, a: 0}
-      key5: {r: 0, g: 0, b: 0, a: 0}
-      key6: {r: 0, g: 0, b: 0, a: 0}
-      key7: {r: 0, g: 0, b: 0, a: 0}
-      ctime0: 0
-      ctime1: 65535
-      ctime2: 0
-      ctime3: 0
-      ctime4: 0
-      ctime5: 0
-      ctime6: 0
-      ctime7: 0
-      atime0: 0
-      atime1: 65535
-      atime2: 0
-      atime3: 0
-      atime4: 0
-      atime5: 0
-      atime6: 0
-      atime7: 0
-      m_Mode: 0
-      m_ColorSpace: -1
-      m_NumColorKeys: 2
-      m_NumAlphaKeys: 2
-    numCornerVertices: 2
-    numCapVertices: 2
-    alignment: 0
-    textureMode: 0
-    textureScale: {x: 1, y: 1}
-    shadowBias: 0.5
-    generateLightingData: 0
-  m_UseWorldSpace: 0
-  m_Loop: 1
-  m_ApplyActiveColorSpace: 1
 --- !u!114 &100487346
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -750,7 +858,61 @@ MonoBehaviour:
   CachedCenter: {x: 0, y: 0, z: 0}
   CachedSize: {x: 1, y: 1, z: 1}
   isEmpty: 0
---- !u!1 &135527037
+--- !u!21 &128364677
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AdaptiveShape_ProfileRing_001_Mat
+  m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendOp: 0
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _QueueOffset: 0
+    - _SampleGI: 0
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
+    - _XRMotionVectorsPass: 1
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+    - _Color: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
+--- !u!1 &160422435
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -758,157 +920,39 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 135527041}
-  - component: {fileID: 135527040}
-  - component: {fileID: 135527039}
-  - component: {fileID: 135527038}
+  - component: {fileID: 160422436}
+  - component: {fileID: 160422439}
+  - component: {fileID: 160422438}
+  - component: {fileID: 160422437}
   m_Layer: 0
-  m_Name: Adaptive Shape
+  m_Name: OuterRing_001
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &135527038
+--- !u!4 &160422436
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 160422435}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1262933086}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &160422437
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 135527037}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1ddc5390d7601ec4babc0946a25eb491, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.AdaptiveShape
-  smartBounds: {fileID: 135527039}
-  preferSmartBoundsBordersPadding: 1
-  fallbackBordersPadding:
-    x:
-      negativeBorder: 0
-      negativePadding: 0
-      minContentsSize: 0
-      positivePadding: 0
-      positiveBorder: 0
-    y:
-      negativeBorder: 0
-      negativePadding: 0
-      minContentsSize: 0
-      positivePadding: 0
-      positiveBorder: 0
-    z:
-      negativeBorder: 0
-      negativePadding: 0
-      minContentsSize: 0
-      positivePadding: 0
-      positiveBorder: 0
-  shapeDocument:
-    worldSizeMeters: {x: 1, y: 1}
-    points:
-    - Id: 0
-      Position: {x: 0.15, y: 0.15}
-      XAnchor: 0
-      YAnchor: 0
-      ProfileXAnchor: 0
-      ProfileZAnchor: 0
-      OffsetX: 0
-      OffsetY: 0
-    - Id: 1
-      Position: {x: 0.85, y: 0.15}
-      XAnchor: 0
-      YAnchor: 0
-      ProfileXAnchor: 0
-      ProfileZAnchor: 0
-      OffsetX: 0
-      OffsetY: 0
-    - Id: 2
-      Position: {x: 0.5, y: 0.8}
-      XAnchor: 0
-      YAnchor: 0
-      ProfileXAnchor: 0
-      ProfileZAnchor: 0
-      OffsetX: 0
-      OffsetY: 0
-    edges:
-    - Id: 0
-      A: 0
-      B: 1
-      ProfileXScale: 1
-    - Id: 1
-      A: 1
-      B: 2
-      ProfileXScale: 1
-    - Id: 2
-      A: 2
-      B: 0
-      ProfileXScale: 1
-    hasInnerShape: 0
-    innerPoints: []
-    innerEdges: []
-    leftPadding: 0
-    rightPadding: 0
-    topPadding: 0
-    bottomPadding: 0
-    leftBorder: 0.2
-    rightBorder: 0
-    topBorder: 0
-    bottomBorder: 0
-    revision: 2
-    editMode: 0
-  profileDocument:
-    worldSizeMeters: {x: 1, y: 1}
-    points:
-    - Id: 0
-      Position: {x: 0, y: 0}
-      XAnchor: 0
-      YAnchor: 3
-      ProfileXAnchor: 1
-      ProfileZAnchor: 0
-      OffsetX: 0
-      OffsetY: 0
-    - Id: 1
-      Position: {x: 0, y: 0.25}
-      XAnchor: 0
-      YAnchor: 0
-      ProfileXAnchor: 2
-      ProfileZAnchor: 0
-      OffsetX: 0
-      OffsetY: 0
-    - Id: 2
-      Position: {x: 0.05, y: 1}
-      XAnchor: 0
-      YAnchor: 1
-      ProfileXAnchor: 3
-      ProfileZAnchor: 0
-      OffsetX: 0
-      OffsetY: 0
-    edges:
-    - Id: 0
-      A: 0
-      B: 1
-      ProfileXScale: 1
-    - Id: 1
-      A: 1
-      B: 2
-      ProfileXScale: 1
-    leftPadding: 0
-    rightPadding: 0
-    topPadding: 0
-    bottomPadding: 0
-    leftBorder: 0.2
-    rightBorder: 0
-    topBorder: 0
-    bottomBorder: 0
-    frontPaddingDepth: 0.1
-    frontBorderDepth: 0.2
-    revision: 7
---- !u!114 &135527039
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 135527037}
+  m_GameObject: {fileID: 160422435}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
@@ -952,7 +996,7 @@ MonoBehaviour:
         interpMax: 1
   bordersPadding:
     x:
-      negativeBorder: 0.2
+      negativeBorder: 0
       negativePadding: 0
       minContentsSize: 0
       positivePadding: 0
@@ -964,29 +1008,29 @@ MonoBehaviour:
       positivePadding: 0
       positiveBorder: 0
     z:
-      negativeBorder: 0.2
-      negativePadding: 0.1
-      minContentsSize: 0.1
-      positivePadding: 0.1
-      positiveBorder: 0.2
-  boundsObject: {fileID: 0}
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 160422439}
   proxyTarget: {fileID: 0}
-  CachedCenter: {x: -1000, y: -1000, z: -1000}
-  CachedSize: {x: -1000, y: -1000, z: -1000}
-  isEmpty: 1
---- !u!114 &135527040
+  CachedCenter: {x: -0.01920849, y: -0.12750483, z: 0.21670566}
+  CachedSize: {x: 1.2693046, y: 1.3278053, z: 0.00999999}
+  isEmpty: 0
+--- !u!114 &160422438
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 135527037}
+  m_GameObject: {fileID: 160422435}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
-  target: {fileID: 135527037}
+  target: {fileID: 160422435}
   showVisuals: 1
   showOnlyWhenSelected: 1
   showSelectedRegion: 1
@@ -1007,21 +1051,171 @@ MonoBehaviour:
   bordersLabelPlacement: 5
   contentsLabelPlacement: 7
   paddingLabelPlacement: 7
---- !u!4 &135527041
-Transform:
+--- !u!120 &160422439
+LineRenderer:
+  serializedVersion: 3
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 135527037}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_GameObject: {fileID: 160422435}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 1383472989}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Positions:
+  - {x: 0.060726643, y: -0.7864075, z: 0.21670566}
+  - {x: 0.61044383, y: 0.5077133, z: 0.21670566}
+  - {x: -0.6488608, y: 0.53139776, z: 0.21670566}
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 0.01
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 0.14901961, g: 0.8509804, b: 1, a: 1}
+      key1: {r: 0.14901961, g: 0.8509804, b: 1, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 2
+    numCapVertices: 2
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_UseWorldSpace: 0
+  m_Loop: 1
+  m_ApplyActiveColorSpace: 1
+--- !u!21 &222442560
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AdaptiveShape_InnerProfileRing_Mat
+  m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendOp: 0
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _QueueOffset: 0
+    - _SampleGI: 0
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
+    - _XRMotionVectorsPass: 1
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+    - _Color: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!43 &252490507
 Mesh:
   m_ObjectHideFlags: 0
@@ -1556,6 +1750,431 @@ MonoBehaviour:
   bordersLabelPlacement: 5
   contentsLabelPlacement: 7
   paddingLabelPlacement: 7
+--- !u!43 &308141775
+Mesh:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AdaptiveShape_StartCap
+  serializedVersion: 12
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 3
+    topology: 0
+    baseVertex: 0
+    firstVertex: 0
+    vertexCount: 3
+    localAABB:
+      m_Center: {x: 0.000000014901161, y: 0.000000014901161, z: 0.0087616835}
+      m_Extent: {x: 0.31057245, y: 0.325, z: 0}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose: []
+  m_BoneNameHashes: 
+  m_RootBoneNameHash: 0
+  m_BonesAABB: []
+  m_VariableBoneCountWeights:
+    m_Data: 
+  m_MeshCompression: 0
+  m_IsReadable: 1
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexFormat: 0
+  m_IndexBuffer: 000001000200
+  m_VertexData:
+    serializedVersion: 3
+    m_VertexCount: 3
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 3
+    - stream: 0
+      offset: 12
+      format: 0
+      dimension: 3
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    m_DataSize: 72
+    _typelessdata: d07e213d6666a6be2a8d0f3c00000000000000000000803f5a039f3e306ba03e2a8d0f3c00000000000000000000803f59039fbe6766a63e2a8d0f3c00000000000000000000803f
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_UV:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Normals:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_NormalSigns:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_UVInfo: 0
+  m_LocalAABB:
+    m_Center: {x: 0.000000014901161, y: 0.000000014901161, z: 0.0087616835}
+    m_Extent: {x: 0.31057245, y: 0.325, z: 0}
+  m_MeshUsageFlags: 0
+  m_CookingOptions: 30
+  m_BakedConvexCollisionMesh: 
+  m_BakedTriangleCollisionMesh: 
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 1
+  m_MeshOptimizationFlags: 1
+  m_StreamData:
+    serializedVersion: 2
+    offset: 0
+    size: 0
+    path: 
+  m_MeshLodInfo:
+    serializedVersion: 2
+    m_LodSelectionCurve:
+      serializedVersion: 1
+      m_LodSlope: 0
+      m_LodBias: 0
+    m_NumLevels: 1
+    m_SubMeshes:
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
+--- !u!1 &310247148
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 310247149}
+  - component: {fileID: 310247152}
+  - component: {fileID: 310247151}
+  - component: {fileID: 310247150}
+  m_Layer: 0
+  m_Name: EndInnerRing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &310247149
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 310247148}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 354855268}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &310247150
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 310247148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 310247152}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -1000, y: -1000, z: -1000}
+  CachedSize: {x: -1000, y: -1000, z: -1000}
+  isEmpty: 1
+--- !u!114 &310247151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 310247148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 310247148}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!120 &310247152
+LineRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 310247148}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2087714593}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Positions: []
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 0.01
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 1, g: 0.6313726, b: 0.23137255, a: 1}
+      key1: {r: 1, g: 0.6313726, b: 0.23137255, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 2
+    numCapVertices: 2
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_UseWorldSpace: 0
+  m_Loop: 1
+  m_ApplyActiveColorSpace: 1
 --- !u!1 &318826953
 GameObject:
   m_ObjectHideFlags: 0
@@ -3150,6 +3769,326 @@ MonoBehaviour:
   bordersLabelPlacement: 5
   contentsLabelPlacement: 7
   paddingLabelPlacement: 7
+--- !u!1 &354855267
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 354855268}
+  - component: {fileID: 354855270}
+  - component: {fileID: 354855269}
+  m_Layer: 0
+  m_Name: ProfileRing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &354855268
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 354855267}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1351229745}
+  - {fileID: 1082807050}
+  - {fileID: 1093289353}
+  - {fileID: 310247149}
+  m_Father: {fileID: 794114132}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &354855269
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 354855267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 0}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -0.01920849, y: -0.12750483, z: 0.41342288}
+  CachedSize: {x: 1.2693046, y: 1.3278053, z: 0.82684577}
+  isEmpty: 0
+--- !u!114 &354855270
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 354855267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 354855267}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!43 &425082061
+Mesh:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AdaptiveShape_Segment_000
+  serializedVersion: 12
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 18
+    topology: 0
+    baseVertex: 0
+    firstVertex: 0
+    vertexCount: 6
+    localAABB:
+      m_Center: {x: -0.01920849, y: -0.12750486, z: 0.11273368}
+      m_Extent: {x: 0.6296523, y: 0.65890265, z: 0.10397199}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose: []
+  m_BoneNameHashes: 
+  m_RootBoneNameHash: 0
+  m_BonesAABB: []
+  m_VariableBoneCountWeights:
+    m_Data: 
+  m_MeshCompression: 0
+  m_IsReadable: 1
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexFormat: 0
+  m_IndexBuffer: 000001000300000003000200020003000500020005000400040005000100040001000000
+  m_VertexData:
+    serializedVersion: 3
+    m_VertexCount: 6
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 3
+    - stream: 0
+      offset: 12
+      format: 0
+      dimension: 3
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    m_DataSize: 144
+    _typelessdata: d07e213d6666a6be2a8d0f3ca5f8cabee44fb93e59fd573f80bc783d005249bf17e85d3e0c53303e539ad23e7723653f5a039f3e306ba03e2a8d0f3c45c263beaa0408bf7e44513f0c461c3f80f9013f17e85d3eb9b403bfbc29ecbdf786593f59039fbe6766a63e2a8d0f3c7940133fee04043e26cb4e3fbe1b26bfaf09083f17e85d3eec41b23e9ebfa2be1ac4613f
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_UV:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Normals:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_NormalSigns:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_UVInfo: 0
+  m_LocalAABB:
+    m_Center: {x: -0.01920849, y: -0.12750486, z: 0.11273368}
+    m_Extent: {x: 0.6296523, y: 0.65890265, z: 0.10397199}
+  m_MeshUsageFlags: 0
+  m_CookingOptions: 30
+  m_BakedConvexCollisionMesh: 
+  m_BakedTriangleCollisionMesh: 
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 1
+  m_MeshOptimizationFlags: 1
+  m_StreamData:
+    serializedVersion: 2
+    offset: 0
+    size: 0
+    path: 
+  m_MeshLodInfo:
+    serializedVersion: 2
+    m_LodSelectionCurve:
+      serializedVersion: 1
+      m_LodSlope: 0
+      m_LodBias: 0
+    m_NumLevels: 1
+    m_SubMeshes:
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
 --- !u!43 &450338891
 Mesh:
   m_ObjectHideFlags: 0
@@ -3328,7 +4267,185 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
---- !u!1 &458754786
+--- !u!43 &474456303
+Mesh:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AdaptiveShape_Segment_001
+  serializedVersion: 12
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 18
+    topology: 0
+    baseVertex: 0
+    firstVertex: 0
+    vertexCount: 6
+    localAABB:
+      m_Center: {x: -0.01920849, y: -0.12750486, z: 0.5192757}
+      m_Extent: {x: 0.6296523, y: 0.65890265, z: 0.30257004}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose: []
+  m_BoneNameHashes: 
+  m_RootBoneNameHash: 0
+  m_BonesAABB: []
+  m_VariableBoneCountWeights:
+    m_Data: 
+  m_MeshCompression: 0
+  m_IsReadable: 1
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexFormat: 0
+  m_IndexBuffer: 000001000300000003000200020003000500020005000400040005000100040001000000
+  m_VertexData:
+    serializedVersion: 3
+    m_VertexCount: 6
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 3
+    - stream: 0
+      offset: 12
+      format: 0
+      dimension: 3
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    m_DataSize: 144
+    _typelessdata: 80bc783d005249bf17e85d3eeb53a6be8cdf433f89500ebfe533273de2dab5be7c64523f5412203f8826253f55d7e0be0c461c3f80f9013f17e85d3e23e91cbfaae321bf3d8bf2beb10ea93e18eea63e7c64523fe1d969bf7bd2a53d3928ccbebe1b26bfaf09083f17e85d3e49925f3f71889ebda43ef6be1c58aabe3a50ad3e7c64523fdb24b33e48f752bffc16e4be
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_UV:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Normals:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_NormalSigns:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_UVInfo: 0
+  m_LocalAABB:
+    m_Center: {x: -0.01920849, y: -0.12750486, z: 0.5192757}
+    m_Extent: {x: 0.6296523, y: 0.65890265, z: 0.30257004}
+  m_MeshUsageFlags: 0
+  m_CookingOptions: 30
+  m_BakedConvexCollisionMesh: 
+  m_BakedTriangleCollisionMesh: 
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 1
+  m_MeshOptimizationFlags: 1
+  m_StreamData:
+    serializedVersion: 2
+    offset: 0
+    size: 0
+    path: 
+  m_MeshLodInfo:
+    serializedVersion: 2
+    m_LodSelectionCurve:
+      serializedVersion: 1
+      m_LodSlope: 0
+      m_LodBias: 0
+    m_NumLevels: 1
+    m_SubMeshes:
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
+--- !u!1 &498737884
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3336,141 +4453,194 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 458754787}
-  - component: {fileID: 458754788}
+  - component: {fileID: 498737885}
+  - component: {fileID: 498737887}
+  - component: {fileID: 498737886}
   m_Layer: 0
-  m_Name: OuterRing_0
+  m_Name: ProfileRing
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &458754787
+--- !u!4 &498737885
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 458754786}
+  m_GameObject: {fileID: 498737884}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.393, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2088782088}
+  m_Children:
+  - {fileID: 864208633}
+  - {fileID: 1658459531}
+  - {fileID: 740534772}
+  - {fileID: 1007321014}
+  m_Father: {fileID: 1665148554}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!120 &458754788
-LineRenderer:
-  serializedVersion: 3
+--- !u!114 &498737886
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 458754786}
+  m_GameObject: {fileID: 498737884}
   m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 0
-  m_LightProbeUsage: 0
-  m_ReflectionProbeUsage: 0
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 847716987}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_Positions:
-  - {x: 0, y: -0.325, z: 0}
-  - {x: 0.35000002, y: 0.32500002, z: 0}
-  - {x: -0.35, y: 0.32500002, z: 0}
-  m_Parameters:
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 0}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -0.01920849, y: -0.12750483, z: 0.11085282}
+  CachedSize: {x: 1.2693046, y: 1.3278053, z: 0.22170565}
+  isEmpty: 0
+--- !u!114 &498737887
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 498737884}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 498737884}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!21 &559125881
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AdaptiveShape_StartCap_Mat
+  m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
     serializedVersion: 3
-    widthMultiplier: 0.010500001
-    widthCurve:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.33333334
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    colorGradient:
-      serializedVersion: 2
-      key0: {r: 0.2, g: 1, b: 0.3019608, a: 1}
-      key1: {r: 0.2, g: 1, b: 0.3019608, a: 1}
-      key2: {r: 0, g: 0, b: 0, a: 0}
-      key3: {r: 0, g: 0, b: 0, a: 0}
-      key4: {r: 0, g: 0, b: 0, a: 0}
-      key5: {r: 0, g: 0, b: 0, a: 0}
-      key6: {r: 0, g: 0, b: 0, a: 0}
-      key7: {r: 0, g: 0, b: 0, a: 0}
-      ctime0: 0
-      ctime1: 65535
-      ctime2: 0
-      ctime3: 0
-      ctime4: 0
-      ctime5: 0
-      ctime6: 0
-      ctime7: 0
-      atime0: 0
-      atime1: 65535
-      atime2: 0
-      atime3: 0
-      atime4: 0
-      atime5: 0
-      atime6: 0
-      atime7: 0
-      m_Mode: 0
-      m_ColorSpace: -1
-      m_NumColorKeys: 2
-      m_NumAlphaKeys: 2
-    numCornerVertices: 2
-    numCapVertices: 2
-    alignment: 0
-    textureMode: 0
-    textureScale: {x: 1, y: 1}
-    shadowBias: 0.5
-    generateLightingData: 0
-  m_UseWorldSpace: 0
-  m_Loop: 1
-  m_ApplyActiveColorSpace: 1
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendOp: 0
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _QueueOffset: 0
+    - _SampleGI: 0
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
+    - _XRMotionVectorsPass: 1
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
+    - _Color: {r: 0.85, g: 0.85, b: 0.85, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!43 &629054279
 Mesh:
   m_ObjectHideFlags: 0
@@ -3784,14 +4954,293 @@ MonoBehaviour:
   bordersLabelPlacement: 5
   contentsLabelPlacement: 7
   paddingLabelPlacement: 7
---- !u!21 &847716987
+--- !u!1 &698922655
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 698922656}
+  - component: {fileID: 698922658}
+  - component: {fileID: 698922657}
+  m_Layer: 0
+  m_Name: Debug
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &698922656
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 698922655}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1262933086}
+  - {fileID: 1717022378}
+  - {fileID: 724646953}
+  m_Father: {fileID: 1026105337}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &698922657
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 698922655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 0}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -0.01920849, y: -0.12750483, z: 0.41342288}
+  CachedSize: {x: 1.2693046, y: 1.3278053, z: 0.82684577}
+  isEmpty: 0
+--- !u!114 &698922658
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 698922655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 698922655}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!1 &724646952
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 724646953}
+  - component: {fileID: 724646955}
+  - component: {fileID: 724646954}
+  m_Layer: 0
+  m_Name: Guides
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &724646953
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 724646952}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 698922656}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &724646954
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 724646952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 0}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -1000, y: -1000, z: -1000}
+  CachedSize: {x: -1000, y: -1000, z: -1000}
+  isEmpty: 1
+--- !u!114 &724646955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 724646952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 724646952}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!21 &738026248
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ShapeStamp_ProfileRingPreview_Mat
+  m_Name: OuterRing_Mat
   m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -3834,23 +5283,129 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.72, g: 0.72, b: 0.72, a: 1}
-    - _Color: {r: 0.72, g: 0.72, b: 0.72, a: 1}
+    - _BaseColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+    - _Color: {r: 0.75, g: 0.75, b: 0.75, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &937505108
+--- !u!1 &740534771
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 740534772}
+  - component: {fileID: 740534775}
+  - component: {fileID: 740534774}
+  - component: {fileID: 740534773}
+  m_Layer: 0
+  m_Name: StartInnerRing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &740534772
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 740534771}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 498737885}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &740534773
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 271543933}
+  m_GameObject: {fileID: 740534771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 740534775}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -1000, y: -1000, z: -1000}
+  CachedSize: {x: -1000, y: -1000, z: -1000}
+  isEmpty: 1
+--- !u!114 &740534774
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 740534771}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DLN.BoundsVisuals
-  target: {fileID: 271543933}
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 740534771}
   showVisuals: 1
   showOnlyWhenSelected: 1
   showSelectedRegion: 1
@@ -3871,14 +5426,122 @@ MonoBehaviour:
   bordersLabelPlacement: 5
   contentsLabelPlacement: 7
   paddingLabelPlacement: 7
---- !u!21 &969416310
+--- !u!120 &740534775
+LineRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 740534771}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 222442560}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Positions: []
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 0.01
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 0.9019608, g: 0.49411765, b: 0.18039216, a: 1}
+      key1: {r: 0.9019608, g: 0.49411765, b: 0.18039216, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 2
+    numCapVertices: 2
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_UseWorldSpace: 0
+  m_Loop: 1
+  m_ApplyActiveColorSpace: 1
+--- !u!21 &785846056
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ShapeStamp_ProfileSegment_1_Mat
+  m_Name: AdaptiveShape_Segment_001_Mat
   m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -3925,6 +5588,703 @@ Material:
     - _Color: {r: 0.8, g: 0.8, b: 0.8, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
+--- !u!1 &794114131
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 794114132}
+  - component: {fileID: 794114137}
+  - component: {fileID: 794114136}
+  - component: {fileID: 794114135}
+  - component: {fileID: 794114134}
+  - component: {fileID: 794114133}
+  m_Layer: 0
+  m_Name: Segment_001
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &794114132
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 794114131}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 354855268}
+  m_Father: {fileID: 1429619194}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &794114133
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 794114131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 794114136}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -0.01920849, y: -0.12750483, z: 0.41342288}
+  CachedSize: {x: 1.2693046, y: 1.3278053, z: 0.82684577}
+  isEmpty: 0
+--- !u!114 &794114134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 794114131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 794114131}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!23 &794114135
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 794114131}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 785846056}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &794114136
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 794114131}
+  m_Mesh: {fileID: 474456303}
+--- !u!114 &794114137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 794114131}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21f7eeb5c06b1e445ae747b1bfee7fef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.AdaptiveShapeSegment
+  segmentIndex: 1
+  profileRingObject: {fileID: 354855267}
+  profileStartOuterRingObject: {fileID: 1351229744}
+  profileEndOuterRingObject: {fileID: 1082807049}
+  profileStartInnerRingObject: {fileID: 0}
+  profileEndInnerRingObject: {fileID: 0}
+  meshFilter: {fileID: 794114136}
+  meshRenderer: {fileID: 794114135}
+--- !u!21 &796787964
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AdaptiveShape_ProfileRing_000_Mat
+  m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendOp: 0
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _QueueOffset: 0
+    - _SampleGI: 0
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
+    - _XRMotionVectorsPass: 1
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+    - _Color: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
+--- !u!1 &864208632
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 864208633}
+  - component: {fileID: 864208636}
+  - component: {fileID: 864208635}
+  - component: {fileID: 864208634}
+  m_Layer: 0
+  m_Name: StartOuterRing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &864208633
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 864208632}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 498737885}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &864208634
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 864208632}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 864208636}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: 0, y: 0, z: 0.0087616835}
+  CachedSize: {x: 0.6311449, y: 0.65999997, z: 0.01}
+  isEmpty: 0
+--- !u!114 &864208635
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 864208632}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 864208632}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!120 &864208636
+LineRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 864208632}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 796787964}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Positions:
+  - {x: 0.03942758, y: -0.325, z: 0.0087616835}
+  - {x: 0.31057245, y: 0.31331778, z: 0.0087616835}
+  - {x: -0.31057242, y: 0.32500002, z: 0.0087616835}
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 0.01
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 0.27058825, g: 0.27058825, b: 0.27058825, a: 1}
+      key1: {r: 0.27058825, g: 0.27058825, b: 0.27058825, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 2
+    numCapVertices: 2
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_UseWorldSpace: 0
+  m_Loop: 1
+  m_ApplyActiveColorSpace: 1
+--- !u!1 &924864952
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 924864953}
+  - component: {fileID: 924864955}
+  - component: {fileID: 924864954}
+  m_Layer: 0
+  m_Name: MainShape
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &924864953
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 924864952}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1429619194}
+  - {fileID: 1447499646}
+  - {fileID: 33473464}
+  m_Father: {fileID: 1026105337}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &924864954
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 924864952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 0}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -0.01920849, y: -0.12750483, z: 0.41342288}
+  CachedSize: {x: 1.2693046, y: 1.3278053, z: 0.82684577}
+  isEmpty: 0
+--- !u!114 &924864955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 924864952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 924864952}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!114 &937505108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 271543933}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DLN.BoundsVisuals
+  target: {fileID: 271543933}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
 --- !u!1 &979736219
 GameObject:
   m_ObjectHideFlags: 0
@@ -4109,6 +6469,60 @@ MonoBehaviour:
   bordersLabelPlacement: 5
   contentsLabelPlacement: 7
   paddingLabelPlacement: 7
+--- !u!21 &983257031
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AdaptiveShape_InnerProfileRing_Mat
+  m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendOp: 0
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _QueueOffset: 0
+    - _SampleGI: 0
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
+    - _XRMotionVectorsPass: 1
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+    - _Color: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!114 &984626475
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4214,14 +6628,439 @@ MonoBehaviour:
   bordersLabelPlacement: 5
   contentsLabelPlacement: 7
   paddingLabelPlacement: 7
---- !u!21 &995262597
+--- !u!43 &985088762
+Mesh:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AdaptiveShape_EndCap
+  serializedVersion: 12
+  m_SubMeshes:
+  - serializedVersion: 2
+    firstByte: 0
+    indexCount: 3
+    topology: 0
+    baseVertex: 0
+    firstVertex: 0
+    vertexCount: 3
+    localAABB:
+      m_Center: {x: -0.0012566298, y: -0.008341432, z: 0.82184577}
+      m_Extent: {x: 0.33144683, y: 0.34684414, z: 0}
+  m_Shapes:
+    vertices: []
+    shapes: []
+    channels: []
+    fullWeights: []
+  m_BindPose: []
+  m_BoneNameHashes: 
+  m_RootBoneNameHash: 0
+  m_BonesAABB: []
+  m_VariableBoneCountWeights:
+    m_Data: 
+  m_MeshCompression: 0
+  m_IsReadable: 1
+  m_KeepVertices: 1
+  m_KeepIndices: 1
+  m_IndexFormat: 0
+  m_IndexBuffer: 000002000100
+  m_VertexData:
+    serializedVersion: 3
+    m_VertexCount: 3
+    m_Channels:
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 3
+    - stream: 0
+      offset: 12
+      format: 0
+      dimension: 3
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    m_DataSize: 72
+    _typelessdata: e533273de2dab5be7c64523f0000000000000000000080bfb10ea93e18eea63e7c64523f0000000000000000000080bf1c58aabe3a50ad3e7c64523f0000000000000000000080bf
+  m_CompressedMesh:
+    m_Vertices:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_UV:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Normals:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Tangents:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Weights:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_NormalSigns:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_TangentSigns:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_FloatColors:
+      m_NumItems: 0
+      m_Range: 0
+      m_Start: 0
+      m_Data: 
+      m_BitSize: 0
+    m_BoneIndices:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_Triangles:
+      m_NumItems: 0
+      m_Data: 
+      m_BitSize: 0
+    m_UVInfo: 0
+  m_LocalAABB:
+    m_Center: {x: -0.0012566298, y: -0.008341432, z: 0.82184577}
+    m_Extent: {x: 0.33144683, y: 0.34684414, z: 0}
+  m_MeshUsageFlags: 0
+  m_CookingOptions: 30
+  m_BakedConvexCollisionMesh: 
+  m_BakedTriangleCollisionMesh: 
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 1
+  m_MeshOptimizationFlags: 1
+  m_StreamData:
+    serializedVersion: 2
+    offset: 0
+    size: 0
+    path: 
+  m_MeshLodInfo:
+    serializedVersion: 2
+    m_LodSelectionCurve:
+      serializedVersion: 1
+      m_LodSlope: 0
+      m_LodBias: 0
+    m_NumLevels: 1
+    m_SubMeshes:
+    - serializedVersion: 2
+      m_Levels:
+      - serializedVersion: 1
+        m_IndexStart: 0
+        m_IndexCount: 0
+--- !u!1 &1007321013
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1007321014}
+  - component: {fileID: 1007321017}
+  - component: {fileID: 1007321016}
+  - component: {fileID: 1007321015}
+  m_Layer: 0
+  m_Name: EndInnerRing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1007321014
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1007321013}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 498737885}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1007321015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1007321013}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 1007321017}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -1000, y: -1000, z: -1000}
+  CachedSize: {x: -1000, y: -1000, z: -1000}
+  isEmpty: 1
+--- !u!114 &1007321016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1007321013}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 1007321013}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!120 &1007321017
+LineRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1007321013}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 983257031}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Positions: []
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 0.01
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 1, g: 0.6313726, b: 0.23137255, a: 1}
+      key1: {r: 1, g: 0.6313726, b: 0.23137255, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 2
+    numCapVertices: 2
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_UseWorldSpace: 0
+  m_Loop: 1
+  m_ApplyActiveColorSpace: 1
+--- !u!21 &1013931825
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ShapeStamp_EndCap_Mat
+  m_Name: OuterRing_Mat
   m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -4264,8 +7103,354 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.65, g: 0.65, b: 0.65, a: 1}
-    - _Color: {r: 0.65, g: 0.65, b: 0.65, a: 1}
+    - _BaseColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+    - _Color: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
+--- !u!1 &1026105333
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1026105337}
+  - component: {fileID: 1026105336}
+  - component: {fileID: 1026105335}
+  - component: {fileID: 1026105334}
+  m_Layer: 0
+  m_Name: Adaptive Shape
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1026105334
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1026105333}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ddc5390d7601ec4babc0946a25eb491, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.AdaptiveShape
+  smartBounds: {fileID: 1026105335}
+  preferSmartBoundsBordersPadding: 1
+  fallbackBordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  mainShapeRoot: {fileID: 924864953}
+  ringSegmentsRoot: {fileID: 1429619194}
+  startCapRoot: {fileID: 1447499646}
+  endCapRoot: {fileID: 33473464}
+  debugRoot: {fileID: 698922656}
+  shapeDocument:
+    worldSizeMeters: {x: 1, y: 1}
+    points:
+    - Id: 0
+      Position: {x: 0.15, y: 0.15}
+      XAnchor: 0
+      YAnchor: 0
+      OffsetX: 0
+      OffsetY: 0
+    - Id: 1
+      Position: {x: 0.77114487, y: 0.16168225}
+      XAnchor: 0
+      YAnchor: 0
+      OffsetX: 0
+      OffsetY: 0
+    - Id: 2
+      Position: {x: 0.5, y: 0.8}
+      XAnchor: 0
+      YAnchor: 0
+      OffsetX: 0
+      OffsetY: 0
+    edges:
+    - Id: 0
+      A: 0
+      B: 1
+      ProfileXScale: 1
+    - Id: 1
+      A: 1
+      B: 2
+      ProfileXScale: 1
+    - Id: 2
+      A: 2
+      B: 0
+      ProfileXScale: 1
+    hasInnerShape: 0
+    innerPoints: []
+    innerEdges: []
+    leftPadding: 0.1
+    rightPadding: 0.1
+    topPadding: 0.1
+    bottomPadding: 0.1
+    leftBorder: 0.1
+    rightBorder: 0.1
+    topBorder: 0.1
+    bottomBorder: 0.1
+    revision: 11
+    editMode: 0
+  profileDocument:
+    worldSizeMeters: {x: 1, y: 1}
+    points:
+    - Id: 0
+      Position: {x: 0, y: 0}
+      XAnchor: 0
+      YAnchor: 3
+      OffsetX: 0
+      OffsetY: 0
+    - Id: 1
+      Position: {x: 0.2, y: 0.21670566}
+      XAnchor: 0
+      YAnchor: 0
+      OffsetX: 0
+      OffsetY: 0
+    - Id: 2
+      Position: {x: 0.0130841285, y: 1}
+      XAnchor: 0
+      YAnchor: 1
+      OffsetX: 0
+      OffsetY: 0
+    profilePoints:
+    - Id: 0
+      Position: {x: 0, y: 0.0087616835}
+      YAnchor: 3
+      OffsetY: 0
+      XSpan: 0
+      ZSpan: 0
+      XT: 0
+      ZT: 0.08761683
+    - Id: 1
+      Position: {x: 0.44824767, y: 0.21670566}
+      YAnchor: 0
+      OffsetY: 0
+      XSpan: 1
+      ZSpan: 2
+      XT: 1
+      ZT: 0.02784277
+    - Id: 2
+      Position: {x: 0.0130841285, y: 0.82184577}
+      YAnchor: 1
+      OffsetY: 0
+      XSpan: 0
+      ZSpan: 3
+      XT: 0.13084128
+      ZT: 0.21845765
+    edges:
+    - Id: 0
+      A: 0
+      B: 1
+      ProfileXScale: 1
+    - Id: 1
+      A: 1
+      B: 2
+      ProfileXScale: 1
+    leftPadding: 0.1
+    rightPadding: 0.1
+    topPadding: 0.1
+    bottomPadding: 0.1
+    leftBorder: 0.1
+    rightBorder: 0.1
+    topBorder: 0.1
+    bottomBorder: 0.1
+    frontPaddingDepth: 0.1
+    frontBorderDepth: 0.1
+    revision: 34
+--- !u!114 &1026105335
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1026105333}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0.1
+      negativePadding: 0.1
+      minContentsSize: 0.1
+      positivePadding: 0.1
+      positiveBorder: 0.1
+    y:
+      negativeBorder: 0.1
+      negativePadding: 0.1
+      minContentsSize: 0.1
+      positivePadding: 0.1
+      positiveBorder: 0.1
+    z:
+      negativeBorder: 0.1
+      negativePadding: 0.1
+      minContentsSize: 0.1
+      positivePadding: 0.1
+      positiveBorder: 0.1
+  boundsObject: {fileID: 0}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -0.01920849, y: -0.12750483, z: 0.41342288}
+  CachedSize: {x: 1.2693046, y: 1.3278053, z: 0.82684577}
+  isEmpty: 0
+--- !u!114 &1026105336
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1026105333}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 1026105333}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!4 &1026105337
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1026105333}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 924864953}
+  - {fileID: 698922656}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!21 &1040007364
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AdaptiveShape_InnerProfileRing_Mat
+  m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendOp: 0
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _QueueOffset: 0
+    - _SampleGI: 0
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
+    - _XRMotionVectorsPass: 1
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+    - _Color: {r: 0.75, g: 0.75, b: 0.75, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!43 &1055134911
@@ -4476,6 +7661,256 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
+--- !u!1 &1082807049
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1082807050}
+  - component: {fileID: 1082807053}
+  - component: {fileID: 1082807052}
+  - component: {fileID: 1082807051}
+  m_Layer: 0
+  m_Name: EndOuterRing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1082807050
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1082807049}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 354855268}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1082807051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1082807049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 1082807053}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -0.0012566447, y: -0.008341432, z: 0.82184577}
+  CachedSize: {x: 0.67289364, y: 0.70368826, z: 0.00999999}
+  isEmpty: 0
+--- !u!114 &1082807052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1082807049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 1082807049}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!120 &1082807053
+LineRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1082807049}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 1134504654}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Positions:
+  - {x: 0.040820975, y: -0.35518557, z: 0.82184577}
+  - {x: 0.3301902, y: 0.32603526, z: 0.82184577}
+  - {x: -0.33270347, y: 0.3385027, z: 0.82184577}
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 0.01
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 0.6313726, g: 0.6313726, b: 0.6313726, a: 1}
+      key1: {r: 0.6313726, g: 0.6313726, b: 0.6313726, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 2
+    numCapVertices: 2
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_UseWorldSpace: 0
+  m_Loop: 1
+  m_ApplyActiveColorSpace: 1
 --- !u!1001 &1090888241
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4885,60 +8320,253 @@ MonoBehaviour:
   bordersLabelPlacement: 5
   contentsLabelPlacement: 7
   paddingLabelPlacement: 7
---- !u!21 &1128960339
-Material:
-  serializedVersion: 8
+--- !u!1 &1093289352
+GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ShapeStamp_StartCap_Mat
-  m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1093289353}
+  - component: {fileID: 1093289356}
+  - component: {fileID: 1093289355}
+  - component: {fileID: 1093289354}
+  m_Layer: 0
+  m_Name: StartInnerRing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1093289353
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1093289352}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 354855268}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1093289354
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1093289352}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 1093289356}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -1000, y: -1000, z: -1000}
+  CachedSize: {x: -1000, y: -1000, z: -1000}
+  isEmpty: 1
+--- !u!114 &1093289355
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1093289352}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 1093289352}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!120 &1093289356
+LineRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1093289352}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 1040007364}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Positions: []
+  m_Parameters:
     serializedVersion: 3
-    m_TexEnvs:
-    - _BaseMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _AddPrecomputedVelocity: 0
-    - _AlphaClip: 0
-    - _AlphaToMask: 0
-    - _Blend: 0
-    - _BlendOp: 0
-    - _Cull: 2
-    - _Cutoff: 0.5
-    - _DstBlend: 0
-    - _DstBlendAlpha: 0
-    - _QueueOffset: 0
-    - _SampleGI: 0
-    - _SrcBlend: 1
-    - _SrcBlendAlpha: 1
-    - _Surface: 0
-    - _XRMotionVectorsPass: 1
-    - _ZWrite: 1
-    m_Colors:
-    - _BaseColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
-    - _Color: {r: 0.85, g: 0.85, b: 0.85, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
+    widthMultiplier: 0.01
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 0.9019608, g: 0.49411765, b: 0.18039216, a: 1}
+      key1: {r: 0.9019608, g: 0.49411765, b: 0.18039216, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 2
+    numCapVertices: 2
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_UseWorldSpace: 0
+  m_Loop: 1
+  m_ApplyActiveColorSpace: 1
 --- !u!43 &1130139280
 Mesh:
   m_ObjectHideFlags: 0
@@ -5117,14 +8745,68 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
---- !u!21 &1152281487
+--- !u!21 &1134504654
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ShapeStamp_ProfileSegment_0_Mat
+  m_Name: AdaptiveShape_ProfileRing_001_Mat
+  m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendOp: 0
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _QueueOffset: 0
+    - _SampleGI: 0
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
+    - _XRMotionVectorsPass: 1
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+    - _Color: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
+--- !u!21 &1179687199
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AdaptiveShape_Segment_000_Mat
   m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -5171,6 +8853,201 @@ Material:
     - _Color: {r: 0.3, g: 0.3, b: 0.3, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
+--- !u!21 &1202618990
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AdaptiveShape_EndCap_Mat
+  m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendOp: 0
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _QueueOffset: 0
+    - _SampleGI: 0
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
+    - _XRMotionVectorsPass: 1
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 0.65, g: 0.65, b: 0.65, a: 1}
+    - _Color: {r: 0.65, g: 0.65, b: 0.65, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
+--- !u!1 &1262933085
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1262933086}
+  - component: {fileID: 1262933088}
+  - component: {fileID: 1262933087}
+  m_Layer: 0
+  m_Name: OuterRings
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1262933086
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1262933085}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2093647492}
+  - {fileID: 160422436}
+  - {fileID: 1583225218}
+  m_Father: {fileID: 698922656}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1262933087
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1262933085}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 0}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -0.01920849, y: -0.12750483, z: 0.4153037}
+  CachedSize: {x: 1.2693046, y: 1.3278053, z: 0.8230841}
+  isEmpty: 0
+--- !u!114 &1262933088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1262933085}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 1262933085}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
 --- !u!1001 &1292719630
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5538,6 +9415,310 @@ MonoBehaviour:
       posEdge:
         regionSizeFrom0To1: 0.03
         desiredSize: 0.03
+--- !u!1 &1351229744
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1351229745}
+  - component: {fileID: 1351229748}
+  - component: {fileID: 1351229747}
+  - component: {fileID: 1351229746}
+  m_Layer: 0
+  m_Name: StartOuterRing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1351229745
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1351229744}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 354855268}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1351229746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1351229744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 1351229748}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -0.01920849, y: -0.12750483, z: 0.21670566}
+  CachedSize: {x: 1.2693046, y: 1.3278053, z: 0.00999999}
+  isEmpty: 0
+--- !u!114 &1351229747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1351229744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 1351229744}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!120 &1351229748
+LineRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1351229744}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 128364677}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Positions:
+  - {x: 0.060726643, y: -0.7864075, z: 0.21670566}
+  - {x: 0.61044383, y: 0.5077133, z: 0.21670566}
+  - {x: -0.6488608, y: 0.53139776, z: 0.21670566}
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 0.01
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 0.49411765, g: 0.49411765, b: 0.49411765, a: 1}
+      key1: {r: 0.49411765, g: 0.49411765, b: 0.49411765, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 2
+    numCapVertices: 2
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_UseWorldSpace: 0
+  m_Loop: 1
+  m_ApplyActiveColorSpace: 1
+--- !u!21 &1383472989
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: OuterRing_Mat
+  m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendOp: 0
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _QueueOffset: 0
+    - _SampleGI: 0
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
+    - _XRMotionVectorsPass: 1
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+    - _Color: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1 &1390336178
 GameObject:
   m_ObjectHideFlags: 0
@@ -5729,6 +9910,146 @@ MonoBehaviour:
   CachedCenter: {x: -1000, y: -1000, z: -1000}
   CachedSize: {x: -1000, y: -1000, z: -1000}
   isEmpty: 1
+--- !u!1 &1429619193
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1429619194}
+  - component: {fileID: 1429619196}
+  - component: {fileID: 1429619195}
+  m_Layer: 0
+  m_Name: RingSegments
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1429619194
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1429619193}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1665148554}
+  - {fileID: 794114132}
+  m_Father: {fileID: 924864953}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1429619195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1429619193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 0}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -0.01920849, y: -0.12750483, z: 0.41342288}
+  CachedSize: {x: 1.2693046, y: 1.3278053, z: 0.82684577}
+  isEmpty: 0
+--- !u!114 &1429619196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1429619193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 1429619193}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
 --- !u!114 &1432830754
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5834,6 +10155,203 @@ MonoBehaviour:
   bordersLabelPlacement: 5
   contentsLabelPlacement: 7
   paddingLabelPlacement: 7
+--- !u!1 &1447499645
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1447499646}
+  - component: {fileID: 1447499650}
+  - component: {fileID: 1447499649}
+  - component: {fileID: 1447499648}
+  - component: {fileID: 1447499647}
+  m_Layer: 0
+  m_Name: StartCap
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1447499646
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1447499645}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 924864953}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1447499647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1447499645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 1447499650}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: 0, y: 0, z: 0.0087616835}
+  CachedSize: {x: 0.6211449, y: 0.65, z: 0.00009999983}
+  isEmpty: 0
+--- !u!114 &1447499648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1447499645}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 1447499645}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!23 &1447499649
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1447499645}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 559125881}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1447499650
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1447499645}
+  m_Mesh: {fileID: 308141775}
 --- !u!1 &1454666616
 GameObject:
   m_ObjectHideFlags: 0
@@ -6432,6 +10950,725 @@ MonoBehaviour:
       y: 1
       z: 1
     anchor: {x: 0.5, y: 0.5, z: 0.5}
+--- !u!1 &1583225217
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1583225218}
+  - component: {fileID: 1583225221}
+  - component: {fileID: 1583225220}
+  - component: {fileID: 1583225219}
+  m_Layer: 0
+  m_Name: OuterRing_002
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1583225218
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1583225217}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1262933086}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1583225219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1583225217}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 1583225221}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -0.0012566447, y: -0.008341432, z: 0.82184577}
+  CachedSize: {x: 0.67289364, y: 0.70368826, z: 0.00999999}
+  isEmpty: 0
+--- !u!114 &1583225220
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1583225217}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 1583225217}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!120 &1583225221
+LineRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1583225217}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 738026248}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Positions:
+  - {x: 0.040820975, y: -0.35518557, z: 0.82184577}
+  - {x: 0.3301902, y: 0.32603526, z: 0.82184577}
+  - {x: -0.33270347, y: 0.3385027, z: 0.82184577}
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 0.01
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 0.14901961, g: 0.8509804, b: 1, a: 1}
+      key1: {r: 0.14901961, g: 0.8509804, b: 1, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 2
+    numCapVertices: 2
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_UseWorldSpace: 0
+  m_Loop: 1
+  m_ApplyActiveColorSpace: 1
+--- !u!1 &1658459530
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1658459531}
+  - component: {fileID: 1658459534}
+  - component: {fileID: 1658459533}
+  - component: {fileID: 1658459532}
+  m_Layer: 0
+  m_Name: EndOuterRing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1658459531
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1658459530}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 498737885}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1658459532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1658459530}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 1658459534}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -0.01920849, y: -0.12750483, z: 0.21670566}
+  CachedSize: {x: 1.2693046, y: 1.3278053, z: 0.00999999}
+  isEmpty: 0
+--- !u!114 &1658459533
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1658459530}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 1658459530}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!120 &1658459534
+LineRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1658459530}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 48204641}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Positions:
+  - {x: 0.060726643, y: -0.7864075, z: 0.21670566}
+  - {x: 0.61044383, y: 0.5077133, z: 0.21670566}
+  - {x: -0.6488608, y: 0.53139776, z: 0.21670566}
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 0.01
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 0.34509805, g: 0.34509805, b: 0.34509805, a: 1}
+      key1: {r: 0.34509805, g: 0.34509805, b: 0.34509805, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 2
+    numCapVertices: 2
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_UseWorldSpace: 0
+  m_Loop: 1
+  m_ApplyActiveColorSpace: 1
+--- !u!1 &1665148553
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1665148554}
+  - component: {fileID: 1665148559}
+  - component: {fileID: 1665148558}
+  - component: {fileID: 1665148557}
+  - component: {fileID: 1665148556}
+  - component: {fileID: 1665148555}
+  m_Layer: 0
+  m_Name: Segment_000
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1665148554
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1665148553}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 498737885}
+  m_Father: {fileID: 1429619194}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1665148555
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1665148553}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 1665148558}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -0.01920849, y: -0.12750483, z: 0.11085282}
+  CachedSize: {x: 1.2693046, y: 1.3278053, z: 0.22170565}
+  isEmpty: 0
+--- !u!114 &1665148556
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1665148553}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 1665148553}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!23 &1665148557
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1665148553}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 1179687199}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1665148558
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1665148553}
+  m_Mesh: {fileID: 425082061}
+--- !u!114 &1665148559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1665148553}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21f7eeb5c06b1e445ae747b1bfee7fef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.AdaptiveShapeSegment
+  segmentIndex: 0
+  profileRingObject: {fileID: 498737884}
+  profileStartOuterRingObject: {fileID: 864208632}
+  profileEndOuterRingObject: {fileID: 1658459530}
+  profileStartInnerRingObject: {fileID: 0}
+  profileEndInnerRingObject: {fileID: 0}
+  meshFilter: {fileID: 1665148558}
+  meshRenderer: {fileID: 1665148557}
 --- !u!1 &1696104652 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 746375330824221482, guid: d0b775e268b010b49b76349b19490910, type: 3}
@@ -6542,7 +11779,7 @@ MonoBehaviour:
   bordersLabelPlacement: 5
   contentsLabelPlacement: 7
   paddingLabelPlacement: 7
---- !u!1 &1701756729
+--- !u!1 &1717022377
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -6550,457 +11787,136 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1701756730}
-  - component: {fileID: 1701756731}
+  - component: {fileID: 1717022378}
+  - component: {fileID: 1717022380}
+  - component: {fileID: 1717022379}
   m_Layer: 0
-  m_Name: OuterRing_1
+  m_Name: InnerRings
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1701756730
+--- !u!4 &1717022378
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1701756729}
+  m_GameObject: {fileID: 1717022377}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2088782088}
+  m_Father: {fileID: 698922656}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!120 &1701756731
-LineRenderer:
-  serializedVersion: 3
+--- !u!114 &1717022379
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1701756729}
+  m_GameObject: {fileID: 1717022377}
   m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 0
-  m_LightProbeUsage: 0
-  m_ReflectionProbeUsage: 0
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 847716987}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_Positions:
-  - {x: 0, y: -0.325, z: 0.25}
-  - {x: 0.35000002, y: 0.32500002, z: 0.25}
-  - {x: -0.35, y: 0.32500002, z: 0.25}
-  m_Parameters:
-    serializedVersion: 3
-    widthMultiplier: 0.010500001
-    widthCurve:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0.33333334
-        outWeight: 0.33333334
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    colorGradient:
-      serializedVersion: 2
-      key0: {r: 0.14901961, g: 0.7490196, b: 0.6509804, a: 1}
-      key1: {r: 0.14901961, g: 0.7490196, b: 0.6509804, a: 1}
-      key2: {r: 0, g: 0, b: 0, a: 0}
-      key3: {r: 0, g: 0, b: 0, a: 0}
-      key4: {r: 0, g: 0, b: 0, a: 0}
-      key5: {r: 0, g: 0, b: 0, a: 0}
-      key6: {r: 0, g: 0, b: 0, a: 0}
-      key7: {r: 0, g: 0, b: 0, a: 0}
-      ctime0: 0
-      ctime1: 65535
-      ctime2: 0
-      ctime3: 0
-      ctime4: 0
-      ctime5: 0
-      ctime6: 0
-      ctime7: 0
-      atime0: 0
-      atime1: 65535
-      atime2: 0
-      atime3: 0
-      atime4: 0
-      atime5: 0
-      atime6: 0
-      atime7: 0
-      m_Mode: 0
-      m_ColorSpace: -1
-      m_NumColorKeys: 2
-      m_NumAlphaKeys: 2
-    numCornerVertices: 2
-    numCapVertices: 2
-    alignment: 0
-    textureMode: 0
-    textureScale: {x: 1, y: 1}
-    shadowBias: 0.5
-    generateLightingData: 0
-  m_UseWorldSpace: 0
-  m_Loop: 1
-  m_ApplyActiveColorSpace: 1
---- !u!43 &1800903991
-Mesh:
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 0}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: -1000, y: -1000, z: -1000}
+  CachedSize: {x: -1000, y: -1000, z: -1000}
+  isEmpty: 1
+--- !u!114 &1717022380
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ShapeStamp_ProfileSegmentsMesh
-  serializedVersion: 12
-  m_SubMeshes:
-  - serializedVersion: 2
-    firstByte: 0
-    indexCount: 18
-    topology: 0
-    baseVertex: 0
-    firstVertex: 0
-    vertexCount: 6
-    localAABB:
-      m_Center: {x: 0.000000014901161, y: 0.000000014901161, z: 0.125}
-      m_Extent: {x: 0.35000002, y: 0.325, z: 0.125}
-  - serializedVersion: 2
-    firstByte: 36
-    indexCount: 18
-    topology: 0
-    baseVertex: 0
-    firstVertex: 6
-    vertexCount: 6
-    localAABB:
-      m_Center: {x: -0.07382411, y: -0.06855096, z: 0.625}
-      m_Extent: {x: 0.42382413, y: 0.393551, z: 0.375}
-  - serializedVersion: 2
-    firstByte: 72
-    indexCount: 3
-    topology: 0
-    baseVertex: 0
-    firstVertex: 12
-    vertexCount: 3
-    localAABB:
-      m_Center: {x: 0.000000014901161, y: 0.000000014901161, z: 0}
-      m_Extent: {x: 0.35000002, y: 0.325, z: 0}
-  - serializedVersion: 2
-    firstByte: 78
-    indexCount: 3
-    topology: 0
-    baseVertex: 0
-    firstVertex: 15
-    vertexCount: 3
-    localAABB:
-      m_Center: {x: -0.07382411, y: -0.06855096, z: 1}
-      m_Extent: {x: 0.42382413, y: 0.393551, z: 0}
-  m_Shapes:
-    vertices: []
-    shapes: []
-    channels: []
-    fullWeights: []
-  m_BindPose: []
-  m_BoneNameHashes: 
-  m_RootBoneNameHash: 0
-  m_BonesAABB: []
-  m_VariableBoneCountWeights:
-    m_Data: 
-  m_MeshCompression: 0
-  m_IsReadable: 1
-  m_KeepVertices: 1
-  m_KeepIndices: 1
-  m_IndexFormat: 0
-  m_IndexBuffer: 00000300010000000200030002000500030002000400050004000100050004000000010006000900070006000800090008000b00090008000a000b000a0007000b000a00060007000c000e000d000f0010001100
-  m_VertexData:
-    serializedVersion: 3
-    m_VertexCount: 18
-    m_Channels:
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 3
-    - stream: 0
-      offset: 12
-      format: 0
-      dimension: 3
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    - stream: 0
-      offset: 0
-      format: 0
-      dimension: 0
-    m_DataSize: 432
-    _typelessdata: 000000006666a6be000000002cbf063ffbaa59bf00000000000000006666a6be0000803e2cbf06bffbaa59bf000000003433b33e6766a63e000000002cbf063ffbaa593f000000003433b33e6766a63e0000803e0000803f00000000000000003333b3be6766a63e00000000000080bf4fec4433000000003333b3be6766a63e0000803e2cbf06bffbaa593f00000000000000006666a6be0000803e9b39123fb4c750bfae2dbebd1a3197bda098ecbe0000803fa520efbeed4c5cbf662950be3433b33e6766a63e0000803e183af43e9bff603f000000003433b33e6766a63e0000803fb3a97f3f8922523dc933edb13333b3be6766a63e0000803e4ddc7abf09304ebdc18a45bec0cbfebe6766a63e0000803f91ee11bf905c503f8cd4e5bd000000006666a6be000000000000000000000000000080bf3433b33e6766a63e000000000000000000000000000080bf3333b3be6766a63e000000000000000000000000000080bf1a3197bda098ecbe0000803f00000000000000000000803f3433b33e6766a63e0000803f00000000000000000000803fc0cbfebe6766a63e0000803f00000000000000000000803f
-  m_CompressedMesh:
-    m_Vertices:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_UV:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Normals:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Tangents:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Weights:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_NormalSigns:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_TangentSigns:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_FloatColors:
-      m_NumItems: 0
-      m_Range: 0
-      m_Start: 0
-      m_Data: 
-      m_BitSize: 0
-    m_BoneIndices:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_Triangles:
-      m_NumItems: 0
-      m_Data: 
-      m_BitSize: 0
-    m_UVInfo: 0
-  m_LocalAABB:
-    m_Center: {x: -0.07382411, y: -0.06855096, z: 0.5}
-    m_Extent: {x: 0.42382413, y: 0.393551, z: 0.5}
-  m_MeshUsageFlags: 0
-  m_CookingOptions: 30
-  m_BakedConvexCollisionMesh: 
-  m_BakedTriangleCollisionMesh: 
-  'm_MeshMetrics[0]': 1
-  'm_MeshMetrics[1]': 1
-  m_MeshOptimizationFlags: 1
-  m_StreamData:
-    serializedVersion: 2
-    offset: 0
-    size: 0
-    path: 
-  m_MeshLodInfo:
-    serializedVersion: 2
-    m_LodSelectionCurve:
-      serializedVersion: 1
-      m_LodSlope: 0
-      m_LodBias: 0
-    m_NumLevels: 1
-    m_SubMeshes:
-    - serializedVersion: 2
-      m_Levels:
-      - serializedVersion: 1
-        m_IndexStart: 0
-        m_IndexCount: 0
-    - serializedVersion: 2
-      m_Levels:
-      - serializedVersion: 1
-        m_IndexStart: 0
-        m_IndexCount: 0
-    - serializedVersion: 2
-      m_Levels:
-      - serializedVersion: 1
-        m_IndexStart: 0
-        m_IndexCount: 0
-    - serializedVersion: 2
-      m_Levels:
-      - serializedVersion: 1
-        m_IndexStart: 0
-        m_IndexCount: 0
---- !u!1 &1813131577
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1813131580}
-  - component: {fileID: 1813131579}
-  - component: {fileID: 1813131578}
-  m_Layer: 0
-  m_Name: ShapeStamp_ProfileSegments
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!23 &1813131578
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1813131577}
+  m_GameObject: {fileID: 1717022377}
   m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 1152281487}
-  - {fileID: 969416310}
-  - {fileID: 1128960339}
-  - {fileID: 995262597}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &1813131579
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1813131577}
-  m_Mesh: {fileID: 1800903991}
---- !u!4 &1813131580
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1813131577}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 1717022377}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
 --- !u!43 &1819306246
 Mesh:
   m_ObjectHideFlags: 0
@@ -7357,7 +12273,61 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
---- !u!1 &2088782087
+--- !u!21 &2087714593
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AdaptiveShape_InnerProfileRing_Mat
+  m_Shader: {fileID: 4800000, guid: 650dd9526735d5b46b79224bc6e94025, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
+    - _Blend: 0
+    - _BlendOp: 0
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _QueueOffset: 0
+    - _SampleGI: 0
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
+    - _XRMotionVectorsPass: 1
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+    - _Color: {r: 0.75, g: 0.75, b: 0.75, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
+--- !u!1 &2093647491
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -7365,32 +12335,248 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2088782088}
+  - component: {fileID: 2093647492}
+  - component: {fileID: 2093647495}
+  - component: {fileID: 2093647494}
+  - component: {fileID: 2093647493}
   m_Layer: 0
-  m_Name: ShapeStamp_ProfileRings
+  m_Name: OuterRing_000
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2088782088
+--- !u!4 &2093647492
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2088782087}
+  m_GameObject: {fileID: 2093647491}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 458754787}
-  - {fileID: 1701756730}
-  - {fileID: 88261456}
-  m_Father: {fileID: 0}
+  m_Children: []
+  m_Father: {fileID: 1262933086}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2093647493
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2093647491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffaf43e7d373054448dd5d255b590180, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.SmartBounds
+  settings:
+    includeSelf: 1
+    includeChildren: 1
+    includeSelfEvenIfEmpty: 0
+    useProxy: 0
+    regionSelection:
+      x:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      y:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+      z:
+        negativeBorderEdge: 0
+        negativeContentEdge: 1
+        negativePaddingEdge: 0
+        center: 0
+        positivePaddingEdge: 0
+        positiveContentEdge: 1
+        positiveBorderEdge: 0
+        interpMin: 0
+        interpMax: 1
+  bordersPadding:
+    x:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    y:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+    z:
+      negativeBorder: 0
+      negativePadding: 0
+      minContentsSize: 0
+      positivePadding: 0
+      positiveBorder: 0
+  boundsObject: {fileID: 2093647495}
+  proxyTarget: {fileID: 0}
+  CachedCenter: {x: 0, y: 0, z: 0.0087616835}
+  CachedSize: {x: 0.6311449, y: 0.65999997, z: 0.01}
+  isEmpty: 0
+--- !u!114 &2093647494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2093647491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848390e30f6ab9846915f4b1d5df04d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DLN.Nodes.Runtime::DLN.BoundsVisuals
+  target: {fileID: 2093647491}
+  showVisuals: 1
+  showOnlyWhenSelected: 1
+  showSelectedRegion: 1
+  showContents: 0
+  showBorders: 0
+  showPadding: 0
+  showLabels: 1
+  showDimensions: 1
+  dimensionSpace: 1
+  lineThickness: 5
+  labelFontSize: 11
+  labelOffsetWorld: 0.05
+  selectedRegionColor: {r: 1, g: 0, b: 1, a: 1}
+  contentsColor: {r: 0, g: 1, b: 0, a: 1}
+  bordersColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  paddingColor: {r: 0, g: 1, b: 1, a: 1}
+  selectedRegionLabelPlacement: 7
+  bordersLabelPlacement: 5
+  contentsLabelPlacement: 7
+  paddingLabelPlacement: 7
+--- !u!120 &2093647495
+LineRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2093647491}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 0
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 1013931825}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Positions:
+  - {x: 0.03942758, y: -0.325, z: 0.0087616835}
+  - {x: 0.31057245, y: 0.31331778, z: 0.0087616835}
+  - {x: -0.31057242, y: 0.32500002, z: 0.0087616835}
+  m_Parameters:
+    serializedVersion: 3
+    widthMultiplier: 0.01
+    widthCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    colorGradient:
+      serializedVersion: 2
+      key0: {r: 0.14901961, g: 0.8509804, b: 1, a: 1}
+      key1: {r: 0.14901961, g: 0.8509804, b: 1, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    numCornerVertices: 2
+    numCapVertices: 2
+    alignment: 0
+    textureMode: 0
+    textureScale: {x: 1, y: 1}
+    shadowBias: 0.5
+    generateLightingData: 0
+  m_UseWorldSpace: 0
+  m_Loop: 1
+  m_ApplyActiveColorSpace: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -7402,6 +12588,4 @@ SceneRoots:
   - {fileID: 1454666622}
   - {fileID: 1090888241}
   - {fileID: 1292719630}
-  - {fileID: 135527041}
-  - {fileID: 2088782088}
-  - {fileID: 1813131580}
+  - {fileID: 1026105337}
