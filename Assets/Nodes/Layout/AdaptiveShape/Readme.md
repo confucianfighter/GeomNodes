@@ -396,3 +396,63 @@ Even though the earlier editor implementation is being replaced, the following s
 `C3DLS_AdaptiveShape` is a component-based adaptive geometry generator for the Composable 3D Layout System. It authors outer shape, profile, and optional inner-hole geometry using region-based editing aligned with existing border / padding / content semantics. Generated surfaces are assigned into semantic material groups such as Front, Body, Inner Shell, and Effects Channels so the result is structurally adaptive and easy to style downstream.
 
 An adaptive shape is designed to serve as a ui element or a ui panel. As a UI panel it can be either concave or convex depending on how the profile is set up. 
+
+---
+
+## Applying and testing these changes locally
+
+Use this checklist to pull the branch, open the project, and validate the new AdaptiveShape material-slot workflow.
+
+### 1) Pull the branch / commit
+
+```bash
+git fetch --all
+git branch --show-current
+# pull whichever branch you are actually using
+git pull
+# optional: ensure commit is present
+git log --oneline -n 5
+```
+
+You should see commit `8865260` (`Start AdaptiveShape material-slot model and custom inspector`) and, if pulled, `0a4dec0` (`Document local apply and test workflow for AdaptiveShape changes`).
+
+### 2) Open in Unity
+
+1. Open the project root in Unity Hub (`/workspace/GeomNodes` in this environment).
+2. Wait for script compilation to finish.
+3. Confirm there are no compiler errors in Console.
+
+### 3) Add and configure an AdaptiveShape
+
+1. In any test scene, create an empty GameObject.
+2. Add the `AdaptiveShape` component.
+3. In the inspector:
+   - (Optional) assign `SmartBounds`.
+   - Toggle `Prefer Smart Bounds Borders Padding` depending on your test path.
+   - In **Size**, toggle `Use Borders Padding Min As Inner Size` to test bridge behavior.
+   - In **Material Slots**, add 2-4 slots and optionally name them (e.g., `Front`, `Body`, `FX`).
+   - In **Profile > Edges**, add edges and assign each edge to a slot index with the popup.
+
+### 4) Behavioral checks
+
+Validate these expected behaviors:
+
+- With zero slots, profile rows warn that no slots are available.
+- After adding slots, profile edges can select slot indices from popup labels.
+- `materialSlotIndex` values stay clamped to valid slot range when slot count changes.
+- `GetCurrentInnerSize()` reflects:
+  - `BordersPadding.x/y.minContentsSize` when bridge mode is ON.
+  - explicit inner size values when bridge mode is OFF.
+
+### 5) Recommended quick regression script check
+
+From project root:
+
+```bash
+git diff --check
+```
+
+### 6) Optional play mode verification
+
+If your mesh build path is already wired in your local branch, enter Play Mode and ensure runtime systems that consume profile edge channeling now read from slot indices rather than per-edge direct material assumptions.
+
