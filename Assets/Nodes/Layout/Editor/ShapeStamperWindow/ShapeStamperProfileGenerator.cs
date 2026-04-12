@@ -157,7 +157,7 @@ namespace DLN.EditorTools.ShapeStamper
 
             for (int i = 0; i < profileDocument.Points.Count; i++)
             {
-                CanvasPoint p = profileDocument.Points[i];
+                ProfilePoint p = profileDocument.Points[i];
                 ProfileSample sample = new ProfileSample
                 {
                     Index = i,
@@ -226,7 +226,7 @@ namespace DLN.EditorTools.ShapeStamper
             IList<Vector2> loop,
             IList<float> edgeScales,
             ProfileCanvasDocument profileDocument,
-            IList<CanvasPoint> profilePoints,
+            IList<ProfilePoint> profilePoints,
             int pointIndex)
         {
             List<float> distances = new List<float>();
@@ -314,251 +314,43 @@ namespace DLN.EditorTools.ShapeStamper
             };
         }
 
-        private static float ResolveProfilePointZ(int pointIndex, IList<CanvasPoint> profilePoints, ProfileCanvasDocument profileDocument)
+        private static float ResolveProfilePointZ(int pointIndex, IList<ProfilePoint> profilePoints, ProfileCanvasDocument profileDocument)
         {
             if (profilePoints == null || pointIndex < 0 || pointIndex >= profilePoints.Count)
                 return 0f;
 
-            CanvasPoint point = profilePoints[pointIndex];
-            if (point.ProfileZAnchor != ProfileDepthAnchor.Floating)
-                return Mathf.Max(0f, ResolveDirectAnchorZ(point, profileDocument));
-
-            int previousAnchorIndex = FindPreviousDepthAnchorIndex(profilePoints, pointIndex);
-            int nextAnchorIndex = FindNextDepthAnchorIndex(profilePoints, pointIndex);
-
-            if (previousAnchorIndex >= 0 && nextAnchorIndex >= 0)
-            {
-                float authoredA = profilePoints[previousAnchorIndex].Position.y;
-                float authoredB = profilePoints[nextAnchorIndex].Position.y;
-                float resolvedA = ResolveDirectAnchorZ(profilePoints[previousAnchorIndex], profileDocument);
-                float resolvedB = ResolveDirectAnchorZ(profilePoints[nextAnchorIndex], profileDocument);
-
-                float span = authoredB - authoredA;
-                if (Mathf.Abs(span) <= SafeEpsilon)
-                    return Mathf.Max(0f, resolvedA);
-
-                float t = Mathf.Clamp01((point.Position.y - authoredA) / span);
-                return Mathf.Max(0f, Mathf.Lerp(resolvedA, resolvedB, t));
-            }
-
-            return Mathf.Max(0f, SafeFinite(point.Position.y, 0f));
+            ProfilePoint point = profilePoints[pointIndex];
+            ProfileSpanLayoutData layout = ProfileSpanLayout.Build(profileDocument);
+            return layout.GetZSpan(point.ZSpan).Evaluate(point.ZT);
         }
 
-        private static float ResolveDirectAnchorZ(CanvasPoint point, ProfileCanvasDocument profileDocument)
-        {
-            float raw;
-            switch (point.ProfileZAnchor)
-            {
-                case ProfileDepthAnchor.Padding:
-                    raw = point.OffsetY;
-                    break;
-
-                case ProfileDepthAnchor.Content:
-                    raw = profileDocument.FrontPaddingDepth + point.OffsetY;
-                    break;
-
-                case ProfileDepthAnchor.Border:
-                    raw = profileDocument.FrontPaddingDepth + profileDocument.FrontBorderDepth + point.OffsetY;
-                    break;
-
-                case ProfileDepthAnchor.Floating:
-                default:
-                    raw = point.Position.y;
-                    break;
-            }
-
-            return Mathf.Max(0f, SafeFinite(raw, 0f));
-        }
-
-        private static int FindPreviousDepthAnchorIndex(IList<CanvasPoint> profilePoints, int fromIndex)
-        {
-            for (int i = fromIndex - 1; i >= 0; i--)
-            {
-                if (profilePoints[i].ProfileZAnchor != ProfileDepthAnchor.Floating)
-                    return i;
-            }
-
-            return -1;
-        }
-
-        private static int FindNextDepthAnchorIndex(IList<CanvasPoint> profilePoints, int fromIndex)
-        {
-            for (int i = fromIndex + 1; i < profilePoints.Count; i++)
-            {
-                if (profilePoints[i].ProfileZAnchor != ProfileDepthAnchor.Floating)
-                    return i;
-            }
-
-            return -1;
-        }
-
-        private static float ResolveProfilePointX(int pointIndex, IList<CanvasPoint> profilePoints, EdgeProfileDrive drive)
+        private static float ResolveProfilePointX(int pointIndex, IList<ProfilePoint> profilePoints, EdgeProfileDrive drive)
         {
             if (profilePoints == null || pointIndex < 0 || pointIndex >= profilePoints.Count)
                 return 0f;
 
-            CanvasPoint point = profilePoints[pointIndex];
-            if (point.ProfileXAnchor != ProfileAnchorX.Floating)
-                return Mathf.Max(0f, ResolveDirectAnchorX(point, drive));
+            ProfilePoint point = profilePoints[pointIndex];
 
-            int previousAnchorIndex = FindPreviousAnchorIndex(profilePoints, pointIndex);
-            int nextAnchorIndex = FindNextAnchorIndex(profilePoints, pointIndex);
+            float paddingWidth = Mathf.Max(0f, drive.BlendedPadding);
+            float borderWidth = Mathf.Max(0f, drive.BlendedBorder);
 
-            if (previousAnchorIndex >= 0 && nextAnchorIndex >= 0)
-            {
-                float authoredA = profilePoints[previousAnchorIndex].Position.x;
-                float authoredB = profilePoints[nextAnchorIndex].Position.x;
-                float resolvedA = ResolveDirectAnchorX(profilePoints[previousAnchorIndex], drive);
-                float resolvedB = ResolveDirectAnchorX(profilePoints[nextAnchorIndex], drive);
+            ProfileSpan paddingToContent = new ProfileSpan(0f, paddingWidth);
+            ProfileSpan contentToBorder = new ProfileSpan(paddingWidth, paddingWidth + borderWidth);
 
-                float span = authoredB - authoredA;
-                if (Mathf.Abs(span) <= SafeEpsilon)
-                    return Mathf.Max(0f, resolvedA);
-
-                float t = Mathf.Clamp01((point.Position.x - authoredA) / span);
-                return Mathf.Max(0f, Mathf.Lerp(resolvedA, resolvedB, t));
-            }
-
-            if (previousAnchorIndex >= 0)
-            {
-                float authoredA = profilePoints[previousAnchorIndex].Position.x;
-                float resolvedA = ResolveDirectAnchorX(profilePoints[previousAnchorIndex], drive);
-                float authoredMax = GetAuthoredMaxX(profilePoints);
-                float resolvedMax = GetResolvedOverallMaxX(profilePoints, drive);
-
-                float span = authoredMax - authoredA;
-                if (Mathf.Abs(span) <= SafeEpsilon)
-                    return Mathf.Max(0f, resolvedA);
-
-                float t = Mathf.Clamp01((point.Position.x - authoredA) / span);
-                return Mathf.Max(0f, Mathf.Lerp(resolvedA, resolvedMax, t));
-            }
-
-            if (nextAnchorIndex >= 0)
-            {
-                float authoredB = profilePoints[nextAnchorIndex].Position.x;
-                float resolvedB = ResolveDirectAnchorX(profilePoints[nextAnchorIndex], drive);
-                float authoredMin = GetAuthoredMinX(profilePoints);
-                float resolvedMin = GetResolvedOverallMinX(profilePoints, drive);
-
-                float span = authoredB - authoredMin;
-                if (Mathf.Abs(span) <= SafeEpsilon)
-                    return Mathf.Max(0f, resolvedB);
-
-                float t = Mathf.Clamp01((point.Position.x - authoredMin) / span);
-                return Mathf.Max(0f, Mathf.Lerp(resolvedMin, resolvedB, t));
-            }
-
-            return Mathf.Max(0f, SafeFinite(point.Position.x * drive.Scale, 0f));
-        }
-
-        private static float ResolveDirectAnchorX(CanvasPoint point, EdgeProfileDrive drive)
-        {
             float raw;
-            switch (point.ProfileXAnchor)
+            switch (point.XSpan)
             {
-                case ProfileAnchorX.Padding:
-                    raw = point.OffsetX;
+                case ProfileXSpan.PaddingToContent:
+                    raw = paddingToContent.Evaluate(point.XT);
                     break;
 
-                case ProfileAnchorX.Content:
-                    raw = drive.BlendedPadding + point.OffsetX;
-                    break;
-
-                case ProfileAnchorX.Border:
-                    raw = drive.BlendedPadding + drive.BlendedBorder + point.OffsetX;
-                    break;
-
-                case ProfileAnchorX.Floating:
+                case ProfileXSpan.ContentToBorder:
                 default:
-                    raw = point.Position.x;
+                    raw = contentToBorder.Evaluate(point.XT);
                     break;
             }
 
-            return Mathf.Max(0f, SafeFinite(raw, 0f));
-        }
-
-        private static int FindPreviousAnchorIndex(IList<CanvasPoint> profilePoints, int fromIndex)
-        {
-            for (int i = fromIndex - 1; i >= 0; i--)
-            {
-                if (profilePoints[i].ProfileXAnchor != ProfileAnchorX.Floating)
-                    return i;
-            }
-
-            return -1;
-        }
-
-        private static int FindNextAnchorIndex(IList<CanvasPoint> profilePoints, int fromIndex)
-        {
-            for (int i = fromIndex + 1; i < profilePoints.Count; i++)
-            {
-                if (profilePoints[i].ProfileXAnchor != ProfileAnchorX.Floating)
-                    return i;
-            }
-
-            return -1;
-        }
-
-        private static float GetAuthoredMinX(IList<CanvasPoint> profilePoints)
-        {
-            if (profilePoints == null || profilePoints.Count == 0)
-                return 0f;
-
-            float minX = profilePoints[0].Position.x;
-            for (int i = 1; i < profilePoints.Count; i++)
-                minX = Mathf.Min(minX, profilePoints[i].Position.x);
-
-            return minX;
-        }
-
-        private static float GetAuthoredMaxX(IList<CanvasPoint> profilePoints)
-        {
-            if (profilePoints == null || profilePoints.Count == 0)
-                return 0f;
-
-            float maxX = profilePoints[0].Position.x;
-            for (int i = 1; i < profilePoints.Count; i++)
-                maxX = Mathf.Max(maxX, profilePoints[i].Position.x);
-
-            return maxX;
-        }
-
-        private static float GetResolvedOverallMinX(IList<CanvasPoint> profilePoints, EdgeProfileDrive drive)
-        {
-            float min = float.PositiveInfinity;
-            bool found = false;
-
-            for (int i = 0; i < profilePoints.Count; i++)
-            {
-                if (profilePoints[i].ProfileXAnchor == ProfileAnchorX.Floating)
-                    continue;
-
-                min = Mathf.Min(min, ResolveDirectAnchorX(profilePoints[i], drive));
-                found = true;
-            }
-
-            return found ? Mathf.Max(0f, min) : 0f;
-        }
-
-        private static float GetResolvedOverallMaxX(IList<CanvasPoint> profilePoints, EdgeProfileDrive drive)
-        {
-            float max = 0f;
-            bool found = false;
-
-            for (int i = 0; i < profilePoints.Count; i++)
-            {
-                if (profilePoints[i].ProfileXAnchor == ProfileAnchorX.Floating)
-                    continue;
-
-                max = Mathf.Max(max, ResolveDirectAnchorX(profilePoints[i], drive));
-                found = true;
-            }
-
-            if (found)
-                return Mathf.Max(0f, max);
-
-            return Mathf.Max(0f, SafeFinite(GetAuthoredMaxX(profilePoints) * drive.Scale, 0f));
+            return Mathf.Max(0f, SafeFinite(raw * drive.Scale, 0f));
         }
 
         private static List<Mesh> BuildSegmentMeshes(ShapeStampRingBuildResult result)
@@ -1393,7 +1185,7 @@ namespace DLN.EditorTools.ShapeStamper
             public int Index;
             public float Offset;
             public float Z;
-            public CanvasPoint Point;
+            public ProfilePoint Point;
         }
 
         private struct EdgeProfileDrive

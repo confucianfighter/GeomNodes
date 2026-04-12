@@ -8,7 +8,7 @@ namespace DLN.EditorTools.ShapeStamper
     public class ProfileCanvasDocument : ICanvasDocument, ICanvasBoundsProvider
     {
         [SerializeField] private Vector2 worldSizeMeters = new Vector2(1f, 1f);
-        [SerializeField] private List<CanvasPoint> points = new();
+        [SerializeField] private List<ProfilePoint> points = new();
         [SerializeField] private List<CanvasEdge> edges = new();
         [SerializeField] private List<CanvasOffsetConstraint> offsets = new();
 
@@ -54,7 +54,7 @@ namespace DLN.EditorTools.ShapeStamper
         public float PaddingGuideX => Mathf.Clamp(AveragePadding, 0f, WorldSizeMeters.x);
         public float BorderGuideX => Mathf.Clamp(AveragePadding + AverageBorder, 0f, WorldSizeMeters.x);
 
-        public IList<CanvasPoint> Points => points;
+        public IList<ProfilePoint> Points => points;
         public IList<CanvasEdge> Edges => edges;
         public IList<CanvasOffsetConstraint> Offsets => offsets;
 
@@ -85,29 +85,35 @@ namespace DLN.EditorTools.ShapeStamper
             edges.Clear();
             offsets.Clear();
 
-            points.Add(new CanvasPoint
+            points.Add(new ProfilePoint
             {
                 Id = 0,
                 Position = new Vector2(0.00f, 0.10f),
-                ProfileXAnchor = ProfileAnchorX.Padding,
-                ProfileZAnchor = ProfileDepthAnchor.Padding,
-                YAnchor = CanvasAnchorY.Top
+                YAnchor = CanvasAnchorY.Top,
+                XSpan = ProfileXSpan.PaddingToContent,
+                ZSpan = ProfileZSpan.PositiveContentToPadding,
+                XT = 0f,
+                ZT = 1f
             });
-            points.Add(new CanvasPoint
+            points.Add(new ProfilePoint
             {
                 Id = 1,
                 Position = new Vector2(0.08f, 0.25f),
-                ProfileXAnchor = ProfileAnchorX.Content,
-                ProfileZAnchor = ProfileDepthAnchor.Content,
-                YAnchor = CanvasAnchorY.Floating
+                YAnchor = CanvasAnchorY.Floating,
+                XSpan = ProfileXSpan.PaddingToContent,
+                ZSpan = ProfileZSpan.PositiveBorderToContent,
+                XT = 1f,
+                ZT = 1f
             });
-            points.Add(new CanvasPoint
+            points.Add(new ProfilePoint
             {
                 Id = 2,
                 Position = new Vector2(0.16f, 0.55f),
-                ProfileXAnchor = ProfileAnchorX.Border,
-                ProfileZAnchor = ProfileDepthAnchor.Border,
-                YAnchor = CanvasAnchorY.Bottom
+                YAnchor = CanvasAnchorY.Bottom,
+                XSpan = ProfileXSpan.ContentToBorder,
+                ZSpan = ProfileZSpan.PositiveBorderToContent,
+                XT = 1f,
+                ZT = 0f
             });
 
             RebuildOpenEdges();
@@ -174,7 +180,7 @@ namespace DLN.EditorTools.ShapeStamper
 
             for (int i = 0; i < points.Count; i++)
             {
-                CanvasPoint p = points[i];
+                ProfilePoint p = points[i];
                 ProfileCanvasPointResolver.ResizePointPreservingBehavior(
                     ref p,
                     bounds,
@@ -188,7 +194,7 @@ namespace DLN.EditorTools.ShapeStamper
         }
 
         private static void ResizePointList(
-            List<CanvasPoint> list,
+            List<ProfilePoint> list,
             Rect oldBounds,
             Rect newBounds,
             float oldPaddingGuideX,
@@ -218,7 +224,7 @@ namespace DLN.EditorTools.ShapeStamper
         {
             for (int i = 0; i < points.Count; i++)
             {
-                CanvasPoint p = points[i];
+                ProfilePoint p = points[i];
                 p.Position = new Vector2(
                     Mathf.Clamp(p.Position.x, 0f, WorldSizeMeters.x),
                     Mathf.Clamp(p.Position.y, 0f, WorldSizeMeters.y)

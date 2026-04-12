@@ -5,7 +5,7 @@ namespace DLN
     public static class ProfileCanvasPointResolver
     {
         public static Vector2 ResolvePoint(
-            CanvasPoint point,
+            ProfilePoint point,
             Rect oldBounds,
             Rect newBounds,
             float oldPaddingGuideX,
@@ -13,36 +13,17 @@ namespace DLN
             float newPaddingGuideX,
             float newBorderGuideX)
         {
-            float x = ResolveX(point, oldBounds, newBounds, oldPaddingGuideX, oldBorderGuideX, newPaddingGuideX, newBorderGuideX);
-            float y = ResolveY(point, oldBounds, newBounds);
+            ProfileCanvasDocument newDoc = BuildDoc(newBounds, newPaddingGuideX, newBorderGuideX);
+            ProfileSpanLayoutData newLayout = ProfileSpanLayout.Build(newDoc);
+
+            float x = newLayout.GetXSpan(point.XSpan).Evaluate(point.XT);
+            float y = ResolveY(point, newBounds, newLayout);
+
             return new Vector2(x, y);
         }
 
-        public static void RecalculateOffsets(
-            ref CanvasPoint point,
-            Rect bounds,
-            float paddingGuideX,
-            float borderGuideX)
-        {
-            point.OffsetX = CalculateOffsetX(point, bounds, paddingGuideX, borderGuideX);
-            point.OffsetY = CalculateOffsetY(point, bounds);
-        }
-
-        public static void SetAnchorsPreservePosition(
-            ref CanvasPoint point,
-            ProfileAnchorX xAnchor,
-            CanvasAnchorY yAnchor,
-            Rect bounds,
-            float paddingGuideX,
-            float borderGuideX)
-        {
-            point.ProfileXAnchor = xAnchor;
-            point.YAnchor = yAnchor;
-            RecalculateOffsets(ref point, bounds, paddingGuideX, borderGuideX);
-        }
-
         public static void ResizePointPreservingBehavior(
-            ref CanvasPoint point,
+            ref ProfilePoint point,
             Rect oldBounds,
             Rect newBounds,
             float oldPaddingGuideX,
@@ -58,120 +39,85 @@ namespace DLN
                 oldBorderGuideX,
                 newPaddingGuideX,
                 newBorderGuideX);
-
-            RecalculateOffsets(ref point, newBounds, newPaddingGuideX, newBorderGuideX);
         }
 
-        public static float ResolveX(
-            CanvasPoint point,
-            Rect oldBounds,
-            Rect newBounds,
-            float oldPaddingGuideX,
-            float oldBorderGuideX,
-            float newPaddingGuideX,
-            float newBorderGuideX)
-        {
-            switch (point.ProfileXAnchor)
-            {
-                case ProfileAnchorX.Padding:
-                    return newBounds.xMin + point.OffsetX;
-
-                case ProfileAnchorX.Content:
-                    return newPaddingGuideX + point.OffsetX;
-
-                case ProfileAnchorX.Border:
-                    return newBorderGuideX + point.OffsetX;
-
-                case ProfileAnchorX.Floating:
-                default:
-                    return RemapPreservingRatio(
-                        point.Position.x,
-                        oldBounds.xMin,
-                        oldBounds.xMax,
-                        newBounds.xMin,
-                        newBounds.xMax);
-            }
-        }
-
-        public static float ResolveY(CanvasPoint point, Rect oldBounds, Rect newBounds)
-        {
-            switch (point.YAnchor)
-            {
-                case CanvasAnchorY.Bottom:
-                    return newBounds.yMax + point.OffsetY;
-
-                case CanvasAnchorY.Center:
-                    return newBounds.center.y + point.OffsetY;
-
-                case CanvasAnchorY.Top:
-                    return newBounds.yMin + point.OffsetY;
-
-                case CanvasAnchorY.Floating:
-                default:
-                    return RemapPreservingRatio(
-                        point.Position.y,
-                        oldBounds.yMin,
-                        oldBounds.yMax,
-                        newBounds.yMin,
-                        newBounds.yMax);
-            }
-        }
-
-        public static float CalculateOffsetX(
-            CanvasPoint point,
+        public static void SetSpansFromPosition(
+            ref ProfilePoint point,
             Rect bounds,
             float paddingGuideX,
             float borderGuideX)
         {
-            switch (point.ProfileXAnchor)
-            {
-                case ProfileAnchorX.Padding:
-                    return point.Position.x - bounds.xMin;
+            ProfileCanvasDocument doc = BuildDoc(bounds, paddingGuideX, borderGuideX);
+            ProfileSpanLayoutData layout = ProfileSpanLayout.Build(doc);
 
-                case ProfileAnchorX.Content:
-                    return point.Position.x - paddingGuideX;
+            point.XSpan = DetectXSpan(point.Position.x, layout);
+            point.ZSpan = DetectZSpan(point.Position.y, layout);
 
-                case ProfileAnchorX.Border:
-                    return point.Position.x - borderGuideX;
-
-                case ProfileAnchorX.Floating:
-                default:
-                    return 0f;
-            }
+            point.XT = layout.GetXSpan(point.XSpan).InverseLerp(point.Position.x);
+            point.ZT = layout.GetZSpan(point.ZSpan).InverseLerp(point.Position.y);
         }
 
-        public static float CalculateOffsetY(CanvasPoint point, Rect bounds)
+        private static float ResolveY(ProfilePoint point, Rect bounds, ProfileSpanLayoutData layout)
         {
-            switch (point.YAnchor)
+            if (point.YAnchor != CanvasAnchorY.Floating)
             {
-                case CanvasAnchorY.Bottom:
-                    return point.Position.y - bounds.yMax;
-
-                case CanvasAnchorY.Center:
-                    return point.Position.y - bounds.center.y;
-
-                case CanvasAnchorY.Top:
-                    return point.Position.y - bounds.yMin;
-
-                case CanvasAnchorY.Floating:
-                default:
-                    return 0f;
+                switch (point.YAnchor)
+                {
+                    case CanvasAnchorY.Top:
+                        return bounds.yMin + point.OffsetY;
+                    case CanvasAnchorY.Bottom:
+                        return bounds.yMax + point.OffsetY;
+                    case CanvasAnchorY.Center:
+                        return bounds.center.y + point.OffsetY;
+                }
             }
+
+            return layout.GetZSpan(point.ZSpan).Evaluate(point.ZT);
         }
 
-        private static float RemapPreservingRatio(
-            float value,
-            float oldMin,
-            float oldMax,
-            float newMin,
-            float newMax)
+        private static ProfileXSpan DetectXSpan(float x, ProfileSpanLayoutData layout)
         {
-            float oldSize = oldMax - oldMin;
-            if (Mathf.Abs(oldSize) < 0.0001f)
-                return newMin;
+            if (x <= layout.XPaddingToContent.Max)
+                return ProfileXSpan.PaddingToContent;
 
-            float t = (value - oldMin) / oldSize;
-            return Mathf.Lerp(newMin, newMax, t);
+            return ProfileXSpan.ContentToBorder;
+        }
+
+        private static ProfileZSpan DetectZSpan(float z, ProfileSpanLayoutData layout)
+        {
+            if (z <= layout.ZPositiveBorderToContent.Max)
+                return ProfileZSpan.PositiveBorderToContent;
+            if (z <= layout.ZPositiveContentToPadding.Max)
+                return ProfileZSpan.PositiveContentToPadding;
+            if (z <= layout.ZMainDepth.Max)
+                return ProfileZSpan.MainDepth;
+            if (z <= layout.ZNegativePaddingToContent.Max)
+                return ProfileZSpan.NegativePaddingToContent;
+
+            return ProfileZSpan.NegativeContentToBorder;
+        }
+
+        private static ProfileCanvasDocument BuildDoc(Rect bounds, float paddingGuideX, float borderGuideX)
+        {
+            ProfileCanvasDocument doc = new ProfileCanvasDocument();
+            doc.ResizeWorld(new Vector2(Mathf.Max(0.0001f, bounds.width), Mathf.Max(0.0001f, bounds.height)));
+
+            float borderOnly = Mathf.Max(0f, borderGuideX - paddingGuideX);
+
+            doc.SetGuideValues(
+                leftPadding: paddingGuideX,
+                rightPadding: paddingGuideX,
+                topPadding: paddingGuideX,
+                bottomPadding: paddingGuideX,
+                leftBorder: borderOnly,
+                rightBorder: borderOnly,
+                topBorder: borderOnly,
+                bottomBorder: borderOnly);
+
+            doc.FrontPaddingDepth = paddingGuideX;
+            doc.FrontBorderDepth = borderOnly;
+
+            return doc;
         }
     }
 }

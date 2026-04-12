@@ -543,7 +543,7 @@ namespace DLN.EditorTools.ShapeStamper
             if (index < 0)
                 return;
 
-            CanvasPoint point = points[index];
+            ProfilePoint point = points[index];
             Rect bounds = shapeDocument.GetCanvasFrameRect();
 
             EditorGUILayout.Space(6f);
@@ -629,12 +629,12 @@ namespace DLN.EditorTools.ShapeStamper
             if (!selected.IsPoint)
                 return;
 
-            IList<CanvasPoint> points = profileDocument.Points;
+            IList<ProfilePoint> points = profileDocument.Points;
             int index = FindPointIndex(points, selected.Id);
             if (index < 0)
                 return;
 
-            CanvasPoint point = points[index];
+            ProfilePoint point = points[index];
             Rect bounds = profileDocument.GetCanvasFrameRect();
             float paddingGuideX = profileDocument.PaddingGuideX;
             float borderGuideX = profileDocument.BorderGuideX;
@@ -643,22 +643,19 @@ namespace DLN.EditorTools.ShapeStamper
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.LabelField($"Profile Point {point.Id}", EditorStyles.boldLabel);
             EditorGUILayout.LabelField(
-                $"X:{point.ProfileXAnchor}   Z:{point.ProfileZAnchor}   OffX:{point.OffsetX:0.###}   OffY:{point.OffsetY:0.###}",
+                $"X:{point.XSpan}   Z:{point.ZSpan}   XT:{point.XT:0.###}   ZT:{point.ZT:0.###}",
                 EditorStyles.miniLabel);
 
             EditorGUI.BeginChangeCheck();
 
-            ProfileAnchorX newXAnchor = (ProfileAnchorX)EditorGUILayout.EnumPopup("Profile X Anchor", point.ProfileXAnchor);
-            ProfileDepthAnchor newZAnchor = (ProfileDepthAnchor)EditorGUILayout.EnumPopup("Profile Z Anchor", point.ProfileZAnchor);
+            ProfileXSpan newXSpan = (ProfileXSpan)EditorGUILayout.EnumPopup("Profile X Span", point.XSpan);
+            ProfileZSpan newZSpan = (ProfileZSpan)EditorGUILayout.EnumPopup("Profile Z Span", point.ZSpan);
             CanvasAnchorY newYAnchor = (CanvasAnchorY)EditorGUILayout.EnumPopup("Profile Y Anchor", point.YAnchor);
             Vector2 newPosition = EditorGUILayout.Vector2Field("Position", point.Position);
+            float newXT = EditorGUILayout.Slider("Profile X T", point.XT, 0f, 1f);
+            float newZT = EditorGUILayout.Slider("Profile Z T", point.ZT, 0f, 1f);
 
-            bool canEditOffsetX = point.ProfileXAnchor != ProfileAnchorX.Floating;
-            bool canEditOffsetY = point.YAnchor != CanvasAnchorY.Floating || point.ProfileZAnchor != ProfileDepthAnchor.Floating;
-
-            EditorGUI.BeginDisabledGroup(!canEditOffsetX);
-            float newOffsetX = EditorGUILayout.FloatField("Offset X", point.OffsetX);
-            EditorGUI.EndDisabledGroup();
+            bool canEditOffsetY = point.YAnchor != CanvasAnchorY.Floating;
 
             EditorGUI.BeginDisabledGroup(!canEditOffsetY);
             float newOffsetY = EditorGUILayout.FloatField("Offset Y", point.OffsetY);
@@ -666,34 +663,21 @@ namespace DLN.EditorTools.ShapeStamper
 
             if (EditorGUI.EndChangeCheck())
             {
-                if (newXAnchor != point.ProfileXAnchor || newYAnchor != point.YAnchor)
-                {
-                    ProfileCanvasPointResolver.SetAnchorsPreservePosition(
-                        ref point,
-                        newXAnchor,
-                        newYAnchor,
-                        bounds,
-                        paddingGuideX,
-                        borderGuideX);
-                }
-
-                point.ProfileZAnchor = newZAnchor;
-
+                point.XSpan = newXSpan;
+                point.ZSpan = newZSpan;
+                point.YAnchor = newYAnchor;
                 point.Position = new Vector2(
                     Mathf.Clamp(newPosition.x, 0f, profileDocument.WorldSizeMeters.x),
                     Mathf.Clamp(newPosition.y, 0f, profileDocument.WorldSizeMeters.y));
+                point.XT = Mathf.Clamp01(newXT);
+                point.ZT = Mathf.Clamp01(newZT);
 
-                if (point.ProfileXAnchor != ProfileAnchorX.Floating)
-                    point.OffsetX = newOffsetX;
-                if (point.YAnchor != CanvasAnchorY.Floating || point.ProfileZAnchor != ProfileDepthAnchor.Floating)
+                if (point.YAnchor != CanvasAnchorY.Floating)
                     point.OffsetY = newOffsetY;
 
-                point.Position = ProfileCanvasPointResolver.ResolvePoint(
-                    point,
+                ProfileCanvasPointResolver.SetSpansFromPosition(
+                    ref point,
                     bounds,
-                    bounds,
-                    paddingGuideX,
-                    borderGuideX,
                     paddingGuideX,
                     borderGuideX);
 
