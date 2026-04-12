@@ -377,6 +377,13 @@ namespace DLN.EditorTools.ShapeStamper
                 "Edit borders/padding on SmartBounds for now. The Shape Stamper window reads them and updates its guides/documents.",
                 MessageType.None);
 
+            if (adaptiveShape.MainShapeRoot != null)
+                EditorGUILayout.LabelField($"MainShape Root: {adaptiveShape.MainShapeRoot.name}", EditorStyles.miniLabel);
+            if (adaptiveShape.RingSegmentsRoot != null)
+                EditorGUILayout.LabelField($"RingSegments Root: {adaptiveShape.RingSegmentsRoot.name}", EditorStyles.miniLabel);
+            if (adaptiveShape.DebugRoot != null)
+                EditorGUILayout.LabelField($"Debug Root: {adaptiveShape.DebugRoot.name}", EditorStyles.miniLabel);
+
             EditorGUILayout.EndVertical();
         }
 
@@ -515,8 +522,6 @@ namespace DLN.EditorTools.ShapeStamper
         }
 
         private void DrawSelectedShapeElementInspector()
-
-
         {
             if (shapeSelection == null || shapeSelection.Count != 1)
                 return;
@@ -637,6 +642,9 @@ namespace DLN.EditorTools.ShapeStamper
             EditorGUILayout.Space(6f);
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.LabelField($"Profile Point {point.Id}", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(
+                $"X:{point.ProfileXAnchor}   Z:{point.ProfileZAnchor}   OffX:{point.OffsetX:0.###}   OffY:{point.OffsetY:0.###}",
+                EditorStyles.miniLabel);
 
             EditorGUI.BeginChangeCheck();
 
@@ -677,7 +685,7 @@ namespace DLN.EditorTools.ShapeStamper
 
                 if (point.ProfileXAnchor != ProfileAnchorX.Floating)
                     point.OffsetX = newOffsetX;
-                if (point.YAnchor != CanvasAnchorY.Floating)
+                if (point.YAnchor != CanvasAnchorY.Floating || point.ProfileZAnchor != ProfileDepthAnchor.Floating)
                     point.OffsetY = newOffsetY;
 
                 point.Position = ProfileCanvasPointResolver.ResolvePoint(
@@ -818,10 +826,19 @@ namespace DLN.EditorTools.ShapeStamper
 
         private void RegeneratePreview()
         {
-            ShapeStamperProfileGenerator.Generate(
-                shapeDocument,
-                profileDocument,
-                BuildPreviewMaterialSettings());
+            ShapeStampPreviewMaterialSettings materialSettings = BuildPreviewMaterialSettings();
+
+            if (adaptiveShape != null)
+            {
+                AdaptiveShapeBuilder.Rebuild(adaptiveShape, materialSettings);
+            }
+            else
+            {
+                ShapeStamperProfileGenerator.Generate(
+                    shapeDocument,
+                    profileDocument,
+                    materialSettings);
+            }
 
             _lastShapeRevision = shapeDocument.Revision;
             _lastProfileRevision = profileDocument.Revision;

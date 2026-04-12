@@ -85,9 +85,30 @@ namespace DLN.EditorTools.ShapeStamper
             edges.Clear();
             offsets.Clear();
 
-            points.Add(new CanvasPoint { Id = 0, Position = new Vector2(0.00f, 0.10f), ProfileXAnchor = ProfileAnchorX.Content, YAnchor = CanvasAnchorY.Top });
-            points.Add(new CanvasPoint { Id = 1, Position = new Vector2(0.08f, 0.25f), ProfileXAnchor = ProfileAnchorX.Padding, YAnchor = CanvasAnchorY.Floating });
-            points.Add(new CanvasPoint { Id = 2, Position = new Vector2(0.16f, 0.55f), ProfileXAnchor = ProfileAnchorX.Border, YAnchor = CanvasAnchorY.Bottom });
+            points.Add(new CanvasPoint
+            {
+                Id = 0,
+                Position = new Vector2(0.00f, 0.10f),
+                ProfileXAnchor = ProfileAnchorX.Padding,
+                ProfileZAnchor = ProfileDepthAnchor.Padding,
+                YAnchor = CanvasAnchorY.Top
+            });
+            points.Add(new CanvasPoint
+            {
+                Id = 1,
+                Position = new Vector2(0.08f, 0.25f),
+                ProfileXAnchor = ProfileAnchorX.Content,
+                ProfileZAnchor = ProfileDepthAnchor.Content,
+                YAnchor = CanvasAnchorY.Floating
+            });
+            points.Add(new CanvasPoint
+            {
+                Id = 2,
+                Position = new Vector2(0.16f, 0.55f),
+                ProfileXAnchor = ProfileAnchorX.Border,
+                ProfileZAnchor = ProfileDepthAnchor.Border,
+                YAnchor = CanvasAnchorY.Bottom
+            });
 
             RebuildOpenEdges();
             RefreshAnchoredPointsForGuideChange(0f, 0f);

@@ -13,12 +13,24 @@ namespace DLN
         [SerializeField] private bool preferSmartBoundsBordersPadding = true;
         [SerializeField] private BordersPadding fallbackBordersPadding = BordersPadding.Default;
 
+        [SerializeField] private Transform mainShapeRoot;
+        [SerializeField] private Transform ringSegmentsRoot;
+        [SerializeField] private Transform startCapRoot;
+        [SerializeField] private Transform endCapRoot;
+        [SerializeField] private Transform debugRoot;
+
 #if UNITY_EDITOR
         [SerializeField] private ShapeCanvasDocument shapeDocument = new();
         [SerializeField] private ProfileCanvasDocument profileDocument = new();
 #endif
 
         public SmartBounds SmartBounds => smartBounds;
+        public Transform MainShapeRoot => mainShapeRoot;
+        public Transform RingSegmentsRoot => ringSegmentsRoot;
+        public Transform StartCapRoot => startCapRoot;
+        public Transform EndCapRoot => endCapRoot;
+        public Transform DebugRoot => debugRoot;
+
         public bool PreferSmartBoundsBordersPadding
         {
             get => preferSmartBoundsBordersPadding;
@@ -77,6 +89,35 @@ namespace DLN
         {
             if (smartBounds == null)
                 TryGetComponent(out smartBounds);
+        }
+
+        public void EnsureGeneratedHierarchy()
+        {
+            mainShapeRoot = EnsureChild(transform, mainShapeRoot, "MainShape");
+            ringSegmentsRoot = EnsureChild(mainShapeRoot, ringSegmentsRoot, "RingSegments");
+            startCapRoot = EnsureChild(mainShapeRoot, startCapRoot, "StartCap");
+            endCapRoot = EnsureChild(mainShapeRoot, endCapRoot, "EndCap");
+            debugRoot = EnsureChild(transform, debugRoot, "Debug");
+        }
+
+        private static Transform EnsureChild(Transform parent, Transform current, string childName)
+        {
+            if (parent == null)
+                return current;
+
+            if (current != null && current.parent == parent)
+            {
+                current.name = childName;
+                return current;
+            }
+
+            Transform existing = parent.Find(childName);
+            if (existing != null)
+                return existing;
+
+            GameObject go = new GameObject(childName);
+            go.transform.SetParent(parent, false);
+            return go.transform;
         }
 
         public BordersPadding GetEffectiveBordersPadding()

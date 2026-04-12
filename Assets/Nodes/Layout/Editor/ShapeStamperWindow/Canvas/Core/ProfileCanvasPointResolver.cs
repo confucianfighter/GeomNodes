@@ -73,10 +73,10 @@ namespace DLN
         {
             switch (point.ProfileXAnchor)
             {
-                case ProfileAnchorX.Content:
+                case ProfileAnchorX.Padding:
                     return newBounds.xMin + point.OffsetX;
 
-                case ProfileAnchorX.Padding:
+                case ProfileAnchorX.Content:
                     return newPaddingGuideX + point.OffsetX;
 
                 case ProfileAnchorX.Border:
@@ -125,10 +125,10 @@ namespace DLN
         {
             switch (point.ProfileXAnchor)
             {
-                case ProfileAnchorX.Content:
+                case ProfileAnchorX.Padding:
                     return point.Position.x - bounds.xMin;
 
-                case ProfileAnchorX.Padding:
+                case ProfileAnchorX.Content:
                     return point.Position.x - paddingGuideX;
 
                 case ProfileAnchorX.Border:

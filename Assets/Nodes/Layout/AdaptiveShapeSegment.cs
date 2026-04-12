@@ -7,6 +7,10 @@ namespace DLN
     {
         [SerializeField] private int segmentIndex = -1;
         [SerializeField] private GameObject profileRingObject;
+        [SerializeField] private GameObject profileStartOuterRingObject;
+        [SerializeField] private GameObject profileEndOuterRingObject;
+        [SerializeField] private GameObject profileStartInnerRingObject;
+        [SerializeField] private GameObject profileEndInnerRingObject;
         [SerializeField] private MeshFilter meshFilter;
         [SerializeField] private MeshRenderer meshRenderer;
 
@@ -20,6 +24,30 @@ namespace DLN
         {
             get => profileRingObject;
             set => profileRingObject = value;
+        }
+
+        public GameObject ProfileStartOuterRingObject
+        {
+            get => profileStartOuterRingObject;
+            set => profileStartOuterRingObject = value;
+        }
+
+        public GameObject ProfileEndOuterRingObject
+        {
+            get => profileEndOuterRingObject;
+            set => profileEndOuterRingObject = value;
+        }
+
+        public GameObject ProfileStartInnerRingObject
+        {
+            get => profileStartInnerRingObject;
+            set => profileStartInnerRingObject = value;
+        }
+
+        public GameObject ProfileEndInnerRingObject
+        {
+            get => profileEndInnerRingObject;
+            set => profileEndInnerRingObject = value;
         }
 
         public MeshFilter MeshFilter

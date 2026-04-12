@@ -73,18 +73,18 @@ namespace DLN.EditorTools.ShapeStamper
                 ringResult.ProfileSamples.Count > 0)
             {
                 buildResult.StartCapMesh = BuildCapMesh(
-                    ringResult.OuterLoops2D[0],
-                    ringResult.InnerLoops2D.Count > 0 ? ringResult.InnerLoops2D[0] : null,
-                    ringResult.ProfileSamples[0].Z,
-                    reverseWinding: true,
-                    meshName: "AdaptiveShape_StartCap");
+    ringResult.OuterLoops2D[0],
+    ringResult.InnerLoops2D.Count > 0 ? ringResult.InnerLoops2D[0] : null,
+    ringResult.ProfileSamples[0].Z,
+    reverseWinding: false,
+    meshName: "AdaptiveShape_StartCap");
 
                 int last = ringResult.ProfileSamples.Count - 1;
                 buildResult.EndCapMesh = BuildCapMesh(
                     ringResult.OuterLoops2D[last],
                     ringResult.InnerLoops2D.Count > 0 ? ringResult.InnerLoops2D[last] : null,
                     ringResult.ProfileSamples[last].Z,
-                    reverseWinding: false,
+                    reverseWinding: true,
                     meshName: "AdaptiveShape_EndCap");
             }
 
@@ -349,11 +349,11 @@ namespace DLN.EditorTools.ShapeStamper
             float raw;
             switch (point.ProfileZAnchor)
             {
-                case ProfileDepthAnchor.Content:
+                case ProfileDepthAnchor.Padding:
                     raw = point.OffsetY;
                     break;
 
-                case ProfileDepthAnchor.Padding:
+                case ProfileDepthAnchor.Content:
                     raw = profileDocument.FrontPaddingDepth + point.OffsetY;
                     break;
 
@@ -457,11 +457,11 @@ namespace DLN.EditorTools.ShapeStamper
             float raw;
             switch (point.ProfileXAnchor)
             {
-                case ProfileAnchorX.Content:
+                case ProfileAnchorX.Padding:
                     raw = point.OffsetX;
                     break;
 
-                case ProfileAnchorX.Padding:
+                case ProfileAnchorX.Content:
                     raw = drive.BlendedPadding + point.OffsetX;
                     break;
 
@@ -738,12 +738,12 @@ namespace DLN.EditorTools.ShapeStamper
             }
 
             AddCap(
-                builder,
-                result.OuterLoops2D[0],
-                result.InnerLoops2D.Count > 0 ? result.InnerLoops2D[0] : null,
-                result.ProfileSamples[0].Z,
-                startCapSubmesh,
-                reverseWinding: true);
+    builder,
+    result.OuterLoops2D[0],
+    result.InnerLoops2D.Count > 0 ? result.InnerLoops2D[0] : null,
+    result.ProfileSamples[0].Z,
+    startCapSubmesh,
+    reverseWinding: false);
 
             int last = result.ProfileSamples.Count - 1;
             AddCap(
@@ -752,8 +752,7 @@ namespace DLN.EditorTools.ShapeStamper
                 result.InnerLoops2D.Count > 0 ? result.InnerLoops2D[last] : null,
                 result.ProfileSamples[last].Z,
                 endCapSubmesh,
-                reverseWinding: false);
-
+                reverseWinding: true);
             return builder.ToMesh("ShapeStamp_ProfileSegmentsMesh");
         }
 
@@ -842,8 +841,8 @@ namespace DLN.EditorTools.ShapeStamper
                 int b0 = bIndices[i];
                 int b1 = bIndices[next];
 
-                builder.AddTriangle(submeshIndex, a0, b1, b0);
-                builder.AddTriangle(submeshIndex, a0, a1, b1);
+                builder.AddTriangle(submeshIndex, a0, b0, b1);
+                builder.AddTriangle(submeshIndex, a0, b1, a1);
             }
         }
 
